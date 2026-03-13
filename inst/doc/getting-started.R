@@ -2,7 +2,7 @@
 knitr::opts_chunk$set(eval = FALSE)
 
 ## ----install------------------------------------------------------------------
-# # From CRAN (once available)
+# # From CRAN
 # install.packages("glasstabs")
 # 
 # # From GitHub
@@ -71,6 +71,59 @@ knitr::opts_chunk$set(eval = FALSE)
 # 
 # shinyApp(ui, server)
 
+## ----ms-helper----------------------------------------------------------------
+# server <- function(input, output, session) {
+#   ms <- glassMultiSelectValue(input, "category")
+# 
+#   observe({
+#     message("Selected: ", paste(ms$selected(), collapse = ", "))
+#     message("Style: ", ms$style())
+#   })
+# }
+
+## ----ms-update----------------------------------------------------------------
+# server <- function(input, output, session) {
+#   observeEvent(input$reset, {
+#     updateGlassMultiSelect(
+#       session,
+#       "category",
+#       selected = character(0)
+#     )
+#   })
+# }
+
+## ----gs-basic-----------------------------------------------------------------
+# choices <- c(
+#   North = "north",
+#   South = "south",
+#   East  = "east",
+#   West  = "west"
+# )
+# 
+# ui <- fluidPage(
+#   useGlassTabs(),
+#   glassSelect("region", choices, clearable = TRUE),
+#   verbatimTextOutput("selected")
+# )
+
+## ----gs-server----------------------------------------------------------------
+# server <- function(input, output, session) {
+#   output$selected <- renderPrint(input$region)
+# }
+# 
+# shinyApp(ui, server)
+
+## ----gs-update----------------------------------------------------------------
+# server <- function(input, output, session) {
+#   observeEvent(input$pick_south, {
+#     updateGlassSelect(
+#       session,
+#       "region",
+#       selected = "south"
+#     )
+#   })
+# }
+
 ## ----together-----------------------------------------------------------------
 # choices <- c(North = "north", South = "south", East = "east", West = "west")
 # 
@@ -132,6 +185,8 @@ knitr::opts_chunk$set(eval = FALSE)
 # library(bs4Dash)
 # library(glasstabs)
 # 
+# choices <- c(Alpha = "alpha", Beta = "beta", Gamma = "gamma")
+# 
 # ui <- bs4DashPage(
 #   header  = bs4DashNavbar(title = "My App"),
 #   sidebar = bs4DashSidebar(disable = TRUE),
@@ -140,11 +195,14 @@ knitr::opts_chunk$set(eval = FALSE)
 #     bs4Card(
 #       title = "Analysis", width = 12,
 #       glassTabsUI("dash",
-#         wrap     = FALSE,
-#         theme    = "light",
-#         extra_ui = glassMultiSelect("f", choices,
-#                                     theme = "light",
-#                                     show_style_switcher = FALSE),
+#         wrap = FALSE,
+#         theme = "light",
+#         extra_ui = glassMultiSelect(
+#           "f",
+#           choices,
+#           theme = "light",
+#           show_style_switcher = FALSE
+#         ),
 #         glassTabPanel("a", "Overview", selected = TRUE,
 #           shiny::p("Overview content.")
 #         ),

@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Single-Select Dropdown with glasstabs</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Single-Select Dropdown with glasstabs</h1>
+
+
+
+<div id="overview" class="section level2">
+<h2>Overview</h2>
+<p><code>glassSelect()</code> is an animated single-select dropdown for
+Shiny.</p>
+<p>It behaves like a standard Shiny input:
+<code>input$&lt;inputId&gt;</code> stores the selected value as a single
+character string, or <code>NULL</code> when nothing is selected.</p>
+<p>It supports:</p>
+<ul>
+<li>optional labels</li>
+<li>search and clear controls</li>
+<li>built-in dark and light themes</li>
+<li>custom theming with <code>glass_select_theme()</code></li>
+<li>selectable marker styles via <code>check_style</code></li>
+<li>server-side updates with <code>updateGlassSelect()</code></li>
+</ul>
+</div>
+<div id="basic-usage" class="section level2">
+<h2>Basic usage</h2>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(shiny)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">library</span>(glasstabs)</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a>fruits <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a>  <span class="at">Apple  =</span> <span class="st">&quot;apple&quot;</span>,</span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a>  <span class="at">Banana =</span> <span class="st">&quot;banana&quot;</span>,</span>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a>  <span class="at">Cherry =</span> <span class="st">&quot;cherry&quot;</span>,</span>
+<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a>  <span class="at">Mango  =</span> <span class="st">&quot;mango&quot;</span></span>
+<span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a>)</span>
+<span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a></span>
+<span id="cb1-11"><a href="#cb1-11" tabindex="-1"></a>ui <span class="ot">&lt;-</span> <span class="fu">fluidPage</span>(</span>
+<span id="cb1-12"><a href="#cb1-12" tabindex="-1"></a>  <span class="fu">useGlassTabs</span>(),</span>
+<span id="cb1-13"><a href="#cb1-13" tabindex="-1"></a>  <span class="fu">glassSelect</span>(<span class="st">&quot;pick&quot;</span>, fruits),</span>
+<span id="cb1-14"><a href="#cb1-14" tabindex="-1"></a>  <span class="fu">verbatimTextOutput</span>(<span class="st">&quot;out&quot;</span>)</span>
+<span id="cb1-15"><a href="#cb1-15" tabindex="-1"></a>)</span>
+<span id="cb1-16"><a href="#cb1-16" tabindex="-1"></a></span>
+<span id="cb1-17"><a href="#cb1-17" tabindex="-1"></a>server <span class="ot">&lt;-</span> <span class="cf">function</span>(input, output, session) {</span>
+<span id="cb1-18"><a href="#cb1-18" tabindex="-1"></a>  output<span class="sc">$</span>out <span class="ot">&lt;-</span> <span class="fu">renderPrint</span>(input<span class="sc">$</span>pick)</span>
+<span id="cb1-19"><a href="#cb1-19" tabindex="-1"></a>}</span>
+<span id="cb1-20"><a href="#cb1-20" tabindex="-1"></a></span>
+<span id="cb1-21"><a href="#cb1-21" tabindex="-1"></a><span class="fu">shinyApp</span>(ui, server)</span></code></pre></div>
+</div>
+<div id="initial-selection" class="section level2">
+<h2>Initial selection</h2>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="co"># No selection (default)</span></span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="fu">glassSelect</span>(<span class="st">&quot;f&quot;</span>, fruits)</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a><span class="co"># Pre-select one value</span></span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a><span class="fu">glassSelect</span>(<span class="st">&quot;f&quot;</span>, fruits, <span class="at">selected =</span> <span class="st">&quot;banana&quot;</span>)</span></code></pre></div>
+</div>
+<div id="optional-label" class="section level2">
+<h2>Optional label</h2>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="fu">glassSelect</span>(<span class="st">&quot;f&quot;</span>, fruits, <span class="at">label =</span> <span class="st">&quot;Choose a fruit&quot;</span>)</span></code></pre></div>
+</div>
+<div id="selection-styles" class="section level2">
+<h2>Selection styles</h2>
+<p><code>glassSelect()</code> supports three selection marker
+styles:</p>
+<ul>
+<li><code>&quot;checkbox&quot;</code> (default)</li>
+<li><code>&quot;check-only&quot;</code></li>
+<li><code>&quot;filled&quot;</code></li>
+</ul>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="fu">glassSelect</span>(<span class="st">&quot;f1&quot;</span>, fruits, <span class="at">check_style =</span> <span class="st">&quot;checkbox&quot;</span>)</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="fu">glassSelect</span>(<span class="st">&quot;f2&quot;</span>, fruits, <span class="at">check_style =</span> <span class="st">&quot;check-only&quot;</span>)</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="fu">glassSelect</span>(<span class="st">&quot;f3&quot;</span>, fruits, <span class="at">check_style =</span> <span class="st">&quot;filled&quot;</span>)</span></code></pre></div>
+</div>
+<div id="searchable-and-clearable" class="section level2">
+<h2>Searchable and clearable</h2>
+<p>Search is enabled by default. You can also enable a clear
+control.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="fu">glassSelect</span>(</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>  <span class="st">&quot;f&quot;</span>,</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>  fruits,</span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>  <span class="at">searchable =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>  <span class="at">clearable =</span> <span class="cn">TRUE</span></span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>)</span></code></pre></div>
+<p>To hide the search box:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="fu">glassSelect</span>(</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>  <span class="st">&quot;f&quot;</span>,</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>  fruits,</span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>  <span class="at">searchable =</span> <span class="cn">FALSE</span></span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>)</span></code></pre></div>
+</div>
+<div id="explicit-all-option" class="section level2">
+<h2>Explicit “All” option</h2>
+<p>You can prepend an explicit “All” option:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="fu">glassSelect</span>(</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>  <span class="st">&quot;f&quot;</span>,</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>  fruits,</span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>  <span class="at">include_all =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>  <span class="at">all_choice_label =</span> <span class="st">&quot;All fruits&quot;</span>,</span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>  <span class="at">all_choice_value =</span> <span class="st">&quot;__all__&quot;</span></span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a>)</span></code></pre></div>
+<p>This is useful when you want the UI to distinguish between: - no
+selection - a deliberate “All” selection</p>
+</div>
+<div id="server-side-access" class="section level2">
+<h2>Server-side access</h2>
+<p>Read the current value directly from
+<code>input$&lt;inputId&gt;</code>:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>server <span class="ot">&lt;-</span> <span class="cf">function</span>(input, output, session) {</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>  <span class="fu">observe</span>({</span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>  <span class="fu">message</span>(<span class="st">&quot;Selected: &quot;</span>, <span class="cf">if</span> (<span class="fu">is.null</span>(input<span class="sc">$</span>pick)) <span class="st">&quot;NULL&quot;</span> <span class="cf">else</span> input<span class="sc">$</span>pick)</span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a>})</span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a>}</span></code></pre></div>
+</div>
+<div id="reactive-helper" class="section level2">
+<h2>Reactive helper</h2>
+<p>If you want a small convenience wrapper, use
+<code>glassSelectValue()</code>:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>server <span class="ot">&lt;-</span> <span class="cf">function</span>(input, output, session) {</span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>  pick <span class="ot">&lt;-</span> <span class="fu">glassSelectValue</span>(input, <span class="st">&quot;pick&quot;</span>)</span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a></span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>  <span class="fu">observe</span>({</span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>    <span class="fu">print</span>(<span class="fu">pick</span>())</span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a>  })</span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a>}</span></code></pre></div>
+</div>
+<div id="updating-choices-and-selection-from-the-server" class="section level2">
+<h2>Updating choices and selection from the server</h2>
+<p><code>updateGlassSelect()</code> can update: - available choices -
+current selection - selection marker style</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="fu">observeEvent</span>(input<span class="sc">$</span>filled, {</span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>  <span class="fu">updateGlassSelect</span>(</span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>    session,</span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a>    <span class="st">&quot;pick&quot;</span>,</span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a>    <span class="at">check_style =</span> <span class="st">&quot;filled&quot;</span></span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a>  )</span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a>})</span></code></pre></div>
+<p>It follows Shiny-style update semantics:</p>
+<ul>
+<li><code>choices = NULL</code> leaves choices unchanged</li>
+<li><code>selected = NULL</code> leaves selection unchanged</li>
+<li><code>selected = character(0)</code> clears the selection</li>
+</ul>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a>ui <span class="ot">&lt;-</span> <span class="fu">fluidPage</span>(</span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>  <span class="fu">useGlassTabs</span>(),</span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>  <span class="fu">actionButton</span>(<span class="st">&quot;subset&quot;</span>, <span class="st">&quot;Keep first 2 fruits&quot;</span>),</span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a>  <span class="fu">actionButton</span>(<span class="st">&quot;banana&quot;</span>, <span class="st">&quot;Select banana&quot;</span>),</span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a>  <span class="fu">actionButton</span>(<span class="st">&quot;clear&quot;</span>, <span class="st">&quot;Clear&quot;</span>),</span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a>  <span class="fu">actionButton</span>(<span class="st">&quot;filled&quot;</span>, <span class="st">&quot;Use filled style&quot;</span>),</span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a>  <span class="fu">glassSelect</span>(<span class="st">&quot;pick&quot;</span>, fruits, <span class="at">clearable =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a>  <span class="fu">verbatimTextOutput</span>(<span class="st">&quot;out&quot;</span>)</span>
+<span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a>)</span>
+<span id="cb11-10"><a href="#cb11-10" tabindex="-1"></a></span>
+<span id="cb11-11"><a href="#cb11-11" tabindex="-1"></a>server <span class="ot">&lt;-</span> <span class="cf">function</span>(input, output, session) {</span>
+<span id="cb11-12"><a href="#cb11-12" tabindex="-1"></a>  output<span class="sc">$</span>out <span class="ot">&lt;-</span> <span class="fu">renderPrint</span>(input<span class="sc">$</span>pick)</span>
+<span id="cb11-13"><a href="#cb11-13" tabindex="-1"></a></span>
+<span id="cb11-14"><a href="#cb11-14" tabindex="-1"></a>  <span class="fu">observeEvent</span>(input<span class="sc">$</span>subset, {</span>
+<span id="cb11-15"><a href="#cb11-15" tabindex="-1"></a>    <span class="fu">updateGlassSelect</span>(</span>
+<span id="cb11-16"><a href="#cb11-16" tabindex="-1"></a>      session,</span>
+<span id="cb11-17"><a href="#cb11-17" tabindex="-1"></a>      <span class="st">&quot;pick&quot;</span>,</span>
+<span id="cb11-18"><a href="#cb11-18" tabindex="-1"></a>      <span class="at">choices =</span> fruits[<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>]</span>
+<span id="cb11-19"><a href="#cb11-19" tabindex="-1"></a>    )</span>
+<span id="cb11-20"><a href="#cb11-20" tabindex="-1"></a>  })</span>
+<span id="cb11-21"><a href="#cb11-21" tabindex="-1"></a></span>
+<span id="cb11-22"><a href="#cb11-22" tabindex="-1"></a>  <span class="fu">observeEvent</span>(input<span class="sc">$</span>banana, {</span>
+<span id="cb11-23"><a href="#cb11-23" tabindex="-1"></a>    <span class="fu">updateGlassSelect</span>(</span>
+<span id="cb11-24"><a href="#cb11-24" tabindex="-1"></a>      session,</span>
+<span id="cb11-25"><a href="#cb11-25" tabindex="-1"></a>      <span class="st">&quot;pick&quot;</span>,</span>
+<span id="cb11-26"><a href="#cb11-26" tabindex="-1"></a>      <span class="at">selected =</span> <span class="st">&quot;banana&quot;</span></span>
+<span id="cb11-27"><a href="#cb11-27" tabindex="-1"></a>    )</span>
+<span id="cb11-28"><a href="#cb11-28" tabindex="-1"></a>  })</span>
+<span id="cb11-29"><a href="#cb11-29" tabindex="-1"></a></span>
+<span id="cb11-30"><a href="#cb11-30" tabindex="-1"></a>  <span class="fu">observeEvent</span>(input<span class="sc">$</span>clear, {</span>
+<span id="cb11-31"><a href="#cb11-31" tabindex="-1"></a>    <span class="fu">updateGlassSelect</span>(</span>
+<span id="cb11-32"><a href="#cb11-32" tabindex="-1"></a>      session,</span>
+<span id="cb11-33"><a href="#cb11-33" tabindex="-1"></a>      <span class="st">&quot;pick&quot;</span>,</span>
+<span id="cb11-34"><a href="#cb11-34" tabindex="-1"></a>      <span class="at">selected =</span> <span class="fu">character</span>(<span class="dv">0</span>)</span>
+<span id="cb11-35"><a href="#cb11-35" tabindex="-1"></a>    )</span>
+<span id="cb11-36"><a href="#cb11-36" tabindex="-1"></a>  })</span>
+<span id="cb11-37"><a href="#cb11-37" tabindex="-1"></a>}</span>
+<span id="cb11-38"><a href="#cb11-38" tabindex="-1"></a></span>
+<span id="cb11-39"><a href="#cb11-39" tabindex="-1"></a><span class="fu">shinyApp</span>(ui, server)</span></code></pre></div>
+<p>When <code>choices</code> is updated without <code>selected</code>,
+the widget keeps the current value if it still exists in the new set of
+choices.</p>
+</div>
+<div id="theming" class="section level2">
+<h2>Theming</h2>
+<div id="built-in-presets" class="section level3">
+<h3>Built-in presets</h3>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="fu">glassSelect</span>(<span class="st">&quot;f&quot;</span>, fruits, <span class="at">theme =</span> <span class="st">&quot;dark&quot;</span>)</span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a><span class="fu">glassSelect</span>(<span class="st">&quot;f&quot;</span>, fruits, <span class="at">theme =</span> <span class="st">&quot;light&quot;</span>)</span></code></pre></div>
+</div>
+<div id="custom-theme-with-glass_select_theme" class="section level3">
+<h3>Custom theme with <code>glass_select_theme()</code></h3>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="fu">glassSelect</span>(</span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a>  <span class="st">&quot;f&quot;</span>,</span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a>  fruits,</span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a>  <span class="at">theme =</span> <span class="fu">glass_select_theme</span>(</span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a>    <span class="at">mode =</span> <span class="st">&quot;dark&quot;</span>,</span>
+<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a>    <span class="at">accent_color =</span> <span class="st">&quot;#f59e0b&quot;</span></span>
+<span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a>  )</span>
+<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a>)</span>
+<span id="cb13-9"><a href="#cb13-9" tabindex="-1"></a></span>
+<span id="cb13-10"><a href="#cb13-10" tabindex="-1"></a><span class="fu">glassSelect</span>(</span>
+<span id="cb13-11"><a href="#cb13-11" tabindex="-1"></a>  <span class="st">&quot;f&quot;</span>,</span>
+<span id="cb13-12"><a href="#cb13-12" tabindex="-1"></a>  fruits,</span>
+<span id="cb13-13"><a href="#cb13-13" tabindex="-1"></a>  <span class="at">theme =</span> <span class="fu">glass_select_theme</span>(</span>
+<span id="cb13-14"><a href="#cb13-14" tabindex="-1"></a>    <span class="at">bg_color =</span> <span class="st">&quot;#1a0a2e&quot;</span>,</span>
+<span id="cb13-15"><a href="#cb13-15" tabindex="-1"></a>    <span class="at">border_color =</span> <span class="st">&quot;#a855f7&quot;</span>,</span>
+<span id="cb13-16"><a href="#cb13-16" tabindex="-1"></a>    <span class="at">text_color =</span> <span class="st">&quot;#ede9fe&quot;</span>,</span>
+<span id="cb13-17"><a href="#cb13-17" tabindex="-1"></a>    <span class="at">accent_color =</span> <span class="st">&quot;#a855f7&quot;</span></span>
+<span id="cb13-18"><a href="#cb13-18" tabindex="-1"></a>  )</span>
+<span id="cb13-19"><a href="#cb13-19" tabindex="-1"></a>)</span>
+<span id="cb13-20"><a href="#cb13-20" tabindex="-1"></a></span>
+<span id="cb13-21"><a href="#cb13-21" tabindex="-1"></a></span>
+<span id="cb13-22"><a href="#cb13-22" tabindex="-1"></a><span class="co">#other themes</span></span>
+<span id="cb13-23"><a href="#cb13-23" tabindex="-1"></a><span class="fu">glassSelect</span>(</span>
+<span id="cb13-24"><a href="#cb13-24" tabindex="-1"></a>  <span class="st">&quot;f&quot;</span>,</span>
+<span id="cb13-25"><a href="#cb13-25" tabindex="-1"></a>  fruits,</span>
+<span id="cb13-26"><a href="#cb13-26" tabindex="-1"></a>  <span class="at">theme =</span> <span class="fu">glass_select_theme</span>(</span>
+<span id="cb13-27"><a href="#cb13-27" tabindex="-1"></a>    <span class="at">mode =</span> <span class="st">&quot;light&quot;</span>,</span>
+<span id="cb13-28"><a href="#cb13-28" tabindex="-1"></a>    <span class="at">accent_color =</span> <span class="st">&quot;#2563eb&quot;</span></span>
+<span id="cb13-29"><a href="#cb13-29" tabindex="-1"></a>  )</span>
+<span id="cb13-30"><a href="#cb13-30" tabindex="-1"></a>)</span>
+<span id="cb13-31"><a href="#cb13-31" tabindex="-1"></a></span>
+<span id="cb13-32"><a href="#cb13-32" tabindex="-1"></a><span class="co">#more themes</span></span>
+<span id="cb13-33"><a href="#cb13-33" tabindex="-1"></a><span class="fu">glassSelect</span>(</span>
+<span id="cb13-34"><a href="#cb13-34" tabindex="-1"></a>  <span class="st">&quot;f&quot;</span>,</span>
+<span id="cb13-35"><a href="#cb13-35" tabindex="-1"></a>  fruits,</span>
+<span id="cb13-36"><a href="#cb13-36" tabindex="-1"></a>  <span class="at">theme =</span> <span class="fu">glass_select_theme</span>(</span>
+<span id="cb13-37"><a href="#cb13-37" tabindex="-1"></a>    <span class="at">mode =</span> <span class="st">&quot;light&quot;</span>,</span>
+<span id="cb13-38"><a href="#cb13-38" tabindex="-1"></a>    <span class="at">bg_color =</span> <span class="st">&quot;#ffffff&quot;</span>,</span>
+<span id="cb13-39"><a href="#cb13-39" tabindex="-1"></a>    <span class="at">border_color =</span> <span class="st">&quot;rgba(0,0,0,0.15)&quot;</span>,</span>
+<span id="cb13-40"><a href="#cb13-40" tabindex="-1"></a>    <span class="at">text_color =</span> <span class="st">&quot;#111111&quot;</span>,</span>
+<span id="cb13-41"><a href="#cb13-41" tabindex="-1"></a>    <span class="at">accent_color =</span> <span class="st">&quot;#111111&quot;</span>,</span>
+<span id="cb13-42"><a href="#cb13-42" tabindex="-1"></a>    <span class="at">label_color =</span> <span class="st">&quot;#111111&quot;</span></span>
+<span id="cb13-43"><a href="#cb13-43" tabindex="-1"></a>  )</span>
+<span id="cb13-44"><a href="#cb13-44" tabindex="-1"></a>)</span></code></pre></div>
+</div>
+</div>
+<div id="standalone-usage" class="section level2">
+<h2>Standalone usage</h2>
+<p><code>glassSelect()</code> can be used without the tab widget. You
+only need <code>useGlassTabs()</code> to load the package CSS and
+JavaScript assets:</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a>ui <span class="ot">&lt;-</span> <span class="fu">fluidPage</span>(</span>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a>  <span class="fu">useGlassTabs</span>(),</span>
+<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a>  <span class="fu">glassSelect</span>(<span class="st">&quot;region&quot;</span>, <span class="fu">c</span>(<span class="at">North =</span> <span class="st">&quot;North&quot;</span>, <span class="at">South =</span> <span class="st">&quot;South&quot;</span>, <span class="at">East =</span> <span class="st">&quot;East&quot;</span>)),</span>
+<span id="cb14-4"><a href="#cb14-4" tabindex="-1"></a>  <span class="fu">verbatimTextOutput</span>(<span class="st">&quot;out&quot;</span>)</span>
+<span id="cb14-5"><a href="#cb14-5" tabindex="-1"></a>)</span>
+<span id="cb14-6"><a href="#cb14-6" tabindex="-1"></a></span>
+<span id="cb14-7"><a href="#cb14-7" tabindex="-1"></a>server <span class="ot">&lt;-</span> <span class="cf">function</span>(input, output, session) {</span>
+<span id="cb14-8"><a href="#cb14-8" tabindex="-1"></a>  output<span class="sc">$</span>out <span class="ot">&lt;-</span> <span class="fu">renderPrint</span>(input<span class="sc">$</span>region)</span>
+<span id="cb14-9"><a href="#cb14-9" tabindex="-1"></a>}</span>
+<span id="cb14-10"><a href="#cb14-10" tabindex="-1"></a></span>
+<span id="cb14-11"><a href="#cb14-11" tabindex="-1"></a><span class="fu">shinyApp</span>(ui, server)</span></code></pre></div>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
