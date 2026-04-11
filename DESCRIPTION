@@ -1,6 +1,6 @@
 Package: glasstabs
 Title: Animated Glass-Style Tabs and Multi-Select Filter for 'Shiny'
-Version: 0.1.1
+Version: 0.2.1
 Authors@R: 
     person("George", "Arthur", , "prigasgenthian48@gmail.com", role = c("aut", "cre"))
 Description: Tools for creating animated glassmorphism-style tab
@@ -22,8 +22,8 @@ Encoding: UTF-8
 RoxygenNote: 7.3.3
 Language: en-US
 NeedsCompilation: no
-Packaged: 2026-03-12 17:14:09 UTC; garthur
+Packaged: 2026-04-11 18:32:08 UTC; priga
 Author: George Arthur [aut, cre]
 Maintainer: George Arthur <prigasgenthian48@gmail.com>
 Repository: CRAN
-Date/Publication: 2026-03-13 13:30:13 UTC
+Date/Publication: 2026-04-11 18:40:07 UTC
