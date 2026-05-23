@@ -6,23 +6,34 @@
 #' @param value    A unique string identifier for this tab (e.g. `"A"`).
 #' @param label    The text shown on the tab button.
 #' @param ...      UI elements for the pane content.
+#' @param icon     Optional icon shown to the left of the tab label. Accepts
+#'   any htmltools-compatible tag, e.g. `shiny::icon("table")` or
+#'   `fontawesome::fa("house")`. Pass `NULL` (default) for no icon.
 #' @param selected Logical. Whether this tab starts selected. Only the first
 #'   `selected = TRUE` tab takes effect; defaults to `FALSE`.
 #'
 #' @return A list of class `"glassTabPanel"` consumed by [glassTabsUI()].
 #'
 #' @examples
-#' glassTabPanel("overview", "Overview",
+#' # Plain text label
+#' overview_tab <- glassTabPanel("overview", "Overview",
 #'   shiny::h3("Welcome"),
 #'   shiny::p("This is the overview tab.")
 #' )
 #'
+#' # With a Shiny icon
+#' data_tab <- glassTabPanel("data", "Data",
+#'   icon = shiny::icon("table"),
+#'   shiny::p("Data content here.")
+#' )
+#'
 #' @export
-glassTabPanel <- function(value, label, ..., selected = FALSE) {
+glassTabPanel <- function(value, label, ..., icon = NULL, selected = FALSE) {
   structure(
     list(
       value    = value,
       label    = label,
+      icon     = icon,
       content  = list(...),
       selected = isTRUE(selected)
     ),
@@ -37,8 +48,17 @@ glassTabPanel <- function(value, label, ..., selected = FALSE) {
 #' @param ... One or more [glassTabPanel()] objects.
 #' @param selected Value of the initially selected tab.
 #' @param wrap Logical. When `TRUE` wraps everything in a `div.gt-container`.
+#' @param compact Logical. When `TRUE` applies reduced padding and spacing via
+#'   the `.gt-compact` CSS modifier — useful inside dashboard cards or tight
+#'   layouts (e.g. bs4Dash).
 #' @param extra_ui Optional additional UI placed to the right of the tab bar.
 #' @param theme One of `"dark"`, `"light"`, or a [glass_tab_theme()] object.
+#' @param dark_selector Optional CSS selector for a parent element that signals
+#'   dark mode (e.g. `"body.dark-mode"` for bs4Dash, `"[data-bs-theme=dark]"`
+#'   for Bootstrap 5). When provided and `theme = "light"`, a second scoped
+#'   `<style>` block overrides the CSS variables back to the dark-mode defaults
+#'   whenever that selector is active — so the tabs stay readable after a
+#'   dark-mode toggle without any server-side intervention.
 #'
 #' @return An `htmltools::tagList` ready to use in a Shiny UI.
 #' @export
@@ -46,26 +66,61 @@ glassTabsUI <- function(
     id, ...,
     selected = NULL,
     wrap = TRUE,
+    compact = FALSE,
     extra_ui = NULL,
-    theme = NULL
+    theme = NULL,
+    dark_selector = NULL
 ) {
   ns     <- shiny::NS(id)
   panels <- list(...)
 
   if (length(panels) == 0) {
-    stop("glassTabsUI() requires at least one glassTabPanel().", call. = FALSE)
+    stop(
+      "glassTabsUI() requires at least one glassTabPanel() child.\n",
+      "Add tabs like: glassTabPanel(\"tab1\", \"Tab Label\", p(\"Content\"))",
+      call. = FALSE
+    )
   }
-  if (!all(vapply(panels, inherits, logical(1), "glassTabPanel"))) {
-    stop("All `...` arguments to glassTabsUI() must be glassTabPanel() objects.", call. = FALSE)
+  bad_panels <- Filter(function(p) !inherits(p, "glassTabPanel"), panels)
+  if (length(bad_panels) > 0) {
+    bad_cls <- unique(vapply(bad_panels, function(x) class(x)[1], character(1)))
+    stop(
+      sprintf(
+        paste0(
+          "glassTabsUI() received %d non-panel argument(s) of class: %s.\n",
+          "All `...` arguments must be glassTabPanel() objects.\n",
+          "Wrap content in: glassTabPanel(value, label, ...content...)"
+        ),
+        length(bad_panels), paste(bad_cls, collapse = ", ")
+      ),
+      call. = FALSE
+    )
   }
 
   theme_vals  <- .tab_resolve_theme(theme)
   panel_vals  <- vapply(panels, function(p) p$value, character(1))
 
+  if (anyDuplicated(panel_vals)) {
+    dupes <- unique(panel_vals[duplicated(panel_vals)])
+    stop(
+      sprintf(
+        paste0(
+          "Duplicate glassTabPanel() values found: %s\n",
+          "Each tab must have a unique `value` string."
+        ),
+        paste(dupes, collapse = ", ")
+      ),
+      call. = FALSE
+    )
+  }
+
   if (!is.null(selected) && !selected %in% panel_vals) {
     stop(
       sprintf(
-        "'selected' value \"%s\" does not match any glassTabPanel() value. Valid values: %s",
+        paste0(
+          "glassTabsUI(): `selected = \"%s\"` does not match any tab value.\n",
+          "Valid tab values: %s"
+        ),
         selected,
         paste(panel_vals, collapse = ", ")
       ),
@@ -81,6 +136,14 @@ glassTabsUI <- function(
   tab_links <- lapply(panels, function(p) {
     is_active <- p$value == active_val
     cls <- paste("gt-tab-link", if (is_active) "active" else "")
+    label_content <- if (!is.null(p$icon)) {
+      list(
+        shiny::tags$span(class = "gt-tab-icon", p$icon),
+        shiny::tags$span(class = "gt-tab-label", p$label)
+      )
+    } else {
+      list(p$label)
+    }
     shiny::tags$div(
       class          = cls,
       `data-value`   = p$value,
@@ -88,7 +151,7 @@ glassTabsUI <- function(
       role           = "tab",
       tabindex       = "0",
       `aria-selected` = if (is_active) "true" else "false",
-      p$label
+      label_content
     )
   })
 
@@ -114,33 +177,71 @@ glassTabsUI <- function(
     extra_ui
   )
 
+  if (!is.null(dark_selector) &&
+      (!is.character(dark_selector) || length(dark_selector) != 1L || !nzchar(dark_selector))) {
+    stop(
+      "glassTabsUI(): `dark_selector` must be a single non-empty CSS selector string, e.g. \"body.dark-mode\".",
+      call. = FALSE
+    )
+  }
+
   scope_id <- ns("wrap")
   theme_css <- sprintf(
-    "#%s{--gt-tab-text:%s;--gt-tab-active-text:%s;--gt-halo-bg:%s;--gt-halo-border:%s;--gt-content-bg:%s;--gt-content-border:%s;--gt-card-bg:%s;--gt-card-text:%s;}",
+    "#%s{--gt-tab-text:%s;--gt-tab-active-text:%s;--gt-halo-bg:%s;--gt-halo-border:%s;--gt-halo-shadow:%s;--gt-content-bg:%s;--gt-content-border:%s;--gt-card-bg:%s;--gt-card-text:%s;}",
     scope_id,
     theme_vals$tab_text,
     theme_vals$tab_active_text,
     theme_vals$halo_bg,
     theme_vals$halo_border,
+    theme_vals$halo_shadow,
     theme_vals$content_bg,
     theme_vals$content_border,
     theme_vals$card_bg,
     theme_vals$card_text
   )
 
+  dark_override_style <- if (!is.null(dark_selector)) {
+    dark_vals <- .tab_resolve_theme("dark")
+    dark_css <- sprintf(
+      "%s #%s{--gt-tab-text:%s;--gt-tab-active-text:%s;--gt-halo-bg:%s;--gt-halo-border:%s;--gt-halo-shadow:%s;--gt-content-bg:%s;--gt-content-border:%s;--gt-card-bg:%s;--gt-card-text:%s;}",
+      dark_selector,
+      scope_id,
+      dark_vals$tab_text,
+      dark_vals$tab_active_text,
+      dark_vals$halo_bg,
+      dark_vals$halo_border,
+      dark_vals$halo_shadow,
+      dark_vals$content_bg,
+      dark_vals$content_border,
+      dark_vals$card_bg,
+      dark_vals$card_text
+    )
+    .make_style_tag(dark_css)
+  } else {
+    NULL
+  }
+
   inner <- htmltools::tagList(
-    shiny::tags$style(theme_css),
+    .make_style_tag(theme_css),
+    dark_override_style,
     navbar,
     shiny::tags$div(class = "gt-halo", id = ns("halo")),
     shiny::tags$div(class = "gt-transfer", id = ns("transfer")),
     shiny::div(class = "gt-tab-wrap", panes)
   )
 
-  if (wrap) {
-    shiny::div(class = "gt-container", id = scope_id, inner)
-  } else {
-    shiny::div(id = scope_id, inner)
-  }
+  is_light <- identical(theme, "light") ||
+    (inherits(theme, "glass_tab_theme") && isTRUE(attr(theme, "mode") == "light"))
+
+  container_cls <- trimws(paste(
+    c(if (isTRUE(wrap))    "gt-container",
+      if (!isTRUE(wrap))   "gt-wrap-shell",
+      if (isTRUE(compact)) "gt-compact",
+      if (is_light)        "theme-light"),
+    collapse = " "
+  ))
+  shiny::div(class = if (nzchar(container_cls)) container_cls else NULL,
+             id = scope_id, inner)
 }
 
 #' Programmatically switch the active glass tab
@@ -179,6 +280,50 @@ updateGlassTabsUI <- function(session, id, selected) {
   session$sendCustomMessage(
     "glasstabs_update_tabs",
     list(ns = session$ns(id), selected = selected)
+  )
+}
+
+#' Update the badge count on a glass tab
+#'
+#' Adds or updates a small numeric badge on a tab button — useful for
+#' surfacing counts such as unread items, pending rows, or notification
+#' totals. Set `count` to `0` or `NA` to hide the badge.
+#'
+#' @param session Shiny session object.
+#' @param id      Module id matching the `id` passed to [glassTabsUI()].
+#' @param value   Value of the tab to update.
+#' @param count   Integer count to display. Values above 99 are shown as
+#'   `"99+"`. `0` or `NA` hides the badge.
+#'
+#' @return Called for its side effect; returns \code{NULL} invisibly.
+#'
+#' @examples
+#' if (interactive()) {
+#'   library(shiny)
+#'   ui <- fluidPage(
+#'     useGlassTabs(),
+#'     glassTabsUI(
+#'       "tabs",
+#'       glassTabPanel("inbox",  "Inbox",  p("Messages here"), selected = TRUE),
+#'       glassTabPanel("sent",   "Sent",   p("Sent items")),
+#'       glassTabPanel("drafts", "Drafts", p("Draft items"))
+#'     ),
+#'     actionButton("refresh", "Refresh counts")
+#'   )
+#'   server <- function(input, output, session) {
+#'     observeEvent(input$refresh, {
+#'       updateGlassTabBadge(session, "tabs", "inbox",  count = sample(1:20, 1))
+#'       updateGlassTabBadge(session, "tabs", "drafts", count = sample(0:5, 1))
+#'     })
+#'   }
+#'   shinyApp(ui, server)
+#' }
+#' @export
+updateGlassTabBadge <- function(session, id, value, count) {
+  count <- if (is.na(count)) 0L else as.integer(count)
+  session$sendCustomMessage(
+    "glasstabs_tab_badge",
+    list(ns = session$ns(id), value = value, count = count)
   )
 }
 
@@ -232,6 +377,57 @@ hideGlassTab <- function(session, id, value) {
   )
 }
 
+#' Disable or enable a glass tab
+#'
+#' `disableGlassTab()` grays out a tab and prevents the user from clicking it
+#' without removing it from the navigation bar. `enableGlassTab()` reverses
+#' this. Unlike [hideGlassTab()], a disabled tab remains visible.
+#'
+#' @param session Shiny session object.
+#' @param id      Module id matching the `id` passed to [glassTabsUI()].
+#' @param value   Value of the tab to disable or enable.
+#'
+#' @return Called for its side effect; returns \code{NULL} invisibly.
+#'
+#' @examples
+#' if (interactive()) {
+#'   library(shiny)
+#'   ui <- fluidPage(
+#'     useGlassTabs(),
+#'     glassTabsUI(
+#'       "tabs",
+#'       glassTabPanel("a", "A", p("Tab A"), selected = TRUE),
+#'       glassTabPanel("b", "B", p("Tab B")),
+#'       glassTabPanel("locked", "Locked", p("Locked content"))
+#'     ),
+#'     checkboxInput("unlocked", "Unlock tab", FALSE)
+#'   )
+#'   server <- function(input, output, session) {
+#'     # Start with "locked" tab disabled
+#'     observe({
+#'       if (input$unlocked) enableGlassTab(session, "tabs", "locked")
+#'       else                disableGlassTab(session, "tabs", "locked")
+#'     })
+#'   }
+#'   shinyApp(ui, server)
+#' }
+#' @export
+disableGlassTab <- function(session, id, value) {
+  session$sendCustomMessage(
+    "glasstabs_disable_tab",
+    list(ns = session$ns(id), value = value)
+  )
+}
+
+#' @rdname disableGlassTab
+#' @export
+enableGlassTab <- function(session, id, value) {
+  session$sendCustomMessage(
+    "glasstabs_enable_tab",
+    list(ns = session$ns(id), value = value)
+  )
+}
+
 #' Append or remove a glass tab at runtime
 #'
 #' `appendGlassTab()` adds a new [glassTabPanel()] to an existing
@@ -275,19 +471,42 @@ hideGlassTab <- function(session, id, value) {
 #' @export
 appendGlassTab <- function(session, id, tab, select = FALSE) {
   if (!inherits(tab, "glassTabPanel")) {
-    stop("'tab' must be a glassTabPanel() object.", call. = FALSE)
+    stop(
+      sprintf(
+        paste0(
+          "appendGlassTab(): `tab` must be a glassTabPanel() object, got %s.\n",
+          "Create one with: glassTabPanel(value, label, ...content...)"
+        ),
+        class(tab)[1]
+      ),
+      call. = FALSE
+    )
   }
 
   full_ns <- session$ns(id)
 
-  link_html <- as.character(shiny::tags$div(
-    class           = "gt-tab-link",
-    `data-value`    = tab$value,
-    `data-ns`       = full_ns,
-    role            = "tab",
-    tabindex        = "0",
-    `aria-selected` = "false",
-    tab$label
+  label_content <- if (!is.null(tab$icon)) {
+    list(
+      shiny::tags$span(class = "gt-tab-icon", tab$icon),
+      shiny::tags$span(class = "gt-tab-label", tab$label)
+    )
+  } else {
+    list(tab$label)
+  }
+
+  link_html <- as.character(do.call(
+    shiny::tags$div,
+    c(
+      list(
+        class           = "gt-tab-link",
+        `data-value`    = tab$value,
+        `data-ns`       = full_ns,
+        role            = "tab",
+        tabindex        = "0",
+        `aria-selected` = "false"
+      ),
+      label_content
+    )
   ))
 
   pane_html <- as.character(
@@ -322,13 +541,26 @@ removeGlassTab <- function(session, id, value) {
 
 #' Server logic for glass tabs
 #'
-#' Tracks the active tab and exposes it as a reactive value.
+#' Tracks the active tab and exposes it as a reactive value. Optionally
+#' integrates with Shiny's bookmarking system so the active tab is preserved
+#' in bookmarked URLs.
 #'
-#' @param id Module id matching the `id` passed to [glassTabsUI()].
+#' `glassTabsServer()` follows the same calling convention as all Shiny module
+#' server functions: pass the **bare** module id, not a namespaced one.
+#' Inside a parent module, pair it with `glassTabsUI(ns("tabs"), ...)` in the
+#' UI, and call `glassTabsServer("tabs")` (without `ns()`) in the server.
+#'
+#' @param id       Module id matching the `id` passed to [glassTabsUI()].
+#'   Do **not** wrap this in `ns()` — `glassTabsServer()` handles namespacing
+#'   internally via [shiny::moduleServer()].
+#' @param bookmark Logical. When `TRUE` (default), registers [shiny::onBookmark()]
+#'   and [shiny::onRestored()] hooks so the active tab is saved and restored
+#'   automatically when Shiny bookmarking is enabled. Set to `FALSE` to opt out.
 #'
 #' @return A reactive expression returning the active tab value.
 #'
 #' @examples
+#' # --- Standalone app ---
 #' if (interactive()) {
 #'   library(shiny)
 #'   ui <- fluidPage(
@@ -345,11 +577,267 @@ removeGlassTab <- function(session, id, value) {
 #'   }
 #'   shinyApp(ui, server)
 #' }
+#'
+#' # --- Bookmarking ---
+#' if (interactive()) {
+#'   library(shiny)
+#'   ui <- function(request) {
+#'     fluidPage(
+#'       useGlassTabs(),
+#'       bookmarkButton(),
+#'       glassTabsUI(
+#'         "tabs",
+#'         glassTabPanel("a", "A", p("Tab A"), selected = TRUE),
+#'         glassTabPanel("b", "B", p("Tab B"))
+#'       )
+#'     )
+#'   }
+#'   server <- function(input, output, session) {
+#'     active <- glassTabsServer("tabs", bookmark = TRUE)
+#'   }
+#'   shinyApp(ui, server, enableBookmarking = "url")
+#' }
+#'
+#' # --- Inside a Shiny module ---
+#' # UI side: use ns() to namespace the widget id
+#' my_module_ui <- function(id) {
+#'   ns <- shiny::NS(id)
+#'   shiny::tagList(
+#'     useGlassTabs(),
+#'     glassTabsUI(
+#'       ns("tabs"),                          # <-- ns() wraps the id here
+#'       glassTabPanel("a", "A", p("Tab A"), selected = TRUE),
+#'       glassTabPanel("b", "B", p("Tab B"))
+#'     )
+#'   )
+#' }
+#'
+#' # Server side: pass the bare id — NOT ns("tabs")
+#' my_module_server <- function(id) {
+#'   shiny::moduleServer(id, function(input, output, session) {
+#'     active <- glassTabsServer("tabs")     # <-- bare id, no ns()
+#'     shiny::observe(print(active()))
+#'   })
+#' }
 #' @export
-glassTabsServer <- function(id) {
+glassTabsServer <- function(id, bookmark = TRUE) {
+  if (grepl("-", id, fixed = TRUE)) {
+    warning(
+      sprintf(
+        paste0(
+          "glassTabsServer() received id \"%s\" which contains \"-\".\n",
+          "This usually means ns(\"tabs\") was passed instead of the bare id \"tabs\".\n",
+          "Fix: glassTabsServer(\"tabs\")  # NOT glassTabsServer(ns(\"tabs\"))\n",
+          "moduleServer() handles namespacing automatically."
+        ),
+        id
+      ),
+      call. = FALSE
+    )
+  }
+
   shiny::moduleServer(id, function(input, output, session) {
-    shiny::reactive({
+    active <- shiny::reactive({
       input[["active_tab"]] %||% NULL
     })
+
+    if (isTRUE(bookmark)) {
+      session$onBookmark(function(state) {
+        state$values$active_tab <- active()
+      })
+
+      session$onRestored(function(state) {
+        val <- state$values$active_tab
+        if (!is.null(val) && nzchar(val)) {
+          # Reconstruct the fully-qualified namespace that the navbar uses as
+          # data-ns.  Inside moduleServer("tabs"), session$ns("") = "tabs-";
+          # strip the trailing separator to get "tabs" (or "parent-tabs").
+          ns_str <- gsub("-$", "", session$ns(""))
+          session$sendCustomMessage(
+            "glasstabs_update_tabs",
+            list(ns = ns_str, selected = val)
+          )
+        }
+      })
+    }
+
+    active
   })
+}
+
+#' Dynamic glass tab UI output
+#'
+#' A drop-in replacement for [shiny::uiOutput()] that pairs with
+#' [renderGlassTabs()]. It creates a placeholder `<div>` that Shiny fills
+#' with a fully reactive [glassTabsUI()] when the server-side render function
+#' runs. The JavaScript engine is automatically (re-)initialised after each
+#' render.
+#'
+#' @param outputId The output id used in the paired [renderGlassTabs()] call.
+#' @param ...      Additional arguments forwarded to [shiny::uiOutput()].
+#'
+#' @return A `shiny.tag` suitable for use in a Shiny UI.
+#'
+#' @examples
+#' # Creates a UI placeholder tag — no Shiny session needed:
+#' tabs_placeholder <- glassTabsOutput("my_tabs")
+#'
+#' # Full dynamic-tab app example:
+#' if (interactive()) {
+#'   library(shiny)
+#'
+#'   tab_data <- list(
+#'     list(value = "a", label = "Alpha"),
+#'     list(value = "b", label = "Beta"),
+#'     list(value = "c", label = "Gamma")
+#'   )
+#'
+#'   ui <- fluidPage(
+#'     useGlassTabs(),
+#'     selectInput("n", "Show tabs", choices = 2:3, selected = 2),
+#'     glassTabsOutput("dynamic_tabs")
+#'   )
+#'
+#'   server <- function(input, output, session) {
+#'     output$dynamic_tabs <- renderGlassTabs({
+#'       panels <- lapply(
+#'         head(tab_data, as.integer(input$n)),
+#'         function(t) glassTabPanel(t$value, t$label, p(t$label))
+#'       )
+#'       do.call(glassTabsUI, c(list("dyn"), panels))
+#'     })
+#'   }
+#'
+#'   shinyApp(ui, server)
+#' }
+#' @export
+glassTabsOutput <- function(outputId, ...) {
+  shiny::uiOutput(outputId, ...)
+}
+
+#' Render a reactive glass tab UI
+#'
+#' Server-side render function that pairs with [glassTabsOutput()]. The
+#' expression should return a [glassTabsUI()] call. After each render the
+#' glasstabs JavaScript engine is automatically reinitialised so animations and
+#' event handlers are correctly attached to the new DOM nodes.
+#'
+#' @param expr   An expression that returns a [glassTabsUI()] tag object.
+#' @param env    The environment in which to evaluate `expr`.
+#' @param quoted Logical. Whether `expr` is already quoted.
+#'
+#' @return A render function suitable for assigning to an `output` slot.
+#'
+#' @examples
+#' if (interactive()) {
+#'   library(shiny)
+#'
+#'   ui <- fluidPage(
+#'     useGlassTabs(),
+#'     radioButtons("theme", "Theme", c("dark", "light"), inline = TRUE),
+#'     glassTabsOutput("tabs_out")
+#'   )
+#'
+#'   server <- function(input, output, session) {
+#'     output$tabs_out <- renderGlassTabs({
+#'       glassTabsUI(
+#'         "themed",
+#'         glassTabPanel("x", "X", selected = TRUE, p("X content")),
+#'         glassTabPanel("y", "Y", p("Y content")),
+#'         theme = input$theme
+#'       )
+#'     })
+#'   }
+#'
+#'   shinyApp(ui, server)
+#' }
+#' @export
+renderGlassTabs <- function(expr, env = parent.frame(), quoted = FALSE) {
+  func <- shiny::exprToFunction(expr, env, quoted)
+
+  shiny::renderUI({
+    result <- func()
+    session <- shiny::getDefaultReactiveDomain()
+    if (!is.null(session)) {
+      session$onFlushed(function() {
+        session$sendCustomMessage("glasstabs_reinit", list())
+      }, once = TRUE)
+    }
+    result
+  })
+}
+
+#' Build a conditionalPanel condition for a glasstabs widget
+#'
+#' Returns a JavaScript condition string that evaluates to `TRUE` when the
+#' specified glasstabs widget has a given active tab. Pass the result directly
+#' to the `condition` argument of [shiny::conditionalPanel()].
+#'
+#' @param id    The `id` passed to [glassTabsUI()]. **Inside a Shiny module**
+#'   use `ns("tabs")` here (same id you passed to `glassTabsUI()`), NOT the
+#'   bare id you pass to [glassTabsServer()].
+#' @param value The tab value string (the `value` argument of the target
+#'   [glassTabPanel()]) that should trigger the condition.
+#'
+#' @return A single character string for use in [shiny::conditionalPanel()].
+#'
+#' @examples
+#' # Returns a plain JS condition string — no Shiny session needed:
+#' glassTabCondition("main", "details")
+#'
+#' # Inside a module — use ns() for the id:
+#' # UI:   glassTabCondition(ns("tabs"), "details")
+#' # This produces: "input['mymod-tabs-active_tab'] === 'details'"
+#'
+#' # Full app example showing conditionalPanel usage:
+#' if (interactive()) {
+#'   library(shiny)
+#'   ui <- fluidPage(
+#'     useGlassTabs(),
+#'     glassTabsUI(
+#'       "main",
+#'       glassTabPanel("overview", "Overview", selected = TRUE,
+#'         p("Always visible.")),
+#'       glassTabPanel("details", "Details",
+#'         p("Detail pane."))
+#'     ),
+#'     conditionalPanel(
+#'       condition = glassTabCondition("main", "details"),
+#'       wellPanel("This panel only shows on the Details tab.")
+#'     )
+#'   )
+#'   server <- function(input, output, session) {}
+#'   shinyApp(ui, server)
+#' }
+#'
+#' @export
+glassTabCondition <- function(id, value) {
+  if (!is.character(id) || length(id) != 1 || !nzchar(id)) {
+    stop(
+      "glassTabCondition(): `id` must be a single non-empty string matching ",
+      "the id passed to glassTabsUI().",
+      call. = FALSE
+    )
+  }
+  if (!is.character(value) || length(value) != 1 || !nzchar(value)) {
+    stop(
+      "glassTabCondition(): `value` must be a single non-empty string matching ",
+      "a glassTabPanel() value.",
+      call. = FALSE
+    )
+  }
+  input_key <- .gt_js_string(paste0(id, "-active_tab"))
+  tab_value <- .gt_js_string(value)
+  sprintf("input[%s] === %s", input_key, tab_value)
+}
+
+#' @noRd
+.gt_js_string <- function(x) {
+  x <- enc2utf8(as.character(x))
+  x <- gsub("\\\\", "\\\\\\\\", x)
+  x <- gsub("\"", "\\\\\"", x)
+  x <- gsub("\r", "\\\\r", x, fixed = TRUE)
+  x <- gsub("\n", "\\\\n", x, fixed = TRUE)
+  x <- gsub("\t", "\\\\t", x, fixed = TRUE)
+  paste0("\"", x, "\"")
 }

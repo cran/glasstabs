@@ -34,16 +34,16 @@
 #' @examples
 #' fruits <- c(Apple = "apple", Banana = "banana", Cherry = "cherry")
 #'
-#' glassSelect("fruit", fruits)
+#' fruit_select <- glassSelect("fruit", fruits)
 #'
-#' glassSelect(
+#' selected_fruit <- glassSelect(
 #'   "fruit",
 #'   fruits,
 #'   selected = "banana",
 #'   clearable = TRUE
 #' )
 #'
-#' glassSelect(
+#' all_fruits <- glassSelect(
 #'   "fruit",
 #'   fruits,
 #'   include_all = TRUE,
@@ -51,7 +51,7 @@
 #'   all_choice_value = "__all__"
 #' )
 #'
-#' glassSelect(
+#' filled_fruit <- glassSelect(
 #'   "fruit",
 #'   fruits,
 #'   check_style = "filled"
@@ -72,6 +72,12 @@ glassSelect <- function(
     check_style = c("checkbox", "check-only", "filled"),
     theme = "dark"
 ) {
+  if (!is.character(inputId) || length(inputId) != 1L || !nzchar(inputId)) {
+    stop(
+      "glassSelect(): `inputId` must be a single non-empty string.",
+      call. = FALSE
+    )
+  }
   check_style <- match.arg(check_style)
   colors <- .ms_resolve_theme(theme)
 
@@ -88,7 +94,16 @@ glassSelect <- function(
     selected <- as.character(selected)
 
     if (length(selected) > 1) {
-      stop("`selected` must be NULL, character(0), or a single value for glassSelect().", call. = FALSE)
+      stop(
+        sprintf(
+          paste0(
+            "glassSelect(): `selected` must be a single value, got %d values: %s\n",
+            "For multi-selection use glassMultiSelect() instead."
+          ),
+          length(selected), paste(utils::head(selected, 3), collapse = ", ")
+        ),
+        call. = FALSE
+      )
     }
 
     if (length(selected) == 0) {
@@ -113,8 +128,9 @@ glassSelect <- function(
   scope_id <- paste0(inputId, "-wrap")
 
   theme_css <- sprintf(
-    "#%s{--ms-bg:%s;--ms-border:%s;--ms-text:%s;--ms-accent:%s;--ms-label:%s;}",
-    field_id, colors$bg, colors$border, colors$text, colors$accent, colors$label
+    "#%s{--ms-bg:%s;--ms-border:%s;--ms-text:%s;--ms-accent:%s;--ms-label:%s;%s}",
+    field_id, colors$bg, colors$border, colors$text, colors$accent, colors$label,
+    .to_rgba_vars(colors)
   )
 
   wrap_cls <- paste(
@@ -161,6 +177,8 @@ glassSelect <- function(
     shiny::div(
       class = cls,
       `data-value` = v,
+      role = "option",
+      `aria-selected` = if (!is.null(selected) && identical(v, selected)) "true" else "false",
       shiny::div(class = "gt-gs-check", check_svg),
       shiny::tags$span(lbl)
     )
@@ -182,7 +200,7 @@ glassSelect <- function(
   }
 
   htmltools::tagList(
-    shiny::tags$style(theme_css),
+    .make_style_tag(theme_css),
     shiny::div(
       class = "gt-gs-field",
       id = field_id,
@@ -200,6 +218,11 @@ glassSelect <- function(
         shiny::div(
           class = "gt-gs-trigger",
           id = paste0(inputId, "-trigger"),
+          role = "combobox",
+          tabindex = "0",
+          `aria-haspopup` = "listbox",
+          `aria-expanded` = "false",
+          `aria-controls` = paste0(inputId, "-dropdown"),
           shiny::tags$span(id = paste0(inputId, "-label"), init_label),
           shiny::div(
             style = "display:flex;align-items:center;gap:6px;",
@@ -222,6 +245,7 @@ glassSelect <- function(
         shiny::div(
           class = "gt-gs-dropdown",
           id = paste0(inputId, "-dropdown"),
+          role = "listbox",
 
           if (isTRUE(searchable)) {
             shiny::div(
@@ -315,7 +339,13 @@ updateGlassSelect <- function(
 
     if (length(selected) > 1) {
       stop(
-        "`selected` must be NULL, character(0), or a single value in updateGlassSelect().",
+        sprintf(
+          paste0(
+            "updateGlassSelect(): `selected` must be a single value or character(0) to clear,\n",
+            "got %d values. For multi-selection use updateGlassMultiSelect() instead."
+          ),
+          length(selected)
+        ),
         call. = FALSE
       )
     }

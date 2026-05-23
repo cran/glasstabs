@@ -53,7 +53,7 @@ knitr::opts_chunk$set(eval = FALSE)
 #   })
 # }
 # 
-# shinyApp(ui, server)
+# if (interactive()) shinyApp(ui, server)
 
 ## ----ms-basic-----------------------------------------------------------------
 # choices <- c(Alpha = "alpha", Beta = "beta", Gamma = "gamma", Delta = "delta")
@@ -69,7 +69,7 @@ knitr::opts_chunk$set(eval = FALSE)
 #   output$selected <- renderPrint(input$category)
 # }
 # 
-# shinyApp(ui, server)
+# if (interactive()) shinyApp(ui, server)
 
 ## ----ms-helper----------------------------------------------------------------
 # server <- function(input, output, session) {
@@ -111,7 +111,7 @@ knitr::opts_chunk$set(eval = FALSE)
 #   output$selected <- renderPrint(input$region)
 # }
 # 
-# shinyApp(ui, server)
+# if (interactive()) shinyApp(ui, server)
 
 ## ----gs-update----------------------------------------------------------------
 # server <- function(input, output, session) {
@@ -164,7 +164,7 @@ knitr::opts_chunk$set(eval = FALSE)
 #   })
 # }
 # 
-# shinyApp(ui, server)
+# if (interactive()) shinyApp(ui, server)
 
 ## ----themes-------------------------------------------------------------------
 # # Built-in light preset
@@ -215,5 +215,5 @@ knitr::opts_chunk$set(eval = FALSE)
 # )
 # 
 # server <- function(input, output, session) {}
-# shinyApp(ui, server)
+# if (interactive()) shinyApp(ui, server)
 

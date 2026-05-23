@@ -1,15 +1,50 @@
 #' Create a custom color theme for glassTabsUI
 #'
-#' @param tab_text Inactive tab text color.
-#' @param tab_active_text Active tab text color.
-#' @param halo_bg Halo background.
-#' @param halo_border Halo border.
-#' @param content_bg Tab content background.
-#' @param content_border Tab content border.
-#' @param card_bg Inner card background.
-#' @param card_text Inner card text color.
+#' All arguments accept any valid CSS color string (hex, `rgb()`, `rgba()`,
+#' named colors). Pass only the fields you want to override — unset fields
+#' fall back to the dark-mode defaults.
 #'
-#' @return A named list of class `"glass_tab_theme"`.
+#' @note **Light mode color accessibility:** When building a light-mode theme,
+#'   ensure `tab_text` is dark enough to read on a white background (e.g. at
+#'   least `"#374151"`) and `tab_active_text` provides strong contrast (e.g.
+#'   `"#1d4ed8"` or darker). Light-grey or near-white values that look fine on
+#'   dark backgrounds become invisible on light ones.
+#'
+#' @param tab_text   Inactive tab text color.
+#' @param tab_active_text Active tab text color (and headings inside cards).
+#' @param halo_bg    Background fill of the animated glass halo.
+#' @param halo_border Border color of the glass halo.
+#' @param content_bg  Tab content area background.
+#' @param content_border Tab content area border.
+#' @param card_bg    Inner `.gt-card` background.
+#' @param card_text  Inner `.gt-card` text color.
+#'
+#' @return A named list of class `"glass_tab_theme"` for passing to
+#'   the `theme` argument of [glassTabsUI()].
+#'
+#' @examples
+#' # Amber / warm accent on a dark base
+#' amber <- glass_tab_theme(
+#'   halo_bg         = "rgba(251, 191, 36, 0.15)",
+#'   halo_border     = "rgba(251, 191, 36, 0.40)",
+#'   tab_active_text = "#fef3c7"
+#' )
+#'
+#' if (interactive()) {
+#'   library(shiny)
+#'   ui <- fluidPage(
+#'     useGlassTabs(),
+#'     glassTabsUI(
+#'       "demo",
+#'       glassTabPanel("a", "Alpha", selected = TRUE, p("Alpha content")),
+#'       glassTabPanel("b", "Beta",  p("Beta content")),
+#'       theme = amber
+#'     )
+#'   )
+#'   server <- function(input, output, session) {}
+#'   shinyApp(ui, server)
+#' }
+#'
 #' @export
 glass_tab_theme <- function(
     tab_text = NULL,
@@ -44,20 +79,22 @@ glass_tab_theme <- function(
     tab_active_text = "#ffffff",
     halo_bg         = "rgba(126,195,247,0.16)",
     halo_border     = "rgba(126,195,247,0.38)",
-    content_bg      = "rgba(9,20,42,0.72)",
-    content_border  = "rgba(255,255,255,0.10)",
-    card_bg         = "rgba(255,255,255,0.03)",
+    halo_shadow     = "inset 0 1px 0 rgba(255,255,255,.22),inset 0 -1px 0 rgba(255,255,255,.06),0 6px 20px rgba(0,0,0,.38),0 0 0 1px rgba(255,255,255,.03)",
+    content_bg      = "transparent",
+    content_border  = "transparent",
+    card_bg         = "transparent",
     card_text       = "#cfe6ff"
   )
 
   light_defaults <- list(
-    tab_text        = "#475569",
-    tab_active_text = "#0f172a",
-    halo_bg         = "rgba(37,99,235,0.10)",
-    halo_border     = "rgba(37,99,235,0.24)",
-    content_bg      = "rgba(255,255,255,0.88)",
-    content_border  = "rgba(0,0,0,0.08)",
-    card_bg         = "rgba(255,255,255,0.70)",
+    tab_text        = "#374151",
+    tab_active_text = "#1d4ed8",
+    halo_bg         = "rgba(37,99,235,0.12)",
+    halo_border     = "rgba(37,99,235,0.60)",
+    halo_shadow     = "inset 0 1px 0 rgba(255,255,255,.80),0 4px 16px rgba(37,99,235,.20),0 0 0 1px rgba(37,99,235,.12)",
+    content_bg      = "transparent",
+    content_border  = "transparent",
+    card_bg         = "transparent",
     card_text       = "#1e293b"
   )
 
@@ -68,7 +105,13 @@ glass_tab_theme <- function(
   if (is.character(theme) && length(theme) == 1) {
     if (!theme %in% c("dark", "light")) {
       stop(
-        "`theme` must be \"dark\", \"light\", or a glass_tab_theme() object.",
+        sprintf(
+          paste0(
+            "glassTabsUI(): `theme = \"%s\"` is not a valid preset.\n",
+            "Use theme = \"dark\", theme = \"light\", or a glass_tab_theme() object."
+          ),
+          theme
+        ),
         call. = FALSE
       )
     }
@@ -89,7 +132,13 @@ glass_tab_theme <- function(
   }
 
   stop(
-    "`theme` must be \"dark\", \"light\", or a glass_tab_theme() object.",
+    sprintf(
+      paste0(
+        "glassTabsUI(): `theme` must be \"dark\", \"light\", or a glass_tab_theme() object,\n",
+        "got %s. See ?glass_tab_theme for custom theming."
+      ),
+      class(theme)[1]
+    ),
     call. = FALSE
   )
 }

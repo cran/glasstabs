@@ -380,7 +380,7 @@ character string, or <code>NULL</code> when nothing is selected.</p>
 <span id="cb1-18"><a href="#cb1-18" tabindex="-1"></a>  output<span class="sc">$</span>out <span class="ot">&lt;-</span> <span class="fu">renderPrint</span>(input<span class="sc">$</span>pick)</span>
 <span id="cb1-19"><a href="#cb1-19" tabindex="-1"></a>}</span>
 <span id="cb1-20"><a href="#cb1-20" tabindex="-1"></a></span>
-<span id="cb1-21"><a href="#cb1-21" tabindex="-1"></a><span class="fu">shinyApp</span>(ui, server)</span></code></pre></div>
+<span id="cb1-21"><a href="#cb1-21" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">interactive</span>()) <span class="fu">shinyApp</span>(ui, server)</span></code></pre></div>
 </div>
 <div id="initial-selection" class="section level2">
 <h2>Initial selection</h2>
@@ -514,7 +514,7 @@ current selection - selection marker style</p>
 <span id="cb11-36"><a href="#cb11-36" tabindex="-1"></a>  })</span>
 <span id="cb11-37"><a href="#cb11-37" tabindex="-1"></a>}</span>
 <span id="cb11-38"><a href="#cb11-38" tabindex="-1"></a></span>
-<span id="cb11-39"><a href="#cb11-39" tabindex="-1"></a><span class="fu">shinyApp</span>(ui, server)</span></code></pre></div>
+<span id="cb11-39"><a href="#cb11-39" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">interactive</span>()) <span class="fu">shinyApp</span>(ui, server)</span></code></pre></div>
 <p>When <code>choices</code> is updated without <code>selected</code>,
 the widget keeps the current value if it still exists in the new set of
 choices.</p>
@@ -589,7 +589,7 @@ JavaScript assets:</p>
 <span id="cb14-8"><a href="#cb14-8" tabindex="-1"></a>  output<span class="sc">$</span>out <span class="ot">&lt;-</span> <span class="fu">renderPrint</span>(input<span class="sc">$</span>region)</span>
 <span id="cb14-9"><a href="#cb14-9" tabindex="-1"></a>}</span>
 <span id="cb14-10"><a href="#cb14-10" tabindex="-1"></a></span>
-<span id="cb14-11"><a href="#cb14-11" tabindex="-1"></a><span class="fu">shinyApp</span>(ui, server)</span></code></pre></div>
+<span id="cb14-11"><a href="#cb14-11" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">interactive</span>()) <span class="fu">shinyApp</span>(ui, server)</span></code></pre></div>
 </div>
 
 

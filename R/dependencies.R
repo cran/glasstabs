@@ -1,3 +1,90 @@
+#' Run a built-in glasstabs example app
+#'
+#' Launches one of the example Shiny apps that ship with the package.
+#' A list of available examples is printed when called with no arguments.
+#' Example apps are launched only in interactive sessions.
+#'
+#' @param example Name of the example to run. One of `"smoke-test"`,
+#'   `"basic"`, `"bs4dash"`, `"dashboard"`. When `NULL` (default), lists
+#'   all available examples.
+#' @param ... Additional arguments passed to [shiny::runApp()].
+#'
+#' @return Called for its side-effect (launches a Shiny app).
+#'
+#' @examples
+#' # List available examples
+#' runGlassExample()
+#'
+#' # Run an example interactively
+#' if (interactive()) {
+#'   runGlassExample("smoke-test")
+#' }
+#'
+#' @export
+runGlassExample <- function(example = NULL, ...) {
+  examples_dir <- system.file("examples", package = "glasstabs")
+  available    <- list.dirs(examples_dir, full.names = FALSE, recursive = FALSE)
+  available    <- available[nzchar(available)]
+
+  if (is.null(example)) {
+    message("Available glasstabs examples:\n",
+            paste0("  - ", available, collapse = "\n"),
+            "\n\nRun one with: runGlassExample(\"", available[1], "\")")
+    return(invisible(available))
+  }
+
+  if (!example %in% available) {
+    stop(
+      sprintf(
+        "Example \"%s\" not found. Available: %s",
+        example,
+        paste(available, collapse = ", ")
+      ),
+      call. = FALSE
+    )
+  }
+
+  app_dir <- file.path(examples_dir, example)
+  if (!interactive()) {
+    stop(
+      "runGlassExample() launches a Shiny app and must be called interactively.\n",
+      "Use if (interactive()) runGlassExample(\"", example, "\") in examples, ",
+      "tests, and vignettes.",
+      call. = FALSE
+    )
+  }
+  shiny::runApp(app_dir, ...)
+}
+
+#' Display the glasstabs changelog
+#'
+#' Prints the package NEWS to the R console. Useful for quickly checking what
+#' changed between versions without leaving your R session.
+#'
+#' @return Called for its side effect; returns `NULL` invisibly.
+#'
+#' @examples
+#' if (interactive()) {
+#'   glasstabs_news()
+#' }
+#'
+#' @export
+glasstabs_news <- function() {
+  if (!interactive()) return(invisible(NULL))
+  news_file <- system.file("NEWS.md", package = "glasstabs")
+  if (nzchar(news_file) && file.exists(news_file)) {
+    cat(readLines(news_file, warn = FALSE), sep = "\n")
+    cat("\n")
+  } else {
+    url <- "https://github.com/prigasG/glasstabs/blob/main/NEWS.md"
+    message(
+      "Could not retrieve glasstabs changelog from the installed package.\n",
+      "View the full changelog online: ", url
+    )
+  }
+  invisible(NULL)
+}
+
 #' Attach glasstabs CSS and JS dependencies
 #'
 #' Call this once in your UI — either inside `fluidPage()`, `bs4DashPage()`,
@@ -8,6 +95,10 @@
 #'   consumed by Shiny's renderer).
 #'
 #' @examples
+#' # Returns an htmlDependency object — no Shiny session needed:
+#' deps <- useGlassTabs()
+#'
+#' # Typical usage inside a Shiny UI:
 #' if (interactive()) {
 #'   library(shiny)
 #'   ui <- fluidPage(
@@ -25,7 +116,7 @@
 useGlassTabs <- function() {
   htmltools::htmlDependency(
     name    = "glasstabs",
-    version = "0.2.1",
+    version = "0.3.2",
     src     = list(file = system.file("www", package = "glasstabs")),
     stylesheet = "glass.css",
     script     = "glass.js"

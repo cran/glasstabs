@@ -25,7 +25,7 @@ knitr::opts_chunk$set(eval = FALSE)
 # 
 # server <- function(input, output, session) {}
 # 
-# shinyApp(ui, server)
+# if (interactive()) shinyApp(ui, server)
 
 ## ----server-input-------------------------------------------------------------
 # server <- function(input, output, session) {

@@ -65,11 +65,6 @@ body {
   font-size: 13px;
   line-height: 1.6;
 }
-.smoke-debug {
-  margin-top: 12px;
-  font-size: 12px;
-  color: rgba(190, 220, 255, 0.76);
-}
 @media (max-width: 820px) {
   .smoke-grid {
     grid-template-columns: 1fr;
@@ -130,8 +125,7 @@ ui <- fluidPage(
       tags$div(
         class = "smoke-panel",
         tags$h4("Live state"),
-        verbatimTextOutput("state"),
-        tags$div(class = "smoke-debug", verbatimTextOutput("debug_state"))
+        verbatimTextOutput("state")
       ),
       tags$div(
         class = "smoke-panel",
@@ -154,13 +148,6 @@ server <- function(input, output, session) {
   metrics <- glassMultiSelectValue(input, "metric_filter")
   compare_present <- reactiveVal(FALSE)
 
-  observeEvent(TRUE, {
-    session$sendCustomMessage(
-      "glasstabs_debug_ping",
-      list(source = "smoke-test", ts = as.character(Sys.time()))
-    )
-  }, once = TRUE, ignoreInit = FALSE)
-
   visible_tabs <- reactive({
     tabs <- c("overview", "details")
     if (isTRUE(input$show_admin)) {
@@ -182,7 +169,7 @@ server <- function(input, output, session) {
 
   observeEvent(input$go_admin, {
     if (isTRUE(input$show_admin)) {
-      updateGlassTabsUI(session, "main", "admin")
+      updateGlassTabsUI(session, "main", selected = "admin")
     }
   })
 
@@ -225,7 +212,7 @@ server <- function(input, output, session) {
       idx <- 1L
     }
     next_idx <- if (idx < length(tabs)) idx + 1L else 1L
-    updateGlassTabsUI(session, "main", tabs[[next_idx]])
+    updateGlassTabsUI(session, "main", selected = tabs[[next_idx]])
   })
 
   observeEvent(input$reset_tabs, {
@@ -236,7 +223,7 @@ server <- function(input, output, session) {
       removeGlassTab(session, "main", "compare")
       compare_present(FALSE)
     }
-    updateGlassTabsUI(session, "main", "overview")
+    updateGlassTabsUI(session, "main", selected = "overview")
   })
 
   output$state <- renderPrint({
@@ -256,13 +243,6 @@ server <- function(input, output, session) {
       compare_present = compare_present()
     )
   })
-
-  output$debug_state <- renderPrint({
-    list(
-      handlers_registered = input$glasstabs_debug_handlers_registered %||% FALSE,
-      debug_ping_payload = input$glasstabs_debug_ping_payload %||% NULL
-    )
-  })
 }
 
-shinyApp(ui, server)
+if (interactive()) shinyApp(ui, server)

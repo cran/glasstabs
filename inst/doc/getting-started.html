@@ -428,7 +428,7 @@ click:</p>
 <span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>  })</span>
 <span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>}</span>
 <span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a></span>
-<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a><span class="fu">shinyApp</span>(ui, server)</span></code></pre></div>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">interactive</span>()) <span class="fu">shinyApp</span>(ui, server)</span></code></pre></div>
 <hr />
 </div>
 </div>
@@ -450,7 +450,7 @@ click:</p>
 <span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>  output<span class="sc">$</span>selected <span class="ot">&lt;-</span> <span class="fu">renderPrint</span>(input<span class="sc">$</span>category)</span>
 <span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>}</span>
 <span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a></span>
-<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a><span class="fu">shinyApp</span>(ui, server)</span></code></pre></div>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">interactive</span>()) <span class="fu">shinyApp</span>(ui, server)</span></code></pre></div>
 <p><code>input$category</code> is always a plain character vector of the
 checked values — use it like any other Shiny input to filter data, drive
 outputs, or trigger reactives.</p>
@@ -507,7 +507,7 @@ updates:</p>
 <span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>  output<span class="sc">$</span>selected <span class="ot">&lt;-</span> <span class="fu">renderPrint</span>(input<span class="sc">$</span>region)</span>
 <span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>}</span>
 <span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a></span>
-<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a><span class="fu">shinyApp</span>(ui, server)</span></code></pre></div>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">interactive</span>()) <span class="fu">shinyApp</span>(ui, server)</span></code></pre></div>
 <p><code>input$region</code> is a single character value, or
 <code>NULL</code> when nothing is selected.</p>
 </div>
@@ -570,7 +570,7 @@ filters as removable tag pills.</p>
 <span id="cb13-37"><a href="#cb13-37" tabindex="-1"></a>  })</span>
 <span id="cb13-38"><a href="#cb13-38" tabindex="-1"></a>}</span>
 <span id="cb13-39"><a href="#cb13-39" tabindex="-1"></a></span>
-<span id="cb13-40"><a href="#cb13-40" tabindex="-1"></a><span class="fu">shinyApp</span>(ui, server)</span></code></pre></div>
+<span id="cb13-40"><a href="#cb13-40" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">interactive</span>()) <span class="fu">shinyApp</span>(ui, server)</span></code></pre></div>
 <hr />
 </div>
 <div id="choosing-a-theme" class="section level2">
@@ -631,7 +631,7 @@ relative to the card body rather than a full-page container. Pair with
 <span id="cb15-31"><a href="#cb15-31" tabindex="-1"></a>)</span>
 <span id="cb15-32"><a href="#cb15-32" tabindex="-1"></a></span>
 <span id="cb15-33"><a href="#cb15-33" tabindex="-1"></a>server <span class="ot">&lt;-</span> <span class="cf">function</span>(input, output, session) {}</span>
-<span id="cb15-34"><a href="#cb15-34" tabindex="-1"></a><span class="fu">shinyApp</span>(ui, server)</span></code></pre></div>
+<span id="cb15-34"><a href="#cb15-34" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">interactive</span>()) <span class="fu">shinyApp</span>(ui, server)</span></code></pre></div>
 <hr />
 </div>
 <div id="next-steps" class="section level2">

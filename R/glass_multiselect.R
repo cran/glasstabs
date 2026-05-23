@@ -31,6 +31,10 @@
 #'   or a [glass_select_theme()] object.
 #' @param hues Optional named integer vector of HSL hue angles (0 to 360) for
 #'   the \code{"filled"} style. Auto-assigned if \code{NULL}.
+#' @param dark_selector Optional CSS selector that signals dark mode (e.g.
+#'   \code{"body.dark-mode"} for bs4Dash). When provided and
+#'   \code{theme = "light"}, emits an extra scoped \code{<style>} block that
+#'   reverts colors to the dark-mode defaults whenever that selector is active.
 #'
 #' @return An \code{htmltools::tagList} containing the trigger button, dropdown
 #'   panel, and scoped \code{<style>} block.
@@ -39,10 +43,10 @@
 #' fruits <- c(Apple = "apple", Banana = "banana", Cherry = "cherry")
 #'
 #' # Minimal
-#' glassMultiSelect("f", fruits)
+#' fruit_filter <- glassMultiSelect("f", fruits)
 #'
 #' # Lock style, hide extra controls
-#' glassMultiSelect(
+#' locked_filter <- glassMultiSelect(
 #'   "f",
 #'   fruits,
 #'   check_style = "check-only",
@@ -52,7 +56,7 @@
 #' )
 #'
 #' # Light theme
-#' glassMultiSelect("f", fruits, theme = "light")
+#' light_filter <- glassMultiSelect("f", fruits, theme = "light")
 #'
 #' @export
 glassMultiSelect <- function(
@@ -67,8 +71,15 @@ glassMultiSelect <- function(
     show_select_all     = TRUE,
     show_clear_all      = TRUE,
     theme               = "dark",
-    hues                = NULL
+    hues                = NULL,
+    dark_selector       = NULL
 ) {
+  if (!is.character(inputId) || length(inputId) != 1L || !nzchar(inputId)) {
+    stop(
+      "glassMultiSelect(): `inputId` must be a single non-empty string.",
+      call. = FALSE
+    )
+  }
   check_style <- match.arg(check_style)
   colors <- .ms_resolve_theme(theme)
 
@@ -119,9 +130,23 @@ glassMultiSelect <- function(
   scope_id <- paste0(inputId, "-wrap")
 
   theme_css <- sprintf(
-    "#%s{--ms-bg:%s;--ms-border:%s;--ms-text:%s;--ms-accent:%s;--ms-label:%s;}",
-    field_id, colors$bg, colors$border, colors$text, colors$accent, colors$label
+    "#%s{--ms-bg:%s;--ms-border:%s;--ms-text:%s;--ms-accent:%s;--ms-label:%s;%s}",
+    field_id, colors$bg, colors$border, colors$text, colors$accent, colors$label,
+    .to_rgba_vars(colors)
   )
+
+  dark_override_style <- if (!is.null(dark_selector) && nzchar(dark_selector)) {
+    dark_colors <- .ms_resolve_theme("dark")
+    .make_style_tag(sprintf(
+      "%s #%s{--ms-bg:%s;--ms-border:%s;--ms-text:%s;--ms-accent:%s;--ms-label:%s;%s}",
+      dark_selector, field_id,
+      dark_colors$bg, dark_colors$border, dark_colors$text,
+      dark_colors$accent, dark_colors$label,
+      .to_rgba_vars(dark_colors)
+    ))
+  } else {
+    NULL
+  }
 
   check_svg <- shiny::tags$svg(
     width = "10",
@@ -229,6 +254,8 @@ glassMultiSelect <- function(
     shiny::div(
       class = all_cls,
       id = paste0(inputId, "-all"),
+      role = "option",
+      `aria-selected` = if (n_total > 0 && n_sel == n_total) "true" else "false",
       shiny::div(class = "gt-ms-check", check_svg),
       shiny::tags$span("Select all")
     )
@@ -237,6 +264,8 @@ glassMultiSelect <- function(
       class = all_cls,
       id = paste0(inputId, "-all"),
       style = "display:none;",
+      role = "option",
+      `aria-selected` = if (n_total > 0 && n_sel == n_total) "true" else "false",
       shiny::div(class = "gt-ms-check", check_svg),
       shiny::tags$span("Select all")
     )
@@ -251,6 +280,8 @@ glassMultiSelect <- function(
       class = cls,
       `data-value` = v,
       style = paste0("--opt-hue:", unname(hues[v]), ";"),
+      role = "option",
+      `aria-selected` = if (v %in% selected) "true" else "false",
       shiny::div(class = "gt-ms-check", check_svg),
       shiny::tags$span(lbl)
     )
@@ -286,7 +317,8 @@ glassMultiSelect <- function(
   )
 
   htmltools::tagList(
-    shiny::tags$style(theme_css),
+    .make_style_tag(theme_css),
+    dark_override_style,
     shiny::div(
       class = "gt-ms-field",
       label_tag,
@@ -301,6 +333,11 @@ glassMultiSelect <- function(
         shiny::div(
           class = "gt-ms-trigger",
           id = paste0(inputId, "-trigger"),
+          role = "combobox",
+          tabindex = "0",
+          `aria-haspopup` = "listbox",
+          `aria-expanded` = "false",
+          `aria-controls` = paste0(inputId, "-dropdown"),
           shiny::tags$span(id = paste0(inputId, "-label"), init_label),
           shiny::div(
             style = "display:flex;align-items:center;gap:6px;",
@@ -327,6 +364,7 @@ glassMultiSelect <- function(
         shiny::div(
           class = "gt-ms-dropdown",
           id = paste0(inputId, "-dropdown"),
+          role = "listbox",
 
           shiny::div(
             class = "gt-ms-search",
@@ -418,6 +456,9 @@ glassMultiSelect <- function(
 #'   \code{"check-only"}, or \code{"filled"}. Defaults to \code{NULL}, which
 #'   keeps the current style unchanged.
 #'
+#' @return No return value. Called for its side effect of updating the
+#'   client-side widget.
+#'
 #' @export
 updateGlassMultiSelect <- function(
     session,
@@ -500,7 +541,15 @@ glassMultiSelectValue <- function(input, inputId) {
 #' @noRd
 .gt_normalize_choices <- function(choices) {
   if (is.null(choices)) {
-    stop("`choices` cannot be NULL.", call. = FALSE)
+    stop(
+      paste0(
+        "`choices` cannot be NULL.\n",
+        "Provide a character vector, e.g.:\n",
+        "  choices = c(\"Option A\", \"Option B\")\n",
+        "  choices = c(Label = \"value\", Other = \"other\")"
+      ),
+      call. = FALSE
+    )
   }
 
   if (!length(choices)) {
@@ -511,7 +560,14 @@ glassMultiSelectValue <- function(input, inputId) {
   }
 
   if (is.list(choices) && !is.atomic(choices)) {
-    stop("`choices` must be a named or unnamed atomic vector.", call. = FALSE)
+    stop(
+      paste0(
+        "`choices` must be a named or unnamed atomic vector, not a list.\n",
+        "Use: choices = c(\"A\", \"B\") or choices = c(Label = \"a\", Other = \"b\")\n",
+        "For grouped choices, flatten to a single vector first."
+      ),
+      call. = FALSE
+    )
   }
 
   orig_names <- names(choices)

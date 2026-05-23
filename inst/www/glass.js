@@ -30,6 +30,14 @@
       .replace(/'/g, '&#39;');
   }
 
+  function attrEquals(name, value) {
+    var escaped = String(value)
+      .replace(/\\/g, '\\\\')
+      .replace(/"/g, '\\"')
+      .replace(/\r?\n/g, '\\a ');
+    return '[' + name + '="' + escaped + '"]';
+  }
+
   function debounce(fn, ms) {
     var timer;
     return function () {
@@ -53,15 +61,72 @@
     return el._gt || null;
   }
 
+  var MS_VARS = [
+    '--ms-bg','--ms-border','--ms-text','--ms-accent','--ms-label',
+    '--ms-ac-12','--ms-ac-16','--ms-ac-18','--ms-ac-22','--ms-ac-28',
+    '--ms-ac-32','--ms-ac-40','--ms-ac-55','--ms-ac-60','--ms-ac-75',
+    '--ms-tx-03','--ms-tx-04','--ms-tx-05','--ms-tx-06','--ms-tx-08',
+    '--ms-tx-35','--ms-tx-45','--ms-tx-50','--ms-tx-80','--ms-ac-tx-75'
+  ];
+
+  var TELEPORT_CLASSES = ['style-checkbox','style-check-only','style-filled','theme-light'];
+
+  /** Teleport a dropdown to <body> so no parent overflow/transform can clip it */
+  function teleportOpen(wrap, dropdown) {
+    if (dropdown.parentNode === document.body) return;
+    /* Read CSS vars from the field ancestor which has them via the scoped <style> tag.
+       Falling back up the tree ensures we find them even in deeply nested layouts. */
+    var source = wrap.closest ? (wrap.closest('.gt-ms-field, .gt-gs-field') || wrap) : wrap;
+    var cs = getComputedStyle(source);
+    var isLight = wrap.classList.contains('theme-light');
+    var fallbacks = isLight
+      ? { '--ms-bg': 'rgba(255,255,255,0.98)', '--ms-border': 'rgba(0,0,0,0.12)',
+          '--ms-text': '#111111', '--ms-accent': '#2563eb', '--ms-label': '#111111' }
+      : { '--ms-bg': 'rgba(9,20,42,0.97)', '--ms-border': 'rgba(255,255,255,0.10)',
+          '--ms-text': '#cfe6ff', '--ms-accent': '#7ec3f7', '--ms-label': '#cfe6ff' };
+    MS_VARS.forEach(function (v) {
+      var val = cs.getPropertyValue(v).trim();
+      if (val) dropdown.style.setProperty(v, val);
+      else if (hasOwn(fallbacks, v)) dropdown.style.setProperty(v, fallbacks[v]);
+    });
+    /* Copy style/theme classes onto the dropdown so CSS ancestor selectors still match */
+    TELEPORT_CLASSES.forEach(function (cls) {
+      if (wrap.classList.contains(cls)) dropdown.classList.add(cls);
+      else dropdown.classList.remove(cls);
+    });
+    document.body.appendChild(dropdown);
+    /* Use absolute positioning so AdminLTE's overflow-x:hidden on body/html
+       doesn't clip the dropdown (position:fixed breaks in those scroll contexts) */
+    dropdown.style.position = 'absolute';
+  }
+
+  /** Move a teleported dropdown back to its wrap */
+  function teleportClose(wrap, dropdown) {
+    if (dropdown.parentNode !== document.body) return;
+    MS_VARS.forEach(function (v) { dropdown.style.removeProperty(v); });
+    dropdown.style.removeProperty('position');
+    dropdown.style.removeProperty('top');
+    dropdown.style.removeProperty('right');
+    dropdown.style.removeProperty('left');
+    TELEPORT_CLASSES.forEach(function (cls) { dropdown.classList.remove(cls); });
+    wrap.appendChild(dropdown);
+  }
+
   /** Close every open glasstabs dropdown except the one being opened */
   function closeAllDropdowns(except) {
     document.querySelectorAll('.gt-gs-wrap.gt-layer-active, .gt-ms-wrap.gt-layer-active').forEach(function (w) {
       if (w === except) return;
       w.classList.remove('gt-layer-active');
-      var dd = w.querySelector('.gt-gs-dropdown, .gt-ms-dropdown');
-      if (dd) dd.classList.remove('open');
+      var dd = w._gtDropdown || w.querySelector('.gt-gs-dropdown, .gt-ms-dropdown');
+      if (dd) {
+        dd.classList.remove('open');
+        teleportClose(w, dd);
+      }
       var trig = w.querySelector('.gt-gs-trigger, .gt-ms-trigger');
-      if (trig) trig.classList.remove('open');
+      if (trig) {
+        trig.classList.remove('open');
+        trig.setAttribute('aria-expanded', 'false');
+      }
     });
   }
 
@@ -89,7 +154,7 @@
 
     var ns = navbar.getAttribute('data-ns');
 
-    var container = navbar.closest('.gt-container')
+    var container = navbar.closest('.gt-container, .gt-wrap-shell')
       || navbar.closest('.card-body')
       || navbar.closest('.box-body')
       || (navbar.parentElement && navbar.parentElement.parentElement)
@@ -105,6 +170,25 @@
     if (!halo || !trf || links.length === 0 || !activeEl) return;
 
     var active = activeEl.getAttribute('data-value');
+    if (window.Shiny && window.Shiny.setInputValue) {
+      Shiny.setInputValue(ns + '-active_tab', active, { priority: 'deferred' });
+    }
+
+    /* Repair pane visibility to match link state.  When bootAll() re-runs
+       initTabs mid-animation (e.g. triggered by shiny:value on dyn_out),
+       clearTabTimers() kills the deferred pane-swap — leaving the active link
+       and the visible pane out of sync.  Syncing here makes every re-init
+       self-healing regardless of when it fires. */
+    links.forEach(function (l) {
+      var v = l.getAttribute('data-value');
+      var pane = document.getElementById(ns + '-pane-' + v);
+      if (!pane) return;
+      if (l === activeEl) {
+        pane.classList.add('active');
+      } else {
+        pane.classList.remove('active');
+      }
+    });
 
     function currentVisibleOrder() {
       return Array.from(navbar.querySelectorAll('.gt-tab-link'))
@@ -257,12 +341,15 @@
       var dur = animated ? animateTransfer(fromEl, toEl) : 0;
 
       navbar._gtTabTimers.push(setTimeout(function () {
-        var ap = container.querySelector('.gt-tab-pane.active');
+        /* Use the namespace-qualified ID so we never accidentally deactivate
+           a nested glassTabsUI pane that also carries gt-tab-pane.active */
+        var ap = document.getElementById(ns + '-pane-' + active);
         if (ap) ap.classList.remove('active');
         var next = document.getElementById(ns + '-pane-' + target);
         if (next) next.classList.add('active');
         active = target;
         if (window.Shiny) Shiny.setInputValue(ns + '-active_tab', target, { priority: 'event' });
+        triggerShinyChange(navbar);
       }, dur > 0 ? Math.max(100, dur * 0.50) : 0));
 
       if (dur > 0) {
@@ -316,8 +403,20 @@
     navbar.addEventListener('click', navbar._gtClickHandler);
 
     navbar._gtKeyHandler = function (e) {
-      if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
       if (!navbar.contains(document.activeElement)) return;
+
+      if (e.key === 'Enter' || e.key === ' ') {
+        var focused = document.activeElement && document.activeElement.closest
+          ? document.activeElement.closest('.gt-tab-link')
+          : null;
+        if (focused && !focused.classList.contains('gt-tab-hidden')) {
+          e.preventDefault();
+          activateTab(focused.getAttribute('data-value'));
+        }
+        return;
+      }
+
+      if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
 
       var visibleOrder = currentVisibleOrder();
       var idx = visibleOrder.indexOf(active);
@@ -366,6 +465,8 @@
 
     if (!trigger || !dropdown || !labelEl) return;
 
+    wrap._gtDropdown = dropdown;
+
     /* ── Capture check SVG template before any rebuilds ── */
     var checkTemplate = wrap.querySelector('.gt-gs-check');
     var checkHtml = checkTemplate ? checkTemplate.innerHTML : '';
@@ -412,14 +513,16 @@
 
     /* ── DOM patching ── */
     function patchOptionClasses() {
-      Array.from(wrap.querySelectorAll('.gt-gs-option')).forEach(function (el) {
+      Array.from(dropdown.querySelectorAll('.gt-gs-option')).forEach(function (el) {
         var v = el.getAttribute('data-value');
-        el.classList.toggle('selected', state.selected !== null && v === state.selected);
+        var isSelected = state.selected !== null && v === state.selected;
+        el.classList.toggle('selected', isSelected);
+        el.setAttribute('aria-selected', isSelected ? 'true' : 'false');
       });
     }
 
     function patchVisibility() {
-      Array.from(wrap.querySelectorAll('.gt-gs-option')).forEach(function (el) {
+      Array.from(dropdown.querySelectorAll('.gt-gs-option')).forEach(function (el) {
         var v = el.getAttribute('data-value');
         var ch = findChoice(v);
         el.classList.toggle('hidden', ch ? ch.hidden : false);
@@ -464,6 +567,7 @@
       opt.addEventListener('click', function () {
         setValue(opt.getAttribute('data-value'), { notify: true });
         close();
+        trigger.focus();
       });
     }
 
@@ -472,6 +576,8 @@
       var row = document.createElement('div');
       row.className = 'gt-gs-option';
       row.setAttribute('data-value', ch.value);
+      row.setAttribute('role', 'option');
+      row.setAttribute('aria-selected', state.selected !== null && ch.value === state.selected ? 'true' : 'false');
 
       row.innerHTML =
         '<div class="gt-gs-check">' + checkHtml + '</div>' +
@@ -539,31 +645,110 @@
       applySearchNow(searchIn ? searchIn.value : '');
     }, 75);
 
+    /* ── Position the dropdown below the trigger ──
+       Uses document-space coordinates (viewport + scrollY) to match
+       position:absolute on the body-appended teleported element.
+       This avoids the position:fixed + overflow:hidden quirk in AdminLTE. */
+    function positionDropdown() {
+      var rect = trigger.getBoundingClientRect();
+      var scrollY = window.pageYOffset || 0;
+      var vw = window.innerWidth;
+      var vh = window.innerHeight;
+      var ddHeight = dropdown.offsetHeight || 0;
+      var top = rect.bottom + scrollY + 8;
+      /* Flip upward if not enough room below */
+      if (rect.bottom + ddHeight + 8 > vh - 8 && rect.top - ddHeight - 8 > 0) {
+        top = rect.top + scrollY - ddHeight - 8;
+      }
+      dropdown.style.top = top + 'px';
+      if ((wrap.closest('[dir]') || document.documentElement).getAttribute('dir') === 'rtl') {
+        var left = rect.left;
+        if (left < 4) left = 4;
+        dropdown.style.left = left + 'px';
+        dropdown.style.right = 'auto';
+      } else {
+        /* Right-align with trigger; clamp to viewport edge */
+        var right = vw - rect.right;
+        if (right < 4) right = 4;
+        dropdown.style.right = right + 'px';
+        dropdown.style.left = 'auto';
+      }
+    }
+
+    var openedAt = 0;
+
     /* ── Open / Close ── */
     function open() {
       closeAllDropdowns(wrap);
       wrap.classList.add('gt-layer-active');
-      dropdown.classList.add('open');
-      trigger.classList.add('open');
-      if (searchIn) searchIn.focus();
+      teleportOpen(wrap, dropdown);
+      /* rAF ensures the browser has laid out the element in body before we
+         read offsetHeight (needed for the upward-flip calculation) */
+      requestAnimationFrame(function () {
+        positionDropdown();
+        dropdown.classList.add('open');
+        trigger.classList.add('open');
+        trigger.setAttribute('aria-expanded', 'true');
+      });
+      openedAt = Date.now();
+      /* Delay focus so synthetic-click re-fires from AdminLTE don't close us */
+      if (searchIn) setTimeout(function () { searchIn.focus(); }, 100);
     }
 
     function close() {
       wrap.classList.remove('gt-layer-active');
       dropdown.classList.remove('open');
       trigger.classList.remove('open');
+      trigger.setAttribute('aria-expanded', 'false');
+      teleportClose(wrap, dropdown);
+    }
+
+    function closeAndReturnFocus() {
+      if (dropdown.classList.contains('open')) {
+        close();
+        trigger.focus();
+      }
     }
 
     /* ── Event listeners ── */
     trigger.addEventListener('click', function (e) {
       e.stopPropagation();
-      if (dropdown.classList.contains('open')) close(); else open();
+      if (dropdown.classList.contains('open')) {
+        /* Ignore close triggers within 500 ms of opening — prevents synthetic
+           re-fires from focus changes (e.g. bs4Dash / AdminLTE environments) */
+        if (Date.now() - openedAt < 500) return;
+        close();
+      } else {
+        open();
+      }
+    });
+
+    trigger.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        if (dropdown.classList.contains('open')) closeAndReturnFocus();
+        else open();
+      } else if (e.key === 'Escape' || e.key === 'Tab') {
+        closeAndReturnFocus();
+      }
+    });
+
+    dropdown.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' || e.key === 'Tab') closeAndReturnFocus();
     });
 
     wrap._gtDocClickHandler = function (e) {
-      if (!wrap.contains(e.target)) close();
+      if (Date.now() - openedAt < 500) return;
+      if (!wrap.contains(e.target) && !dropdown.contains(e.target)) close();
     };
     document.addEventListener('click', wrap._gtDocClickHandler);
+
+    /* Reposition on scroll/resize while open */
+    wrap._gtScrollHandler = function () {
+      if (dropdown.classList.contains('open')) positionDropdown();
+    };
+    window.addEventListener('scroll', wrap._gtScrollHandler, true);
+    window.addEventListener('resize', wrap._gtScrollHandler);
 
     if (clearBtn) {
       clearBtn.addEventListener('click', function (e) {
@@ -582,6 +767,13 @@
         document.removeEventListener('click', wrap._gtDocClickHandler);
         wrap._gtDocClickHandler = null;
       }
+      if (wrap._gtScrollHandler) {
+        window.removeEventListener('scroll', wrap._gtScrollHandler, true);
+        window.removeEventListener('resize', wrap._gtScrollHandler);
+        wrap._gtScrollHandler = null;
+      }
+      teleportClose(wrap, dropdown);
+      wrap._gtDropdown = null;
       wrap._gt = null;
       wrap._gtSelectInit = false;
     }
@@ -610,8 +802,9 @@
       },
       setStyle: function (s, opts) {
         if (STYLES.indexOf(s) === -1) return;
-        STYLES.forEach(function (st) { wrap.classList.remove('style-' + st); });
+        STYLES.forEach(function (st) { wrap.classList.remove('style-' + st); dropdown.classList.remove('style-' + st); });
         wrap.classList.add('style-' + s);
+        dropdown.classList.add('style-' + s);
         currentStyle = s;
       },
       clear: function (opts) {
@@ -643,6 +836,8 @@
     var searchIn = wrap.querySelector('input[type="text"]');
     var styleBtns = Array.from(wrap.querySelectorAll('.gt-style-btn'));
     var optionsBox = wrap.querySelector('[id$="-options"]') || wrap;
+
+    wrap._gtDropdown = dropdown;
 
     var STYLES = ['check-only', 'checkbox', 'filled'];
     var currentStyle = 'checkbox';
@@ -710,14 +905,16 @@
 
     /* ── DOM patching ── */
     function patchOptionClasses() {
-      Array.from(wrap.querySelectorAll('.gt-ms-option')).forEach(function (el) {
+      Array.from(dropdown.querySelectorAll('.gt-ms-option')).forEach(function (el) {
         var v = el.getAttribute('data-value');
-        el.classList.toggle('checked', state.selected.has(v));
+        var isSelected = state.selected.has(v);
+        el.classList.toggle('checked', isSelected);
+        el.setAttribute('aria-selected', isSelected ? 'true' : 'false');
       });
     }
 
     function patchVisibility() {
-      Array.from(wrap.querySelectorAll('.gt-ms-option')).forEach(function (el) {
+      Array.from(dropdown.querySelectorAll('.gt-ms-option')).forEach(function (el) {
         var v = el.getAttribute('data-value');
         for (var i = 0; i < state.choices.length; i++) {
           if (state.choices[i].value === v) {
@@ -743,6 +940,7 @@
         } else if (visSel > 0) {
           allRow.classList.add('indeterminate');
         }
+        allRow.setAttribute('aria-selected', vis > 0 && visSel === vis ? 'true' : 'false');
       }
 
       /* Badge */
@@ -871,6 +1069,8 @@
       var row = document.createElement('div');
       row.className = 'gt-ms-option';
       row.setAttribute('data-value', ch.value);
+      row.setAttribute('role', 'option');
+      row.setAttribute('aria-selected', state.selected.has(ch.value) ? 'true' : 'false');
       row.style.setProperty('--opt-hue', String(ch.hue));
 
       if (state.selected.has(ch.value)) {
@@ -951,6 +1151,7 @@
         } else if (visSel > 0) {
           allRow.classList.add('indeterminate');
         }
+        allRow.setAttribute('aria-selected', vis > 0 && visSel === vis ? 'true' : 'false');
       }
     }
 
@@ -958,31 +1159,107 @@
       applySearchNow(searchIn ? searchIn.value : '');
     }, 75);
 
+    /* ── Position the dropdown below the trigger ──
+       Uses document-space coordinates (viewport + scrollY) to match
+       position:absolute on the body-appended teleported element. */
+    function positionDropdown() {
+      var rect = trigger.getBoundingClientRect();
+      var scrollY = window.pageYOffset || 0;
+      var vw = window.innerWidth;
+      var vh = window.innerHeight;
+      var ddHeight = dropdown.offsetHeight || 0;
+      var top = rect.bottom + scrollY + 8;
+      /* Flip upward if not enough room below */
+      if (rect.bottom + ddHeight + 8 > vh - 8 && rect.top - ddHeight - 8 > 0) {
+        top = rect.top + scrollY - ddHeight - 8;
+      }
+      dropdown.style.top = top + 'px';
+      if ((wrap.closest('[dir]') || document.documentElement).getAttribute('dir') === 'rtl') {
+        var left = rect.left;
+        if (left < 4) left = 4;
+        dropdown.style.left = left + 'px';
+        dropdown.style.right = 'auto';
+      } else {
+        /* Right-align with trigger; clamp to viewport edge */
+        var right = vw - rect.right;
+        if (right < 4) right = 4;
+        dropdown.style.right = right + 'px';
+        dropdown.style.left = 'auto';
+      }
+    }
+
+    var openedAt = 0;
+
     /* ── Open / Close ── */
     function open() {
       closeAllDropdowns(wrap);
       wrap.classList.add('gt-layer-active');
-      dropdown.classList.add('open');
-      trigger.classList.add('open');
-      if (searchIn) searchIn.focus();
+      teleportOpen(wrap, dropdown);
+      requestAnimationFrame(function () {
+        positionDropdown();
+        dropdown.classList.add('open');
+        trigger.classList.add('open');
+        trigger.setAttribute('aria-expanded', 'true');
+      });
+      openedAt = Date.now();
+      /* Delay focus so synthetic-click re-fires from AdminLTE don't close us */
+      if (searchIn) setTimeout(function () { searchIn.focus(); }, 100);
     }
 
     function close() {
       wrap.classList.remove('gt-layer-active');
       dropdown.classList.remove('open');
       trigger.classList.remove('open');
+      trigger.setAttribute('aria-expanded', 'false');
+      teleportClose(wrap, dropdown);
+    }
+
+    function closeAndReturnFocus() {
+      if (dropdown.classList.contains('open')) {
+        close();
+        trigger.focus();
+      }
     }
 
     /* ── Event listeners ── */
     trigger.addEventListener('click', function (e) {
       e.stopPropagation();
-      if (dropdown.classList.contains('open')) close(); else open();
+      if (dropdown.classList.contains('open')) {
+        /* Ignore close triggers within 500 ms of opening — prevents synthetic
+           re-fires from focus changes (e.g. bs4Dash / AdminLTE environments) */
+        if (Date.now() - openedAt < 500) return;
+        close();
+      } else {
+        open();
+      }
+    });
+
+    trigger.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        if (dropdown.classList.contains('open')) closeAndReturnFocus();
+        else open();
+      } else if (e.key === 'Escape' || e.key === 'Tab') {
+        closeAndReturnFocus();
+      }
+    });
+
+    dropdown.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' || e.key === 'Tab') closeAndReturnFocus();
     });
 
     wrap._gtDocClickHandler = function (e) {
-      if (!wrap.contains(e.target)) close();
+      if (Date.now() - openedAt < 500) return;
+      if (!wrap.contains(e.target) && !dropdown.contains(e.target)) close();
     };
     document.addEventListener('click', wrap._gtDocClickHandler);
+
+    /* Reposition on scroll/resize while open */
+    wrap._gtScrollHandler = function () {
+      if (dropdown.classList.contains('open')) positionDropdown();
+    };
+    window.addEventListener('scroll', wrap._gtScrollHandler, true);
+    window.addEventListener('resize', wrap._gtScrollHandler);
 
     styleBtns.forEach(function (btn) {
       btn.addEventListener('click', function () {
@@ -992,8 +1269,9 @@
         styleBtns.forEach(function (b) { b.classList.remove('active'); });
         btn.classList.add('active');
 
-        STYLES.forEach(function (st) { wrap.classList.remove('style-' + st); });
+        STYLES.forEach(function (st) { wrap.classList.remove('style-' + st); dropdown.classList.remove('style-' + st); });
         wrap.classList.add('style-' + s);
+        dropdown.classList.add('style-' + s);
         currentStyle = s;
 
         syncUI();
@@ -1037,6 +1315,13 @@
         document.removeEventListener('click', wrap._gtDocClickHandler);
         wrap._gtDocClickHandler = null;
       }
+      if (wrap._gtScrollHandler) {
+        window.removeEventListener('scroll', wrap._gtScrollHandler, true);
+        window.removeEventListener('resize', wrap._gtScrollHandler);
+        wrap._gtScrollHandler = null;
+      }
+      teleportClose(wrap, dropdown);
+      wrap._gtDropdown = null;
       wrap._gt = null;
       wrap._gtMultiInit = false;
     }
@@ -1072,8 +1357,9 @@
           b.classList.toggle('active', b.getAttribute('data-style') === s);
         });
 
-        STYLES.forEach(function (st) { wrap.classList.remove('style-' + st); });
+        STYLES.forEach(function (st) { wrap.classList.remove('style-' + st); dropdown.classList.remove('style-' + st); });
         wrap.classList.add('style-' + s);
+        dropdown.classList.add('style-' + s);
         currentStyle = s;
 
         syncUI();
@@ -1096,6 +1382,32 @@
     registerBindings._done = true;
 
     var $ = window.jQuery;
+
+    var glassTabsBinding = new Shiny.InputBinding();
+    $.extend(glassTabsBinding, {
+      find: function (scope) {
+        return $(scope).find('.gt-navbar');
+      },
+      getId: function (el) {
+        var ns = el.getAttribute('data-ns');
+        return ns ? ns + '-active_tab' : null;
+      },
+      getValue: function (el) {
+        initTabs(el);
+        var activeLink = el.querySelector('.gt-tab-link.active');
+        return activeLink ? activeLink.getAttribute('data-value') : null;
+      },
+      subscribe: function (el, callback) {
+        initTabs(el);
+        $(el).on('change.glasstabs', function () {
+          callback();
+        });
+      },
+      unsubscribe: function (el) {
+        $(el).off('.glasstabs');
+      }
+    });
+    Shiny.inputBindings.register(glassTabsBinding, 'glasstabs.glassTabs');
 
     /* ── Single-select binding ── */
     var glassSelectBinding = new Shiny.InputBinding();
@@ -1199,6 +1511,16 @@
   /* ══════════════════════════════════════════════════════
      BOOT
   ══════════════════════════════════════════════════════ */
+  var bootTimer = null;
+
+  function scheduleBoot() {
+    if (bootTimer !== null) return;
+    bootTimer = setTimeout(function () {
+      bootTimer = null;
+      bootAll();
+    }, 0);
+  }
+
   function bootAll() {
     document.querySelectorAll('.gt-navbar').forEach(function (nb) {
       initTabs(nb);
@@ -1215,6 +1537,28 @@
     registerBindings();
   }
 
+  document.addEventListener('click', function (e) {
+    var link = e.target && e.target.closest ? e.target.closest('.gt-tab-link') : null;
+    if (!link || link.classList.contains('gt-tab-hidden') || link.classList.contains('gt-tab-disabled')) return;
+    var navbar = link.closest ? link.closest('.gt-navbar') : null;
+    if (!navbar) return;
+    initTabs(navbar);
+    if (navbar._gtActivate) navbar._gtActivate(link.getAttribute('data-value'));
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    var link = document.activeElement && document.activeElement.closest
+      ? document.activeElement.closest('.gt-tab-link')
+      : null;
+    if (!link || link.classList.contains('gt-tab-hidden') || link.classList.contains('gt-tab-disabled')) return;
+    var navbar = link.closest ? link.closest('.gt-navbar') : null;
+    if (!navbar) return;
+    e.preventDefault();
+    initTabs(navbar);
+    if (navbar._gtActivate) navbar._gtActivate(link.getAttribute('data-value'));
+  });
+
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', bootAll);
   } else {
@@ -1222,6 +1566,26 @@
   }
 
   window.addEventListener('load', bootAll);
+
+  if (window.MutationObserver) {
+    var bootObserver = new MutationObserver(function (mutations) {
+      for (var i = 0; i < mutations.length; i++) {
+        var nodes = mutations[i].addedNodes || [];
+        for (var j = 0; j < nodes.length; j++) {
+          var n = nodes[j];
+          if (!n || n.nodeType !== 1) continue;
+          if (
+            (n.matches && n.matches('.gt-navbar, .gt-gs-wrap, .gt-ms-wrap')) ||
+            (n.querySelector && n.querySelector('.gt-navbar, .gt-gs-wrap, .gt-ms-wrap'))
+          ) {
+            scheduleBoot();
+            return;
+          }
+        }
+      }
+    });
+    bootObserver.observe(document.documentElement, { childList: true, subtree: true });
+  }
 
   /* Report the initial active tab for every navbar once the Shiny session
      is ready — so glassTabsServer() is never NULL on first render. */
@@ -1242,22 +1606,16 @@
       bootAll();
     });
 
-    Shiny.addCustomMessageHandler('glasstabs_debug_ping', function (msg) {
-      if (window.Shiny && window.Shiny.setInputValue) {
-        Shiny.setInputValue('glasstabs_debug_ping_payload', msg || null, { priority: 'event' });
-      }
-    });
-
     Shiny.addCustomMessageHandler('glasstabs_update_tabs', function (msg) {
       if (!msg.ns || !msg.selected) return;
-      var navbar = document.querySelector('.gt-navbar[data-ns="' + msg.ns + '"]');
+      var navbar = document.querySelector('.gt-navbar' + attrEquals('data-ns', msg.ns));
       if (navbar && navbar._gtActivate) navbar._gtActivate(msg.selected);
     });
 
     Shiny.addCustomMessageHandler('glasstabs_show_tab', function (msg) {
-      var navbar = document.querySelector('.gt-navbar[data-ns="' + msg.ns + '"]');
+      var navbar = document.querySelector('.gt-navbar' + attrEquals('data-ns', msg.ns));
       if (!navbar) return;
-      var link = navbar.querySelector('.gt-tab-link[data-value="' + msg.value + '"]');
+      var link = navbar.querySelector('.gt-tab-link' + attrEquals('data-value', msg.value));
       if (!link) return;
       link.classList.remove('gt-tab-hidden');
       link.style.display = '';
@@ -1268,11 +1626,11 @@
     });
 
     Shiny.addCustomMessageHandler('glasstabs_hide_tab', function (msg) {
-      var navbar = document.querySelector('.gt-navbar[data-ns="' + msg.ns + '"]');
+      var navbar = document.querySelector('.gt-navbar' + attrEquals('data-ns', msg.ns));
       if (!navbar) return;
-      var link = navbar.querySelector('.gt-tab-link[data-value="' + msg.value + '"]');
+      var link = navbar.querySelector('.gt-tab-link' + attrEquals('data-value', msg.value));
       if (!link) return;
-      var container = navbar.closest('.gt-container')
+      var container = navbar.closest('.gt-container, .gt-wrap-shell')
         || navbar.closest('.card-body')
         || navbar.closest('.box-body')
         || (navbar.parentElement && navbar.parentElement.parentElement)
@@ -1290,11 +1648,11 @@
       if (wasActive && navbar._gtActivate) {
         var first = navbar.querySelector('.gt-tab-link:not(.gt-tab-hidden)');
         if (first) navbar._gtActivate(first.getAttribute('data-value'), true);
-      } else if (!wasActive && container && !container.querySelector('.gt-tab-pane.active')) {
+      } else if (!wasActive) {
         var currentActive = navbar.querySelector('.gt-tab-link.active:not(.gt-tab-hidden)');
         if (currentActive) {
           var currentPane = document.getElementById(msg.ns + '-pane-' + currentActive.getAttribute('data-value'));
-          if (currentPane) currentPane.classList.add('active');
+          if (currentPane && !currentPane.classList.contains('active')) currentPane.classList.add('active');
         }
       }
       if (!wasActive && navbar._gtResizeHandler) {
@@ -1303,11 +1661,11 @@
     });
 
     Shiny.addCustomMessageHandler('glasstabs_append_tab', function (msg) {
-      var navbar = document.querySelector('.gt-navbar[data-ns="' + msg.ns + '"]');
+      var navbar = document.querySelector('.gt-navbar' + attrEquals('data-ns', msg.ns));
       if (!navbar) return;
-      if (navbar.querySelector('.gt-tab-link[data-value="' + msg.value + '"]')) return;
+      if (navbar.querySelector('.gt-tab-link' + attrEquals('data-value', msg.value))) return;
 
-      var container = navbar.closest('.gt-container')
+      var container = navbar.closest('.gt-container, .gt-wrap-shell')
         || navbar.closest('.card-body')
         || navbar.closest('.box-body')
         || (navbar.parentElement && navbar.parentElement.parentElement)
@@ -1321,8 +1679,11 @@
         navbar.querySelectorAll('.gt-tab-link.active').forEach(function (l) {
           l.classList.remove('active');
           l.setAttribute('aria-selected', 'false');
+          /* Deactivate only this namespace's pane — not nested glassTabsUI panes */
+          var v = l.getAttribute('data-value');
+          var p = document.getElementById(msg.ns + '-pane-' + v);
+          if (p) p.classList.remove('active');
         });
-        container.querySelectorAll('.gt-tab-pane.active').forEach(function (p) { p.classList.remove('active'); });
       }
 
       var tmp = document.createElement('div');
@@ -1350,12 +1711,12 @@
     });
 
     Shiny.addCustomMessageHandler('glasstabs_remove_tab', function (msg) {
-      var navbar = document.querySelector('.gt-navbar[data-ns="' + msg.ns + '"]');
+      var navbar = document.querySelector('.gt-navbar' + attrEquals('data-ns', msg.ns));
       if (!navbar) return;
-      var link = navbar.querySelector('.gt-tab-link[data-value="' + msg.value + '"]');
+      var link = navbar.querySelector('.gt-tab-link' + attrEquals('data-value', msg.value));
       if (!link) return;
 
-      var container = navbar.closest('.gt-container')
+      var container = navbar.closest('.gt-container, .gt-wrap-shell')
         || navbar.closest('.card-body')
         || navbar.closest('.box-body')
         || (navbar.parentElement && navbar.parentElement.parentElement)
@@ -1371,12 +1732,10 @@
           nextValue = remaining[0].getAttribute('data-value');
           remaining[0].classList.add('active');
           remaining[0].setAttribute('aria-selected', 'true');
-          if (container) {
-            var ap = container.querySelector('.gt-tab-pane.active');
-            if (ap) ap.classList.remove('active');
-            var nextPane = document.getElementById(msg.ns + '-pane-' + nextValue);
-            if (nextPane) nextPane.classList.add('active');
-          }
+          var ap = document.getElementById(msg.ns + '-pane-' + msg.value);
+          if (ap) ap.classList.remove('active');
+          var nextPane = document.getElementById(msg.ns + '-pane-' + nextValue);
+          if (nextPane) nextPane.classList.add('active');
         }
       }
 
@@ -1396,11 +1755,60 @@
       }
     });
 
+    Shiny.addCustomMessageHandler('glasstabs_disable_tab', function (msg) {
+      var navbar = document.querySelector('.gt-navbar' + attrEquals('data-ns', msg.ns));
+      if (!navbar) return;
+      var link = navbar.querySelector('.gt-tab-link' + attrEquals('data-value', msg.value));
+      if (!link) return;
+      link.classList.add('gt-tab-disabled');
+      link.setAttribute('aria-disabled', 'true');
+      link.setAttribute('tabindex', '-1');
+    });
+
+    Shiny.addCustomMessageHandler('glasstabs_enable_tab', function (msg) {
+      var navbar = document.querySelector('.gt-navbar' + attrEquals('data-ns', msg.ns));
+      if (!navbar) return;
+      var link = navbar.querySelector('.gt-tab-link' + attrEquals('data-value', msg.value));
+      if (!link) return;
+      link.classList.remove('gt-tab-disabled');
+      link.removeAttribute('aria-disabled');
+      link.setAttribute('tabindex', '0');
+    });
+
+    Shiny.addCustomMessageHandler('glasstabs_tab_badge', function (msg) {
+      var navbar = document.querySelector('.gt-navbar' + attrEquals('data-ns', msg.ns));
+      if (!navbar) return;
+      var link = navbar.querySelector('.gt-tab-link' + attrEquals('data-value', msg.value));
+      if (!link) return;
+      var badge = link.querySelector('.gt-tab-badge');
+      if (!badge) {
+        badge = document.createElement('span');
+        badge.className = 'gt-tab-badge';
+        link.appendChild(badge);
+      }
+      var n = parseInt(msg.count, 10);
+      if (isNaN(n) || n <= 0) {
+        badge.textContent = '';
+        badge.style.display = 'none';
+      } else {
+        badge.textContent = n > 99 ? '99+' : String(n);
+        badge.style.display = '';
+      }
+    });
+
     registerCustomMessageHandlers._done = true;
-    if (window.Shiny && window.Shiny.setInputValue) {
-      Shiny.setInputValue('glasstabs_debug_handlers_registered', true, { priority: 'event' });
-    }
   }
+
+  /* Re-init glasstabs elements injected by renderGlassTabs / renderUI.
+     Only fires bootAll() when the updated output actually contains glasstabs
+     nodes, so ordinary Shiny outputs are not affected. */
+  document.addEventListener('shiny:value', function (e) {
+    var el = e.target || (e.binding && e.binding.el);
+    if (!el) return;
+    if (el.querySelector('.gt-navbar, .gt-gs-wrap, .gt-ms-wrap')) {
+      scheduleBoot();
+    }
+  });
 
   registerCustomMessageHandlers();
   document.addEventListener('shiny:sessioninitialized', registerCustomMessageHandlers);

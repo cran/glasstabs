@@ -81,7 +81,7 @@ server <- function(input, output, session) {
   })
 }
 
-shinyApp(ui, server)
+if (interactive()) shinyApp(ui, server)
 ```
 
 > **Note:** `useGlassTabs()` must be called once somewhere in the UI before any `glassTabsUI()` or `glassMultiSelect()` call. It injects the shared CSS and JavaScript as a properly deduplicated `htmltools` dependency.
@@ -90,17 +90,38 @@ shinyApp(ui, server)
 
 ## Function reference
 
+### Setup
+
 | Function | Description |
 |---|---|
-| `useGlassTabs()` | Inject package CSS and JavaScript, call once in the UI |
-| `glassTabsUI(id, ..., selected, wrap, extra_ui, theme)` | Animated tab bar with content area |
-| `glassTabPanel(value, label, ..., selected)` | Define one tab and its content |
-| `glassTabsServer(id)` | Reactive returning the active tab value |
+| `useGlassTabs()` | Inject package CSS and JavaScript — call once in the UI |
+| `runGlassExample(example)` | Launch a built-in example app (`runGlassExample()` to list all) |
+| `glasstabs_news()` | Print the package changelog to the R console |
+
+### Tab widget
+
+| Function | Description |
+|---|---|
+| `glassTabsUI(id, ..., selected, wrap, compact, extra_ui, theme)` | Animated tab bar with content area; `compact=TRUE` for dashboard cards |
+| `glassTabPanel(value, label, ..., icon, selected)` | Define one tab and its content; `icon` accepts `shiny::icon()` |
+| `glassTabsServer(id, bookmark)` | Reactive returning the active tab; bookmarks active tab in URL |
+| `glassTabsOutput(outputId)` | UI placeholder for a server-rendered tab widget |
+| `renderGlassTabs({expr})` | Render a `glassTabsUI()` reactively; JS reinitialises automatically |
+| `glassTabCondition(id, value)` | JS condition string for `conditionalPanel()` |
 | `updateGlassTabsUI(session, id, selected)` | Switch the active tab from the server |
+| `updateGlassTabBadge(session, id, value, count)` | Set a numeric badge on a tab button (`0` hides it) |
 | `showGlassTab(session, id, value)` | Show a hidden tab |
 | `hideGlassTab(session, id, value)` | Hide a tab from the navigation bar |
+| `disableGlassTab(session, id, value)` | Gray out a tab (stays visible, not clickable) |
+| `enableGlassTab(session, id, value)` | Re-enable a disabled tab |
 | `appendGlassTab(session, id, tab, select)` | Add a new tab at runtime |
 | `removeGlassTab(session, id, value)` | Remove a tab at runtime |
+| `glass_tab_theme(...)` | Custom colour theme for `glassTabsUI()` |
+
+### Select widgets
+
+| Function | Description |
+|---|---|
 | `glassMultiSelect(inputId, choices, ...)` | Multi-select dropdown widget |
 | `updateGlassMultiSelect(session, inputId, ...)` | Update multi-select choices, selection, or style |
 | `glassMultiSelectValue(input, inputId)` | Reactive helper for multi-select value and style |
@@ -108,8 +129,7 @@ shinyApp(ui, server)
 | `updateGlassSelect(session, inputId, ...)` | Update single-select choices, selection, or style |
 | `glassSelectValue(input, inputId)` | Reactive helper for selected value |
 | `glassFilterTags(inputId)` | Tag-pill display area synced to a multi-select |
-| `glass_tab_theme(...)` | Custom color theme for `glassTabsUI()` |
-| `glass_select_theme(...)` | Custom color theme for `glassSelect()` and `glassMultiSelect()` |
+| `glass_select_theme(...)` | Custom colour theme for `glassSelect()` and `glassMultiSelect()` |
 
 ---
 
@@ -121,6 +141,22 @@ shinyApp(ui, server)
 | `input$<inputId>` | `character vector` | Selected values from `glassMultiSelect()` |
 | `input$<inputId>_style` | `character` | Active selection style from `glassMultiSelect()` |
 | `input$<inputId>` | `character` or `NULL` | Selected value from `glassSelect()` |
+
+### conditionalPanel integration
+
+Use `glassTabCondition()` to avoid constructing the input key manually:
+
+```r
+# Instead of: condition = "input['main-active_tab'] === 'details'"
+conditionalPanel(
+  condition = glassTabCondition("main", "details"),
+  p("Only visible on the Details tab.")
+)
+
+# Inside a module — pass the same id as glassTabsUI():
+# glassTabsUI(ns("tabs"), ...)
+# conditionalPanel(condition = glassTabCondition(ns("tabs"), "details"), ...)
+```
 
 ---
 
@@ -148,7 +184,7 @@ server <- function(input, output, session) {
   output$out <- renderPrint(input$fruit)
 }
 
-shinyApp(ui, server)
+if (interactive()) shinyApp(ui, server)
 ```
 
 > **Note:** By default, `glassMultiSelect()` starts with all choices selected.
@@ -208,7 +244,7 @@ server <- function(input, output, session) {
   output$out <- renderPrint(input$region)
 }
 
-shinyApp(ui, server)
+if (interactive()) shinyApp(ui, server)
 ```
 
 ## Server-side updates
@@ -411,11 +447,15 @@ server <- function(input, output, session) {
 
 ---
 
-## Roadmap
+## What's new in 0.3.0
 
-- Additional select widget presets and examples
-
-- More layout examples for bs4Dash and standard Shiny apps
+- `runGlassExample()` — launch any built-in example from the console
+- `icon` argument in `glassTabPanel()` — add `shiny::icon()` or any tag to a tab button
+- `disableGlassTab()` / `enableGlassTab()` — gray out tabs without hiding them
+- `updateGlassTabBadge()` — set live numeric count badges on tab buttons
+- `glassTabsServer(bookmark = TRUE)` — active tab preserved in Shiny URL bookmarks
+- `glassTabsOutput()` / `renderGlassTabs()` — fully server-driven reactive tab sets
+- `inst/cheatsheet/glasstabs-cheatsheet.tex` — printable two-column LaTeX reference card
 
 ---
 

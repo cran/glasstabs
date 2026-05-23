@@ -374,7 +374,7 @@ style.</p>
 <span id="cb1-17"><a href="#cb1-17" tabindex="-1"></a>  output<span class="sc">$</span>out <span class="ot">&lt;-</span> <span class="fu">renderPrint</span>(input<span class="sc">$</span>pick)</span>
 <span id="cb1-18"><a href="#cb1-18" tabindex="-1"></a>}</span>
 <span id="cb1-19"><a href="#cb1-19" tabindex="-1"></a></span>
-<span id="cb1-20"><a href="#cb1-20" tabindex="-1"></a><span class="fu">shinyApp</span>(ui, server)</span></code></pre></div>
+<span id="cb1-20"><a href="#cb1-20" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">interactive</span>()) <span class="fu">shinyApp</span>(ui, server)</span></code></pre></div>
 </div>
 <div id="shiny-inputs-produced" class="section level2">
 <h2>Shiny inputs produced</h2>
@@ -552,7 +552,7 @@ and the style from <code>input$&lt;inputId&gt;_style</code>:</p>
 <span id="cb10-44"><a href="#cb10-44" tabindex="-1"></a>  })</span>
 <span id="cb10-45"><a href="#cb10-45" tabindex="-1"></a>}</span>
 <span id="cb10-46"><a href="#cb10-46" tabindex="-1"></a></span>
-<span id="cb10-47"><a href="#cb10-47" tabindex="-1"></a><span class="fu">shinyApp</span>(ui, server)</span></code></pre></div>
+<span id="cb10-47"><a href="#cb10-47" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">interactive</span>()) <span class="fu">shinyApp</span>(ui, server)</span></code></pre></div>
 <p>When <code>choices</code> is updated without <code>selected</code>,
 the widget keeps the intersection of the current selection and the new
 choice set.</p>
@@ -656,7 +656,7 @@ JS:</p>
 <span id="cb13-28"><a href="#cb13-28" tabindex="-1"></a>  output<span class="sc">$</span>tbl <span class="ot">&lt;-</span> <span class="fu">renderTable</span>(<span class="fu">filtered</span>())</span>
 <span id="cb13-29"><a href="#cb13-29" tabindex="-1"></a>}</span>
 <span id="cb13-30"><a href="#cb13-30" tabindex="-1"></a></span>
-<span id="cb13-31"><a href="#cb13-31" tabindex="-1"></a><span class="fu">shinyApp</span>(ui, server)</span></code></pre></div>
+<span id="cb13-31"><a href="#cb13-31" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">interactive</span>()) <span class="fu">shinyApp</span>(ui, server)</span></code></pre></div>
 </div>
 <div id="multiple-dropdowns-on-one-page" class="section level2">
 <h2>Multiple dropdowns on one page</h2>

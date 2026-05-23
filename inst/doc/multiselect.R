@@ -21,7 +21,7 @@ knitr::opts_chunk$set(eval = FALSE)
 #   output$out <- renderPrint(input$pick)
 # }
 # 
-# shinyApp(ui, server)
+# if (interactive()) shinyApp(ui, server)
 
 ## ----initial------------------------------------------------------------------
 # # All selected (default)
@@ -136,7 +136,7 @@ knitr::opts_chunk$set(eval = FALSE)
 #   })
 # }
 # 
-# shinyApp(ui, server)
+# if (interactive()) shinyApp(ui, server)
 
 ## ----presets------------------------------------------------------------------
 # glassMultiSelect("f", fruits, theme = "dark")   # default
@@ -197,7 +197,7 @@ knitr::opts_chunk$set(eval = FALSE)
 #   output$tbl <- renderTable(filtered())
 # }
 # 
-# shinyApp(ui, server)
+# if (interactive()) shinyApp(ui, server)
 
 ## ----multi--------------------------------------------------------------------
 # ui <- fluidPage(

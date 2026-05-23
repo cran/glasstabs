@@ -22,7 +22,7 @@ knitr::opts_chunk$set(eval = FALSE)
 #   output$out <- renderPrint(input$pick)
 # }
 # 
-# shinyApp(ui, server)
+# if (interactive()) shinyApp(ui, server)
 
 ## ----initial------------------------------------------------------------------
 # # No selection (default)
@@ -127,7 +127,7 @@ knitr::opts_chunk$set(eval = FALSE)
 #   })
 # }
 # 
-# shinyApp(ui, server)
+# if (interactive()) shinyApp(ui, server)
 
 ## ----presets------------------------------------------------------------------
 # glassSelect("f", fruits, theme = "dark")
@@ -190,5 +190,5 @@ knitr::opts_chunk$set(eval = FALSE)
 #   output$out <- renderPrint(input$region)
 # }
 # 
-# shinyApp(ui, server)
+# if (interactive()) shinyApp(ui, server)
 
