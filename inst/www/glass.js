@@ -1,9 +1,7 @@
 (function () {
   'use strict';
 
-  /* ══════════════════════════════════════════════════════
-     UTILITIES
-  ══════════════════════════════════════════════════════ */
+  /* UTILITIES */
   function px(n) { return Math.round(n) + 'px'; }
 
   function centerOf(el, container) {
@@ -19,6 +17,38 @@
 
   function hasOwn(obj, key) {
     return Object.prototype.hasOwnProperty.call(obj, key);
+  }
+
+  function asValueArray(value) {
+    if (Array.isArray(value)) return value;
+    if (value === null || typeof value === 'undefined') return [];
+    return [value];
+  }
+
+  function parseBoolAttr(el, name) {
+    return String(el.getAttribute(name) || '').toLowerCase() === 'true';
+  }
+
+  function parseIntAttr(el, name, fallback) {
+    var parsed = parseInt(el.getAttribute(name), 10);
+    return isNaN(parsed) ? fallback : parsed;
+  }
+
+  function parseJsonArrayAttr(el, name) {
+    var raw = el.getAttribute(name);
+    if (!raw) return [];
+    try {
+      var parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed.map(String) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function asChoiceArray(choices) {
+    if (Array.isArray(choices)) return choices;
+    if (choices && typeof choices === 'object') return Object.values(choices);
+    return [];
   }
 
   function escapeHtml(x) {
@@ -53,6 +83,41 @@
     }
   }
 
+  /** Hide group headers whose options are all hidden (e.g. by search).
+      Walks the options container once; a header is shown only when at least
+      one option between it and the next header is visible. */
+  function syncOptgroupHeaders(container) {
+    if (!container) return;
+    var kids = container.children;
+    var header = null;
+    var anyVisible = false;
+    for (var i = 0; i < kids.length; i++) {
+      var el = kids[i];
+      var isHeader = el.classList.contains('gt-gs-optgroup') ||
+                     el.classList.contains('gt-ms-optgroup');
+      var isOption = el.classList.contains('gt-gs-option') ||
+                     el.classList.contains('gt-ms-option');
+      if (isHeader) {
+        if (header) header.classList.toggle('hidden', !anyVisible);
+        header = el;
+        anyVisible = false;
+      } else if (isOption) {
+        if (!el.classList.contains('hidden')) anyVisible = true;
+      }
+    }
+    if (header) header.classList.toggle('hidden', !anyVisible);
+  }
+
+  /** Build a group-header node for the rebuilt-from-payload path. */
+  function buildOptgroupNode(label, cssClass) {
+    var h = document.createElement('div');
+    h.className = cssClass;
+    h.setAttribute('data-group', label);
+    h.setAttribute('role', 'presentation');
+    h.textContent = label;
+    return h;
+  }
+
   /** Lazy-init helper used by Shiny input bindings */
   function ensureInit(el) {
     if (el._gt) return el._gt;
@@ -69,7 +134,7 @@
     '--ms-tx-35','--ms-tx-45','--ms-tx-50','--ms-tx-80','--ms-ac-tx-75'
   ];
 
-  var TELEPORT_CLASSES = ['style-checkbox','style-check-only','style-filled','theme-light'];
+  var TELEPORT_CLASSES = ['style-checkbox','style-check-only','style-filled','theme-light','shape-square'];
 
   /** Teleport a dropdown to <body> so no parent overflow/transform can clip it */
   function teleportOpen(wrap, dropdown) {
@@ -130,9 +195,7 @@
     });
   }
 
-  /* ══════════════════════════════════════════════════════
-     TAB ENGINE
-  ══════════════════════════════════════════════════════ */
+  /* TAB ENGINE */
   function initTabs(navbar) {
     function clearTabTimers() {
       if (navbar._gtTabTimers) {
@@ -176,7 +239,7 @@
 
     /* Repair pane visibility to match link state.  When bootAll() re-runs
        initTabs mid-animation (e.g. triggered by shiny:value on dyn_out),
-       clearTabTimers() kills the deferred pane-swap — leaving the active link
+       clearTabTimers() kills the deferred pane-swap - leaving the active link
        and the visible pane out of sync.  Syncing here makes every re-init
        self-healing regardless of when it fires. */
     links.forEach(function (l) {
@@ -394,7 +457,7 @@
       document.fonts.ready.then(initHalo).catch(function () {});
     }
 
-    /* Single delegated click handler — covers dynamically appended tabs */
+    /* Single delegated click handler - covers dynamically appended tabs */
     navbar._gtClickHandler = function (e) {
       var link = e.target.closest ? e.target.closest('.gt-tab-link') : null;
       if (!link || link.classList.contains('gt-tab-hidden')) return;
@@ -439,17 +502,17 @@
     window.addEventListener('resize', navbar._gtResizeHandler);
   }
 
-  /* ══════════════════════════════════════════════════════
-     SINGLE-SELECT ENGINE
-  ══════════════════════════════════════════════════════ */
+  /* SINGLE-SELECT ENGINE */
   function initGlassSelect(wrap) {
     if (wrap._gtSelectInit) return;
     wrap._gtSelectInit = true;
 
     var inputId = wrap.getAttribute('data-input-id');
     var placeholder = wrap.getAttribute('data-placeholder') || 'Select an option';
+    var serverMode = parseBoolAttr(wrap, 'data-server');
+    var serverMinChars = parseIntAttr(wrap, 'data-server-min-chars', 0);
 
-    /* ── DOM refs ── */
+    /* DOM refs */
     var trigger = wrap.querySelector('.gt-gs-trigger');
     var dropdown = wrap.querySelector('.gt-gs-dropdown');
     var labelEl = wrap.querySelector('[id$="-label"]');
@@ -467,21 +530,28 @@
 
     wrap._gtDropdown = dropdown;
 
-    /* ── Capture check SVG template before any rebuilds ── */
+    /* Capture check SVG template before any rebuilds */
     var checkTemplate = wrap.querySelector('.gt-gs-check');
     var checkHtml = checkTemplate ? checkTemplate.innerHTML : '';
 
-    /* ── Add scroll class to options container ── */
+    /* Add scroll class to options container */
     if (optionsBox) optionsBox.classList.add('gt-gs-options-scroll');
 
-    /* ── Internal state ── */
+    var statusRow = document.createElement('div');
+    statusRow.className = 'gt-select-status hidden';
+    statusRow.setAttribute('role', 'status');
+    statusRow.setAttribute('aria-live', 'polite');
+
+    /* Internal state */
     var state = {
       choices: [],     // [{label, value, hidden, _labelLower}]
       selected: null,  // string | null
+      selectedLabel: null,
+      loading: false,
       query: ''
     };
 
-    /* ── Read initial state from R-generated DOM ── */
+    /* Read initial state from R-generated DOM */
     Array.from(wrap.querySelectorAll('.gt-gs-option')).forEach(function (el) {
       var value = el.getAttribute('data-value');
       var span = el.querySelector('span');
@@ -490,15 +560,18 @@
         label: label,
         value: value,
         hidden: false,
+        disabled: el.classList.contains('disabled'),
+        group: el.getAttribute('data-group') || '',
         _labelLower: label.toLowerCase()
       });
       if (el.classList.contains('selected')) {
         state.selected = value;
+        state.selectedLabel = label;
       }
       bindOption(el);
     });
 
-    /* ── State readers ── */
+    /* State readers */
     function getValue() {
       return state.selected;
     }
@@ -511,7 +584,34 @@
       return null;
     }
 
-    /* ── DOM patching ── */
+    function visibleChoiceCount() {
+      var n = 0;
+      state.choices.forEach(function (ch) {
+        if (!ch.hidden) n++;
+      });
+      return n;
+    }
+
+    function setStatus(text, active, loading) {
+      statusRow.textContent = text || '';
+      statusRow.classList.toggle('hidden', !active);
+      statusRow.classList.toggle('loading', !!loading);
+      if (active && optionsBox && statusRow.parentNode !== optionsBox) {
+        optionsBox.appendChild(statusRow);
+      }
+    }
+
+    function updateStatus() {
+      if (state.loading) {
+        setStatus('Searching...', true, true);
+      } else if (visibleChoiceCount() === 0) {
+        setStatus('No matches', true, false);
+      } else {
+        setStatus('', false, false);
+      }
+    }
+
+    /* DOM patching */
     function patchOptionClasses() {
       Array.from(dropdown.querySelectorAll('.gt-gs-option')).forEach(function (el) {
         var v = el.getAttribute('data-value');
@@ -527,16 +627,18 @@
         var ch = findChoice(v);
         el.classList.toggle('hidden', ch ? ch.hidden : false);
       });
+      syncOptgroupHeaders(optionsBox);
     }
 
-    /* ── UI sync (visual only, no Shiny notification) ── */
+    /* UI sync (visual only, no Shiny notification) */
     function syncUI() {
       var ch = findChoice(state.selected);
-      labelEl.textContent = ch ? ch.label : placeholder;
+      labelEl.textContent = ch ? ch.label : (state.selectedLabel || placeholder);
       patchOptionClasses();
+      updateStatus();
     }
 
-    /* ── Shiny notification ── */
+    /* Shiny notification */
     function commitSelection() {
       triggerShinyChange(wrap);
       if (window.Shiny) {
@@ -544,22 +646,32 @@
       }
     }
 
-    /* ── setValue with opts ── */
+    /* setValue with opts */
     function setValue(value, opts) {
       opts = opts || {};
       var doNotify = opts.notify !== false;
       var valueStr = (value === null || typeof value === 'undefined' || value === '') ? null : String(value);
 
       if (valueStr !== null && !findChoice(valueStr)) {
-        valueStr = null;
+        if (opts.preserveMissingSelection) {
+          state.selectedLabel = opts.label || state.selectedLabel;
+        } else {
+          valueStr = null;
+        }
       }
 
       state.selected = valueStr;
+      if (valueStr === null) {
+        state.selectedLabel = null;
+      } else {
+        var selectedChoice = findChoice(valueStr);
+        if (selectedChoice) state.selectedLabel = selectedChoice.label;
+      }
       syncUI();
       if (doNotify) commitSelection();
     }
 
-    /* ── Option click binding ── */
+    /* Option click binding */
     function bindOption(opt) {
       if (!opt || opt._gtBound) return;
       opt._gtBound = true;
@@ -571,13 +683,18 @@
       });
     }
 
-    /* ── Build a single option DOM node ── */
+    /* Build a single option DOM node */
     function buildOptionNode(ch) {
       var row = document.createElement('div');
       row.className = 'gt-gs-option';
       row.setAttribute('data-value', ch.value);
       row.setAttribute('role', 'option');
       row.setAttribute('aria-selected', state.selected !== null && ch.value === state.selected ? 'true' : 'false');
+      if (ch.disabled) {
+        row.classList.add('disabled');
+        row.setAttribute('aria-disabled', 'true');
+      }
+      if (ch.group) row.setAttribute('data-group', ch.group);
 
       row.innerHTML =
         '<div class="gt-gs-check">' + checkHtml + '</div>' +
@@ -587,20 +704,26 @@
       return row;
     }
 
-    /* ── setChoices: rebuild from state ── */
+    /* setChoices: rebuild from state */
     function setChoices(choices, opts) {
       opts = opts || {};
       var preserveSel = opts.preserveSelection !== false;
+      var preserveMissingSel = opts.preserveMissingSelection === true;
       var doNotify = opts.notify !== false;
 
       var oldSelected = preserveSel ? state.selected : null;
+      var oldSelectedLabel = preserveSel ? state.selectedLabel : null;
+      choices = asChoiceArray(choices);
+      state.loading = false;
 
       /* Update state */
-      state.choices = (choices || []).map(function (ch) {
+      state.choices = choices.map(function (ch) {
         return {
           label: String(ch.label),
           value: String(ch.value),
           hidden: false,
+          disabled: !!ch.disabled,
+          group: ch.group ? String(ch.group) : '',
           _labelLower: String(ch.label).toLowerCase()
         };
       });
@@ -608,28 +731,41 @@
       /* Intersect selection */
       if (oldSelected !== null && findChoice(oldSelected)) {
         state.selected = oldSelected;
+        state.selectedLabel = findChoice(oldSelected).label;
+      } else if (oldSelected !== null && preserveMissingSel) {
+        state.selected = oldSelected;
+        state.selectedLabel = oldSelectedLabel;
       } else {
         state.selected = null;
+        state.selectedLabel = null;
       }
 
       /* Rebuild DOM */
       var frag = document.createDocumentFragment();
+      var prevGroup = '';
       state.choices.forEach(function (ch) {
+        if (ch.group && ch.group !== prevGroup) {
+          frag.appendChild(buildOptgroupNode(ch.group, 'gt-gs-optgroup'));
+        }
+        prevGroup = ch.group || '';
         frag.appendChild(buildOptionNode(ch));
       });
       optionsBox.innerHTML = '';
       optionsBox.appendChild(frag);
+      optionsBox.appendChild(statusRow);
 
       /* Re-apply search if active */
-      if (state.query) {
+      if (!serverMode && state.query) {
         applySearchNow(state.query);
+      } else {
+        syncOptgroupHeaders(optionsBox);
       }
 
       syncUI();
       if (doNotify) commitSelection();
     }
 
-    /* ── Search (debounced) ── */
+    /* Search (debounced) */
     function applySearchNow(q) {
       var qq = (q || '').toLowerCase().trim();
       state.query = qq;
@@ -639,13 +775,28 @@
       });
 
       patchVisibility();
+      updateStatus();
+    }
+
+    function sendServerSearch(q) {
+      var query = (q || '').trim();
+      state.query = query.toLowerCase();
+      if (!window.Shiny || !window.Shiny.setInputValue) return;
+      if (query.length < serverMinChars) query = '';
+      state.loading = true;
+      updateStatus();
+      Shiny.setInputValue(inputId + '_search', {
+        query: query,
+        nonce: Date.now()
+      }, { priority: 'event' });
     }
 
     var debouncedSearch = debounce(function () {
-      applySearchNow(searchIn ? searchIn.value : '');
+      if (serverMode) sendServerSearch(searchIn ? searchIn.value : '');
+      else applySearchNow(searchIn ? searchIn.value : '');
     }, 75);
 
-    /* ── Position the dropdown below the trigger ──
+    /* Position the dropdown below the trigger 
        Uses document-space coordinates (viewport + scrollY) to match
        position:absolute on the body-appended teleported element.
        This avoids the position:fixed + overflow:hidden quirk in AdminLTE. */
@@ -677,7 +828,7 @@
 
     var openedAt = 0;
 
-    /* ── Open / Close ── */
+    /* Open / Close */
     function open() {
       closeAllDropdowns(wrap);
       wrap.classList.add('gt-layer-active');
@@ -710,11 +861,11 @@
       }
     }
 
-    /* ── Event listeners ── */
+    /* Event listeners */
     trigger.addEventListener('click', function (e) {
       e.stopPropagation();
       if (dropdown.classList.contains('open')) {
-        /* Ignore close triggers within 500 ms of opening — prevents synthetic
+        /* Ignore close triggers within 500 ms of opening - prevents synthetic
            re-fires from focus changes (e.g. bs4Dash / AdminLTE environments) */
         if (Date.now() - openedAt < 500) return;
         close();
@@ -761,7 +912,7 @@
       searchIn.addEventListener('input', debouncedSearch);
     }
 
-    /* ── Destroy (lifecycle teardown) ── */
+    /* Destroy (lifecycle teardown) */
     function destroy() {
       if (wrap._gtDocClickHandler) {
         document.removeEventListener('click', wrap._gtDocClickHandler);
@@ -778,16 +929,16 @@
       wrap._gtSelectInit = false;
     }
 
-    /* ── Initial UI sync ── */
+    /* Initial UI sync */
     syncUI();
 
-    /* ── Emit initial value to Shiny ── */
+    /* Emit initial value to Shiny */
     if (window.Shiny && window.Shiny.setInputValue) {
       Shiny.setInputValue(inputId, state.selected, { priority: 'deferred' });
       Shiny.setInputValue(inputId + '_ready', true, { priority: 'deferred' });
     }
 
-    /* ── Public controller ── */
+    /* Public controller */
     wrap._gt = {
       kind: 'single',
       getValue: getValue,
@@ -807,16 +958,42 @@
         dropdown.classList.add('style-' + s);
         currentStyle = s;
       },
+      setShape: function (sh) {
+        var square = (sh === 'square');
+        wrap.classList.toggle('shape-square', square);
+        if (dropdown) dropdown.classList.toggle('shape-square', square);
+      },
+      setDisabledChoices: function (vals) {
+        var disabled = new Set(asValueArray(vals));
+        state.choices.forEach(function (ch) {
+          ch.disabled = disabled.has(ch.value);
+        });
+        Array.from(dropdown.querySelectorAll('.gt-gs-option')).forEach(function (el) {
+          var off = disabled.has(el.getAttribute('data-value'));
+          el.classList.toggle('disabled', off);
+          if (off) el.setAttribute('aria-disabled', 'true');
+          else el.removeAttribute('aria-disabled');
+        });
+      },
+      setDisabled: function (d) {
+        var off = !!d;
+        wrap.classList.toggle('gt-disabled', off);
+        if (off) close();
+        if (trigger) {
+          trigger.setAttribute('tabindex', off ? '-1' : '0');
+          if (off) trigger.setAttribute('aria-disabled', 'true');
+          else trigger.removeAttribute('aria-disabled');
+        }
+      },
       clear: function (opts) {
         setValue(null, opts);
       },
-      destroy: destroy
+      destroy: destroy,
+      commitSelection: commitSelection
     };
   }
 
-  /* ══════════════════════════════════════════════════════
-     MULTI-SELECT ENGINE
-  ══════════════════════════════════════════════════════ */
+  /* MULTI-SELECT ENGINE */
   function initMultiSelect(wrap) {
     if (wrap._gtMultiInit) return;
     wrap._gtMultiInit = true;
@@ -824,8 +1001,10 @@
     var inputId = wrap.getAttribute('data-input-id');
     var placeholder = wrap.getAttribute('data-placeholder') || 'Filter by Category';
     var allLabel = wrap.getAttribute('data-all-label') || 'All categories';
+    var serverMode = parseBoolAttr(wrap, 'data-server');
+    var serverMinChars = parseIntAttr(wrap, 'data-server-min-chars', 0);
 
-    /* ── DOM refs ── */
+    /* DOM refs */
     var trigger = wrap.querySelector('.gt-ms-trigger');
     var dropdown = wrap.querySelector('.gt-ms-dropdown');
     var allRow = wrap.querySelector('.gt-ms-all');
@@ -845,21 +1024,28 @@
       if (wrap.classList.contains('style-' + s)) currentStyle = s;
     });
 
-    /* ── Capture check SVG template ── */
+    /* Capture check SVG template */
     var checkTemplate = wrap.querySelector('.gt-ms-check');
     var checkHtml = checkTemplate ? checkTemplate.innerHTML : '';
 
-    /* ── Add scroll class ── */
+    /* Add scroll class */
     if (optionsBox) optionsBox.classList.add('gt-ms-options-scroll');
 
-    /* ── Internal state ── */
+    var statusRow = document.createElement('div');
+    statusRow.className = 'gt-select-status hidden';
+    statusRow.setAttribute('role', 'status');
+    statusRow.setAttribute('aria-live', 'polite');
+
+    /* Internal state */
     var state = {
       choices: [],          // [{label, value, hidden, hue, _labelLower}]
       selected: new Set(),  // Set of value strings
+      total: parseIntAttr(wrap, 'data-server-total', null),
+      loading: false,
       query: ''
     };
 
-    /* ── Read initial state from R-generated DOM ── */
+    /* Read initial state from R-generated DOM */
     Array.from(wrap.querySelectorAll('.gt-ms-option')).forEach(function (el) {
       var value = el.getAttribute('data-value');
       var span = el.querySelector('span');
@@ -870,6 +1056,8 @@
         label: label,
         value: value,
         hidden: false,
+        disabled: el.classList.contains('disabled'),
+        group: el.getAttribute('data-group') || '',
         hue: parseInt(hue, 10) || 210,
         _labelLower: label.toLowerCase()
       });
@@ -881,12 +1069,23 @@
       bindOption(el);
     });
 
-    /* ── State readers ── */
+    parseJsonArrayAttr(wrap, 'data-selected-values').forEach(function (v) {
+      state.selected.add(v);
+    });
+
+    /* State readers */
     function getValue() {
       /* Return in choice order, not Set insertion order */
       var out = [];
+      var seen = new Set();
       state.choices.forEach(function (ch) {
-        if (state.selected.has(ch.value)) out.push(ch.value);
+        if (state.selected.has(ch.value)) {
+          out.push(ch.value);
+          seen.add(ch.value);
+        }
+      });
+      state.selected.forEach(function (v) {
+        if (!seen.has(v)) out.push(v);
       });
       return out;
     }
@@ -903,7 +1102,26 @@
       return n;
     }
 
-    /* ── DOM patching ── */
+    function setStatus(text, active, loading) {
+      statusRow.textContent = text || '';
+      statusRow.classList.toggle('hidden', !active);
+      statusRow.classList.toggle('loading', !!loading);
+      if (active && optionsBox && statusRow.parentNode !== optionsBox) {
+        optionsBox.appendChild(statusRow);
+      }
+    }
+
+    function updateStatus() {
+      if (state.loading) {
+        setStatus('Searching...', true, true);
+      } else if (visibleChoices().length === 0) {
+        setStatus('No matches', true, false);
+      } else {
+        setStatus('', false, false);
+      }
+    }
+
+    /* DOM patching */
     function patchOptionClasses() {
       Array.from(dropdown.querySelectorAll('.gt-ms-option')).forEach(function (el) {
         var v = el.getAttribute('data-value');
@@ -923,11 +1141,12 @@
           }
         }
       });
+      syncOptgroupHeaders(optionsBox);
     }
 
-    /* ── syncUI: visual-only update ── */
+    /* syncUI: visual-only update */
     function syncUI() {
-      var total = state.choices.length;
+      var total = state.total === null ? state.choices.length : state.total;
       var selCount = state.selected.size;
       var vis = visibleChoices().length;
       var visSel = visibleSelectedCount();
@@ -968,17 +1187,18 @@
               break;
             }
           }
-          labelEl.textContent = first ? first.label : placeholder;
+          labelEl.textContent = first ? first.label : '1 selected';
         } else {
           labelEl.textContent = 'Multiple selection';
         }
       }
 
       patchOptionClasses();
+      updateStatus();
       renderTags();
     }
 
-    /* ── commitSelection: notify Shiny ── */
+    /* commitSelection: notify Shiny */
     function commitSelection() {
       triggerShinyChange(wrap);
       if (window.Shiny) {
@@ -987,7 +1207,7 @@
       }
     }
 
-    /* ── renderTags: reads from state, not DOM ── */
+    /* renderTags: reads from state, not DOM */
     function renderTags() {
       var tagPanes = document.querySelectorAll('[data-tags-for="' + inputId + '"]');
       if (tagPanes.length === 0) return;
@@ -1030,24 +1250,25 @@
       });
     }
 
-    /* ── setValue with opts ── */
+    /* setValue with opts */
     function setValue(vals, opts) {
       opts = opts || {};
       var doNotify = opts.notify !== false;
+      var preserveMissingSel = opts.preserveMissingSelection === true;
       var arr = Array.isArray(vals) ? vals.map(String) : [];
 
       state.selected = new Set();
       var validValues = new Set(state.choices.map(function (ch) { return ch.value; }));
 
       arr.forEach(function (v) {
-        if (validValues.has(v)) state.selected.add(v);
+        if (validValues.has(v) || preserveMissingSel) state.selected.add(v);
       });
 
       syncUI();
       if (doNotify) commitSelection();
     }
 
-    /* ── Option click binding ── */
+    /* Option click binding */
     function bindOption(opt) {
       if (!opt || opt._gtBound) return;
       opt._gtBound = true;
@@ -1064,7 +1285,7 @@
       });
     }
 
-    /* ── Build a single option DOM node ── */
+    /* Build a single option DOM node */
     function buildOptionNode(ch) {
       var row = document.createElement('div');
       row.className = 'gt-ms-option';
@@ -1076,6 +1297,11 @@
       if (state.selected.has(ch.value)) {
         row.className += ' checked';
       }
+      if (ch.disabled) {
+        row.classList.add('disabled');
+        row.setAttribute('aria-disabled', 'true');
+      }
+      if (ch.group) row.setAttribute('data-group', ch.group);
 
       row.innerHTML =
         '<div class="gt-ms-check">' + checkHtml + '</div>' +
@@ -1085,51 +1311,66 @@
       return row;
     }
 
-    /* ── setChoices: rebuild from state ── */
+    /* setChoices: rebuild from state */
     function setChoices(choices, opts) {
       opts = opts || {};
       var preserveSel = opts.preserveSelection !== false;
+      var preserveMissingSel = opts.preserveMissingSelection === true;
       var doNotify = opts.notify !== false;
+      var total = typeof opts.total === 'number' ? opts.total : null;
 
       var oldSelected = preserveSel ? new Set(state.selected) : new Set();
+      choices = asChoiceArray(choices);
+      state.loading = false;
 
       /* Update state */
-      var n = (choices || []).length;
-      state.choices = (choices || []).map(function (ch, i) {
+      var n = choices.length;
+      state.choices = choices.map(function (ch, i) {
         return {
           label: String(ch.label),
           value: String(ch.value),
           hidden: false,
+          disabled: !!ch.disabled,
+          group: ch.group ? String(ch.group) : '',
           hue: ch.hue || Math.round((200 + 360 * i / Math.max(1, n)) % 360),
           _labelLower: String(ch.label).toLowerCase()
         };
       });
+      state.total = total === null ? state.choices.length : total;
 
       /* Intersect selection */
       var newValues = new Set(state.choices.map(function (ch) { return ch.value; }));
       state.selected = new Set();
       oldSelected.forEach(function (v) {
-        if (newValues.has(v)) state.selected.add(v);
+        if (newValues.has(v) || preserveMissingSel) state.selected.add(v);
       });
 
       /* Rebuild DOM using fragment */
       var frag = document.createDocumentFragment();
+      var prevGroup = '';
       state.choices.forEach(function (ch) {
+        if (ch.group && ch.group !== prevGroup) {
+          frag.appendChild(buildOptgroupNode(ch.group, 'gt-ms-optgroup'));
+        }
+        prevGroup = ch.group || '';
         frag.appendChild(buildOptionNode(ch));
       });
       optionsBox.innerHTML = '';
       optionsBox.appendChild(frag);
+      optionsBox.appendChild(statusRow);
 
       /* Re-apply search if active */
-      if (state.query) {
+      if (!serverMode && state.query) {
         applySearchNow(state.query);
+      } else {
+        syncOptgroupHeaders(optionsBox);
       }
 
       syncUI();
       if (doNotify) commitSelection();
     }
 
-    /* ── Search (debounced) ── */
+    /* Search (debounced) */
     function applySearchNow(q) {
       var qq = (q || '').toLowerCase().trim();
       state.query = qq;
@@ -1140,7 +1381,6 @@
 
       patchVisibility();
       /* Update allRow and counts without notifying Shiny */
-      var total = state.choices.length;
       var vis = visibleChoices().length;
       var visSel = visibleSelectedCount();
 
@@ -1153,13 +1393,28 @@
         }
         allRow.setAttribute('aria-selected', vis > 0 && visSel === vis ? 'true' : 'false');
       }
+      updateStatus();
+    }
+
+    function sendServerSearch(q) {
+      var query = (q || '').trim();
+      state.query = query.toLowerCase();
+      if (!window.Shiny || !window.Shiny.setInputValue) return;
+      if (query.length < serverMinChars) query = '';
+      state.loading = true;
+      updateStatus();
+      Shiny.setInputValue(inputId + '_search', {
+        query: query,
+        nonce: Date.now()
+      }, { priority: 'event' });
     }
 
     var debouncedSearch = debounce(function () {
-      applySearchNow(searchIn ? searchIn.value : '');
+      if (serverMode) sendServerSearch(searchIn ? searchIn.value : '');
+      else applySearchNow(searchIn ? searchIn.value : '');
     }, 75);
 
-    /* ── Position the dropdown below the trigger ──
+    /* Position the dropdown below the trigger 
        Uses document-space coordinates (viewport + scrollY) to match
        position:absolute on the body-appended teleported element. */
     function positionDropdown() {
@@ -1190,7 +1445,7 @@
 
     var openedAt = 0;
 
-    /* ── Open / Close ── */
+    /* Open / Close */
     function open() {
       closeAllDropdowns(wrap);
       wrap.classList.add('gt-layer-active');
@@ -1221,11 +1476,11 @@
       }
     }
 
-    /* ── Event listeners ── */
+    /* Event listeners */
     trigger.addEventListener('click', function (e) {
       e.stopPropagation();
       if (dropdown.classList.contains('open')) {
-        /* Ignore close triggers within 500 ms of opening — prevents synthetic
+        /* Ignore close triggers within 500 ms of opening - prevents synthetic
            re-fires from focus changes (e.g. bs4Dash / AdminLTE environments) */
         if (Date.now() - openedAt < 500) return;
         close();
@@ -1281,7 +1536,8 @@
 
     if (allRow) {
       allRow.addEventListener('click', function () {
-        var vis = visibleChoices();
+        /* Select-all only ever acts on enabled, visible options */
+        var vis = visibleChoices().filter(function (ch) { return !ch.disabled; });
         var anyUnchecked = vis.some(function (ch) { return !state.selected.has(ch.value); });
 
         vis.forEach(function (ch) {
@@ -1309,7 +1565,7 @@
       searchIn.addEventListener('input', debouncedSearch);
     }
 
-    /* ── Destroy (lifecycle teardown) ── */
+    /* Destroy (lifecycle teardown) */
     function destroy() {
       if (wrap._gtDocClickHandler) {
         document.removeEventListener('click', wrap._gtDocClickHandler);
@@ -1326,17 +1582,17 @@
       wrap._gtMultiInit = false;
     }
 
-    /* ── Initial sync ── */
+    /* Initial sync */
     syncUI();
 
-    /* ── Emit initial value to Shiny ── */
+    /* Emit initial value to Shiny */
     if (window.Shiny && window.Shiny.setInputValue) {
       Shiny.setInputValue(inputId, getValue(), { priority: 'deferred' });
       Shiny.setInputValue(inputId + '_style', currentStyle, { priority: 'deferred' });
       Shiny.setInputValue(inputId + '_ready', true, { priority: 'deferred' });
     }
 
-    /* ── Public controller ── */
+    /* Public controller */
     wrap._gt = {
       kind: 'multi',
       getValue: getValue,
@@ -1365,18 +1621,44 @@
         syncUI();
         if (opts.notify !== false) commitSelection();
       },
+      setShape: function (sh) {
+        var square = (sh === 'square');
+        wrap.classList.toggle('shape-square', square);
+        if (dropdown) dropdown.classList.toggle('shape-square', square);
+      },
+      setDisabledChoices: function (vals) {
+        var disabled = new Set(asValueArray(vals));
+        state.choices.forEach(function (ch) {
+          ch.disabled = disabled.has(ch.value);
+        });
+        Array.from(dropdown.querySelectorAll('.gt-ms-option')).forEach(function (el) {
+          var off = disabled.has(el.getAttribute('data-value'));
+          el.classList.toggle('disabled', off);
+          if (off) el.setAttribute('aria-disabled', 'true');
+          else el.removeAttribute('aria-disabled');
+        });
+        syncUI();
+      },
+      setDisabled: function (d) {
+        var off = !!d;
+        wrap.classList.toggle('gt-disabled', off);
+        if (off) close();
+        if (trigger) {
+          trigger.setAttribute('tabindex', off ? '-1' : '0');
+          if (off) trigger.setAttribute('aria-disabled', 'true');
+          else trigger.removeAttribute('aria-disabled');
+        }
+      },
       clear: function (opts) {
         setValue([], opts);
       },
       destroy: destroy,
-      /* Expose for binding — stable reference, not the closure var */
+      /* Expose for binding - stable reference, not the closure var */
       commitSelection: commitSelection
     };
   }
 
-  /* ══════════════════════════════════════════════════════
-     SHINY INPUT BINDINGS
-  ══════════════════════════════════════════════════════ */
+  /* SHINY INPUT BINDINGS */
   function registerBindings() {
     if (typeof Shiny === 'undefined' || !window.jQuery || registerBindings._done) return;
     registerBindings._done = true;
@@ -1409,7 +1691,7 @@
     });
     Shiny.inputBindings.register(glassTabsBinding, 'glasstabs.glassTabs');
 
-    /* ── Single-select binding ── */
+    /* Single-select binding */
     var glassSelectBinding = new Shiny.InputBinding();
     $.extend(glassSelectBinding, {
       find: function (scope) {
@@ -1437,9 +1719,11 @@
       receiveMessage: function (el, data) {
         var ctrl = ensureInit(el);
         if (!ctrl) return;
+        var shouldCommit = false;
 
         if (hasOwn(data, 'choices')) {
           ctrl.setChoices(data.choices || [], { notify: false });
+          shouldCommit = true;
         }
 
         if (hasOwn(data, 'selected')) {
@@ -1447,19 +1731,34 @@
           if (Array.isArray(sel)) sel = sel.length ? sel[0] : null;
           if (sel === '') sel = null;
           ctrl.setValue(sel, { notify: false });
+          shouldCommit = true;
         }
 
         if (hasOwn(data, 'style')) {
           ctrl.setStyle(data.style, { notify: false });
+          shouldCommit = true;
+        }
+
+        if (hasOwn(data, 'shape') && typeof ctrl.setShape === 'function') {
+          ctrl.setShape(data.shape);
+        }
+
+        if (hasOwn(data, 'disabled') && typeof ctrl.setDisabled === 'function') {
+          ctrl.setDisabled(data.disabled);
+        }
+
+        if (hasOwn(data, 'disabled_choices') && typeof ctrl.setDisabledChoices === 'function') {
+          ctrl.setDisabledChoices(data.disabled_choices);
         }
 
         /* Single commit after all fields are set */
-        triggerShinyChange(el);
+        if (shouldCommit && ctrl.commitSelection) ctrl.commitSelection();
+        if (shouldCommit) triggerShinyChange(el);
       }
     });
     Shiny.inputBindings.register(glassSelectBinding, 'glasstabs.glassSelect');
 
-    /* ── Multi-select binding ── */
+    /* Multi-select binding */
     var glassMultiSelectBinding = new Shiny.InputBinding();
     $.extend(glassMultiSelectBinding, {
       find: function (scope) {
@@ -1487,30 +1786,44 @@
       receiveMessage: function (el, data) {
         var ctrl = ensureInit(el);
         if (!ctrl) return;
+        var shouldCommit = false;
 
         if (hasOwn(data, 'choices')) {
           ctrl.setChoices(data.choices || [], { notify: false });
+          shouldCommit = true;
         }
 
         if (hasOwn(data, 'selected')) {
-          ctrl.setValue(Array.isArray(data.selected) ? data.selected : [], { notify: false });
+          ctrl.setValue(asValueArray(data.selected), { notify: false });
+          shouldCommit = true;
         }
 
         if (hasOwn(data, 'style')) {
           ctrl.setStyle(data.style, { notify: false });
+          shouldCommit = true;
+        }
+
+        if (hasOwn(data, 'shape') && typeof ctrl.setShape === 'function') {
+          ctrl.setShape(data.shape);
+        }
+
+        if (hasOwn(data, 'disabled') && typeof ctrl.setDisabled === 'function') {
+          ctrl.setDisabled(data.disabled);
+        }
+
+        if (hasOwn(data, 'disabled_choices') && typeof ctrl.setDisabledChoices === 'function') {
+          ctrl.setDisabledChoices(data.disabled_choices);
         }
 
         /* Single commit after all fields are set */
-        if (ctrl.commitSelection) ctrl.commitSelection();
-        triggerShinyChange(el);
+        if (shouldCommit && ctrl.commitSelection) ctrl.commitSelection();
+        if (shouldCommit) triggerShinyChange(el);
       }
     });
     Shiny.inputBindings.register(glassMultiSelectBinding, 'glasstabs.glassMultiSelect');
   }
 
-  /* ══════════════════════════════════════════════════════
-     BOOT
-  ══════════════════════════════════════════════════════ */
+  /* BOOT */
   var bootTimer = null;
 
   function scheduleBoot() {
@@ -1535,6 +1848,7 @@
     });
 
     registerBindings();
+    registerCustomMessageHandlers();
   }
 
   document.addEventListener('click', function (e) {
@@ -1588,7 +1902,7 @@
   }
 
   /* Report the initial active tab for every navbar once the Shiny session
-     is ready — so glassTabsServer() is never NULL on first render. */
+     is ready - so glassTabsServer() is never NULL on first render. */
   document.addEventListener('shiny:sessioninitialized', function () {
     document.querySelectorAll('.gt-navbar').forEach(function (nb) {
       var ns = nb.getAttribute('data-ns');
@@ -1601,9 +1915,67 @@
 
   function registerCustomMessageHandlers() {
     if (typeof Shiny === 'undefined' || registerCustomMessageHandlers._done) return;
-    
+
+    function applyMultiSelectUpdate(msg, attempt) {
+      attempt = attempt || 0;
+      var wrap = msg && msg.inputId
+        ? document.querySelector('.gt-ms-wrap' + attrEquals('data-input-id', msg.inputId))
+        : null;
+      var ctrl = wrap ? ensureInit(wrap) : null;
+
+      if (!ctrl) {
+        if (attempt < 20) {
+          setTimeout(function () { applyMultiSelectUpdate(msg, attempt + 1); }, 25);
+        }
+        return;
+      }
+
+      var data = msg.data || {};
+      var shouldCommit = false;
+      if (hasOwn(data, 'choices')) {
+        ctrl.setChoices(data.choices || [], { notify: false });
+        shouldCommit = true;
+      }
+      if (hasOwn(data, 'selected')) {
+        ctrl.setValue(asValueArray(data.selected), { notify: false });
+        shouldCommit = true;
+      }
+      if (hasOwn(data, 'style')) {
+        ctrl.setStyle(data.style, { notify: false });
+        shouldCommit = true;
+      }
+      if (hasOwn(data, 'shape') && typeof ctrl.setShape === 'function') {
+        ctrl.setShape(data.shape);
+      }
+      if (hasOwn(data, 'disabled') && typeof ctrl.setDisabled === 'function') {
+        ctrl.setDisabled(data.disabled);
+      }
+      if (hasOwn(data, 'disabled_choices') && typeof ctrl.setDisabledChoices === 'function') {
+        ctrl.setDisabledChoices(data.disabled_choices);
+      }
+      if (shouldCommit && ctrl.commitSelection) ctrl.commitSelection();
+    }
+
     Shiny.addCustomMessageHandler('glasstabs_reinit', function (msg) {
       bootAll();
+    });
+
+    Shiny.addCustomMessageHandler('glasstabs_update_multiselect', function (msg) {
+      setTimeout(function () { applyMultiSelectUpdate(msg, 0); }, 50);
+    });
+
+    Shiny.addCustomMessageHandler('glasstabs_server_choices', function (msg) {
+      if (!msg || !msg.inputId) return;
+      var selector = msg.type === 'multi' ? '.gt-ms-wrap' : '.gt-gs-wrap';
+      var wrap = document.querySelector(selector + attrEquals('data-input-id', msg.inputId));
+      var ctrl = wrap ? ensureInit(wrap) : null;
+      if (!ctrl || !ctrl.setChoices) return;
+
+      ctrl.setChoices(msg.choices || [], {
+        notify: false,
+        preserveMissingSelection: true,
+        total: typeof msg.total === 'number' ? msg.total : undefined
+      });
     });
 
     Shiny.addCustomMessageHandler('glasstabs_update_tabs', function (msg) {
@@ -1679,7 +2051,7 @@
         navbar.querySelectorAll('.gt-tab-link.active').forEach(function (l) {
           l.classList.remove('active');
           l.setAttribute('aria-selected', 'false');
-          /* Deactivate only this namespace's pane — not nested glassTabsUI panes */
+          /* Deactivate only this namespace's pane - not nested glassTabsUI panes */
           var v = l.getAttribute('data-value');
           var p = document.getElementById(msg.ns + '-pane-' + v);
           if (p) p.classList.remove('active');
@@ -1812,5 +2184,12 @@
 
   registerCustomMessageHandlers();
   document.addEventListener('shiny:sessioninitialized', registerCustomMessageHandlers);
+  if (window.jQuery) {
+    window.jQuery(document).on('shiny:sessioninitialized.glasstabs', function () {
+      registerBindings();
+      registerCustomMessageHandlers();
+      bootAll();
+    });
+  }
 
 })();

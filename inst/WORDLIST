@@ -12,6 +12,7 @@ Theming
 UI
 bootAll
 bs
+bslib
 changelog
 cheatsheet
 checkmarks
@@ -30,6 +31,8 @@ glassTabCondition
 glassTabsUI
 glassmorphism
 grey
+greyed
+greys
 hardcoded
 htmltools
 initialisation
@@ -51,7 +54,11 @@ renderGlassTabs
 renderer
 roxygen
 runGlassExample
+runnable
+sc
+selectInput
 selectable
+selectize
 stylesheet
 themeable
 theming

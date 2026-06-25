@@ -1,7 +1,7 @@
 #' Create a custom color theme for glassTabsUI
 #'
 #' All arguments accept any valid CSS color string (hex, `rgb()`, `rgba()`,
-#' named colors). Pass only the fields you want to override — unset fields
+#' named colors). Pass only the fields you want to override - unset fields
 #' fall back to the dark-mode defaults.
 #'
 #' @note **Light mode color accessibility:** When building a light-mode theme,
@@ -71,8 +71,6 @@ glass_tab_theme <- function(
   )
 }
 
-# Internal helper: resolve final tab theme values
-# @noRd
 .tab_resolve_theme <- function(theme = NULL) {
   dark_defaults <- list(
     tab_text        = "rgba(207,230,255,0.78)",

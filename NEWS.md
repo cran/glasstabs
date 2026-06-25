@@ -1,3 +1,59 @@
+# glasstabs 0.3.3
+
+## Native-layout parity
+
+* `glassSelect()` and `glassMultiSelect()` gained a `width` argument
+  (passed to `shiny::validateCssUnit()`) so the widgets can fill a column or
+  match a fixed layout, like native `selectizeInput()`.
+* Both selects now accept grouped choices as a named list, selectInput()-style
+  (e.g. `list(Fruit = c(Apple = "apple"), Veg = c(...))`), rendering
+  non-interactive group headers. Search hides headers whose options are all
+  filtered out.
+* Added disabled support: `disabled = TRUE` greys out and blocks the whole
+  widget, and `disabled_choices` renders individual options as non-selectable.
+  Both are also reachable at runtime via `updateGlassSelect()` /
+  `updateGlassMultiSelect()` (`disabled`, `disabled_choices`). Disabled options
+  are skipped by "Select all".
+* `glassTabsUI()` gained a `shape` argument (`"rounded"` default or
+  `"square"`) so the tab bar and content corners can match
+  `shape = "square"` selects for a cohesive, selectize-style layout.
+
+## Square corners
+
+* Added a `shape` argument to `glassSelect()` and `glassMultiSelect()`. The
+  default `shape = "rounded"` keeps the signature glass look, while
+  `shape = "square"` applies crisp, selectize-style corners so the widgets sit
+  flush next to native `selectizeInput()` controls without looking out of
+  place.
+* `updateGlassSelect()` and `updateGlassMultiSelect()` gained a `shape`
+  argument so the corner style can be switched at runtime from the server
+  without re-rendering the widget (open dropdowns and selection state are
+  preserved).
+* Added a `runGlassExample("square-corners")` example app that demonstrates the
+  square shape live alongside native `selectizeInput()`, including a
+  runtime rounded-vs-square toggle via `update*()` and a light-theme variant.
+* Added a `runGlassExample("bslib")` example app that shows square
+  `glassSelect()` and `glassMultiSelect()` controls inside a Bootstrap 5
+  `bslib` layout.
+
+## Large choice sets
+
+* Added opt-in server-side search support for large `glassSelect()` and
+  `glassMultiSelect()` choice sets via `server = TRUE`, `glassSelectServer()`,
+  and `glassMultiSelectServer()`.
+* Added loading and no-results states for select search results, including
+  server-backed search responses.
+* Added a runnable `runGlassExample("server-select")` example and vignette
+  sections for server-backed single- and multi-select controls.
+
+## Bug fixes
+
+* Fixed `updateGlassMultiSelect()` updates being lost when a multi-select is
+  created or replaced by `renderUI()` in the same reactive flush. Dynamic
+  updates now target the replacement widget and retry briefly while it binds.
+* Fixed scalar `selected` values being interpreted as an empty selection by the
+  multi-select JavaScript binding.
+
 # glasstabs 0.3.2
 
 ## Public dashboard readiness
@@ -244,4 +300,4 @@ Initial release.
 * All theming uses pre-computed CSS variables (no `color-mix()`), ensuring
   compatibility with Shiny's embedded browser.
 * Multiple instances of either widget on the same page work independently;
-  each instance is scoped to its own `id`.
+  each instance is sc

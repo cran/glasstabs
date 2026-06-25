@@ -55,6 +55,27 @@ knitr::opts_chunk$set(eval = FALSE)
 #   hues = c(apple = 0, banana = 50, cherry = 340, mango = 30, peach = 20)
 # )
 
+## ----shape--------------------------------------------------------------------
+# # Rounded (default)
+# glassMultiSelect("filters_rounded", fruits, shape = "rounded")
+# 
+# # Square - matches selectizeInput()
+# glassMultiSelect("filters_square", fruits, shape = "square")
+
+## ----ms-parity----------------------------------------------------------------
+# # Fixed / fluid width
+# glassMultiSelect("filters_w", fruits, width = "100%")
+# 
+# # Grouped choices (selectInput()-style named list)
+# glassMultiSelect("food", list(
+#   Fruit = c(Apple = "apple", Banana = "banana"),
+#   Veg   = c(Carrot = "carrot", Pea = "pea")
+# ))
+# 
+# # Disable the whole widget, or specific options
+# glassMultiSelect("filters_d", fruits, disabled = TRUE)
+# glassMultiSelect("filters_dc", fruits, disabled_choices = "banana")
+
 ## ----chrome-------------------------------------------------------------------
 # glassMultiSelect("f", fruits,
 #   show_style_switcher = FALSE,   # hide the Check / Box / Fill row
@@ -88,6 +109,31 @@ knitr::opts_chunk$set(eval = FALSE)
 #     message("Style: ", ms$style())
 #   })
 # }
+
+## ----server-search------------------------------------------------------------
+# many_choices <- stats::setNames(
+#   sprintf("value-%04d", 1:2000),
+#   sprintf("Choice %04d", 1:2000)
+# )
+# 
+# ui <- fluidPage(
+#   useGlassTabs(),
+#   glassMultiSelect(
+#     "pick",
+#     many_choices,
+#     server = TRUE,
+#     server_limit = 30,
+#     show_style_switcher = FALSE
+#   ),
+#   verbatimTextOutput("out")
+# )
+# 
+# server <- function(input, output, session) {
+#   glassMultiSelectServer("pick", many_choices, session = session, limit = 30)
+#   output$out <- renderPrint(length(input$pick))
+# }
+# 
+# if (interactive()) shinyApp(ui, server)
 
 ## ----updates------------------------------------------------------------------
 # ui <- fluidPage(
