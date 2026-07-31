@@ -5,9 +5,9 @@
 #' Example apps are launched only in interactive sessions.
 #'
 #' @param example Name of the example to run, such as `"basic"`,
-#'   `"bslib"`, `"dashboard"`, `"server-select"`, `"smoke-test"`, or
-#'   `"square-corners"`. When `NULL` (default), lists all available
-#'   examples.
+#'   `"bslib"`, `"connect-workflow"`, `"dashboard"`, `"indicators"`,
+#'   `"server-select"`, `"smoke-test"`, or `"square-corners"`. When `NULL`
+#'   (default), lists all available examples.
 #' @param ... Additional arguments passed to [shiny::runApp()].
 #'
 #' @return Called for its side-effect (launches a Shiny app).
@@ -19,6 +19,7 @@
 #' # Run an example interactively
 #' if (interactive()) {
 #'   runGlassExample("bslib")
+#'   runGlassExample("connect-workflow")
 #'   runGlassExample("smoke-test")
 #'   runGlassExample("server-select")
 #' }
@@ -37,23 +38,31 @@ runGlassExample <- function(example = NULL, ...) {
   }
 
   if (!example %in% available) {
-    stop(
+    .gt_abort(
       sprintf(
         "Example \"%s\" not found. Available: %s",
         example,
         paste(available, collapse = ", ")
       ),
-      call. = FALSE
+      class = "glasstabs_error_bad_choice",
+      argument = "example",
+      value = example,
+      expected = available
     )
   }
 
   app_dir <- file.path(examples_dir, example)
   if (!interactive()) {
-    stop(
-      "runGlassExample() launches a Shiny app and must be called interactively.\n",
-      "Use if (interactive()) runGlassExample(\"", example, "\") in examples, ",
-      "tests, and vignettes.",
-      call. = FALSE
+    .gt_abort(
+      paste0(
+        "runGlassExample() launches a Shiny app and must be called interactively.\n",
+        "Use if (interactive()) runGlassExample(\"", example, "\") in examples, ",
+        "tests, and vignettes."
+      ),
+      class = "glasstabs_error_bad_argument",
+      argument = "example",
+      value = example,
+      expected = "an interactive R session"
     )
   }
   shiny::runApp(app_dir, ...)
@@ -119,7 +128,7 @@ glasstabs_news <- function() {
 useGlassTabs <- function() {
   htmltools::htmlDependency(
     name    = "glasstabs",
-    version = "0.3.3",
+    version = as.character(utils::packageVersion("glasstabs")),
     src     = list(file = system.file("www", package = "glasstabs")),
     stylesheet = "glass.css",
     script     = "glass.js"

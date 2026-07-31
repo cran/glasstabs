@@ -11,6 +11,7 @@ local_browser_pkg_root <- function() {
 }
 
 test_that("browser: glassSelect opens and clicking an option updates input", {
+  skip_on_covr()
   skip_if_not_installed("shinytest2")
   local_browser_pkg_root()
 
@@ -32,6 +33,7 @@ test_that("browser: glassSelect opens and clicking an option updates input", {
 })
 
 test_that("browser: glassMultiSelect toggles choices and updates input", {
+  skip_on_covr()
   skip_if_not_installed("shinytest2")
   local_browser_pkg_root()
 
@@ -55,6 +57,7 @@ test_that("browser: glassMultiSelect toggles choices and updates input", {
 })
 
 test_that("browser: runtime setShape reaches wrapper and teleported dropdown", {
+  skip_on_covr()
   skip_if_not_installed("shinytest2")
   local_browser_pkg_root()
 
@@ -92,4 +95,34 @@ test_that("browser: runtime setShape reaches wrapper and teleported dropdown", {
     document.querySelector('#shape_single-dropdown').classList.contains('shape-square') &&
     document.querySelector('#shape_single-dropdown').parentElement === document.body
   "))
+})
+
+test_that("browser: controller close closes an open dropdown and updates open state", {
+  skip_on_covr()
+  skip_if_not_installed("shinytest2")
+  local_browser_pkg_root()
+
+  app <- shinytest2::AppDriver$new(
+    test_path("apps", "browser-interactions"),
+    name = "browser-close-all-selects",
+    height = 800,
+    width = 1000
+  )
+  on.exit(app$stop(), add = TRUE)
+
+  app$wait_for_idle()
+  expect_equal(app$get_value(output = "fruit_open_state"), "closed")
+
+  app$click(selector = "#fruit-trigger")
+  app$wait_for_js("document.querySelector('#fruit-dropdown.open') !== null")
+  app$wait_for_idle()
+  expect_equal(app$get_value(output = "fruit_open_state"), "open")
+
+  expect_true(app$get_js("
+    document.querySelector('#fruit-wrap')._gt.close();
+    true;
+  "))
+  app$wait_for_js("document.querySelector('#fruit-dropdown.open') === null")
+  app$wait_for_idle()
+  expect_equal(app$get_value(output = "fruit_open_state"), "closed")
 })

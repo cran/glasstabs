@@ -217,3 +217,29 @@ knitr::opts_chunk$set(eval = FALSE)
 # server <- function(input, output, session) {}
 # if (interactive()) shinyApp(ui, server)
 
+## ----starting-pattern---------------------------------------------------------
+# ui <- fluidPage(
+#   useGlassTabs(),
+#   glassTabsUI(
+#     "main",
+#     glassTabPanel("summary", "Summary", selected = TRUE, summary_ui),
+#     glassTabPanel("details", "Details", details_ui),
+#     extra_ui = glassSelect(
+#       "region",
+#       c(North = "north", South = "south"),
+#       clearable = TRUE,
+#       theme = "auto"
+#     ),
+#     theme = "auto"
+#   )
+# )
+# 
+# server <- function(input, output, session) {
+#   active_tab <- glassTabsServer("main")
+# 
+#   observe({
+#     region <- if (is.null(input$region)) "all" else input$region
+#     message("Tab: ", active_tab(), "; region: ", region)
+#   })
+# }
+

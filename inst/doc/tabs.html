@@ -405,51 +405,115 @@ via <code>Shiny.setInputValue</code>. Access it as
 <p>Arrow keys move between tabs when focus is inside the widget — no
 extra code needed.</p>
 </div>
+<div id="indicator-styles" class="section level2">
+<h2>Indicator styles</h2>
+<p>Use <code>indicator</code> to choose how the active tab is drawn:</p>
+<ul>
+<li><code>indicator = &quot;glass&quot;</code> keeps the default frosted halo with
+shimmer and the transfer trace.</li>
+<li><code>indicator = &quot;solid&quot;</code> uses a flat sliding pill with no
+<code>backdrop-filter</code>, which is lighter on the GPU for plain
+dashboards.</li>
+<li><code>indicator = &quot;underline&quot;</code> uses a slim sliding bar and
+removes the tab pill background.</li>
+</ul>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="fu">glassTabsUI</span>(<span class="st">&quot;nav&quot;</span>,</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>  <span class="fu">glassTabPanel</span>(<span class="st">&quot;overview&quot;</span>, <span class="st">&quot;Overview&quot;</span>, <span class="at">selected =</span> <span class="cn">TRUE</span>, <span class="fu">p</span>(<span class="st">&quot;Overview&quot;</span>)),</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>  <span class="fu">glassTabPanel</span>(<span class="st">&quot;data&quot;</span>, <span class="st">&quot;Data&quot;</span>, <span class="fu">p</span>(<span class="st">&quot;Data&quot;</span>)),</span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>  <span class="fu">glassTabPanel</span>(<span class="st">&quot;settings&quot;</span>, <span class="st">&quot;Settings&quot;</span>, <span class="fu">p</span>(<span class="st">&quot;Settings&quot;</span>)),</span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>  <span class="at">indicator =</span> <span class="st">&quot;solid&quot;</span></span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a>)</span></code></pre></div>
+<p>The same tabs can be rendered in all three styles without changing
+their content or server logic:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>make_tabs <span class="ot">&lt;-</span> <span class="cf">function</span>(id, indicator) {</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>  <span class="fu">glassTabsUI</span>(</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>    id,</span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>    <span class="fu">glassTabPanel</span>(<span class="st">&quot;overview&quot;</span>, <span class="st">&quot;Overview&quot;</span>, <span class="at">selected =</span> <span class="cn">TRUE</span>, <span class="fu">p</span>(<span class="st">&quot;Overview&quot;</span>)),</span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a>    <span class="fu">glassTabPanel</span>(<span class="st">&quot;data&quot;</span>, <span class="st">&quot;Data&quot;</span>, <span class="fu">p</span>(<span class="st">&quot;Data&quot;</span>)),</span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>    <span class="at">indicator =</span> indicator,</span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a>    <span class="at">compact =</span> <span class="cn">TRUE</span></span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a>  )</span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a>}</span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a></span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a><span class="fu">tagList</span>(</span>
+<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a>  <span class="fu">make_tabs</span>(<span class="st">&quot;glass_tabs&quot;</span>, <span class="st">&quot;glass&quot;</span>),</span>
+<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a>  <span class="fu">make_tabs</span>(<span class="st">&quot;solid_tabs&quot;</span>, <span class="st">&quot;solid&quot;</span>),</span>
+<span id="cb4-14"><a href="#cb4-14" tabindex="-1"></a>  <span class="fu">make_tabs</span>(<span class="st">&quot;underline_tabs&quot;</span>, <span class="st">&quot;underline&quot;</span>)</span>
+<span id="cb4-15"><a href="#cb4-15" tabindex="-1"></a>)</span></code></pre></div>
+</div>
+<div id="vertical-orientation" class="section level2">
+<h2>Vertical orientation</h2>
+<p>Set <code>orientation = &quot;vertical&quot;</code> to stack the tabs in a
+left-hand rail beside the content pane. In vertical mode, Up/Down arrow
+keys move between tabs and <code>indicator = &quot;underline&quot;</code> becomes
+a side bar adjacent to the content.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="fu">glassTabsUI</span>(<span class="st">&quot;side&quot;</span>,</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>  <span class="fu">glassTabPanel</span>(<span class="st">&quot;inbox&quot;</span>, <span class="st">&quot;Inbox&quot;</span>, <span class="at">selected =</span> <span class="cn">TRUE</span>, <span class="fu">p</span>(<span class="st">&quot;Inbox&quot;</span>)),</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>  <span class="fu">glassTabPanel</span>(<span class="st">&quot;sent&quot;</span>, <span class="st">&quot;Sent&quot;</span>, <span class="fu">p</span>(<span class="st">&quot;Sent&quot;</span>)),</span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>  <span class="fu">glassTabPanel</span>(<span class="st">&quot;archive&quot;</span>, <span class="st">&quot;Archive&quot;</span>, <span class="fu">p</span>(<span class="st">&quot;Archive&quot;</span>)),</span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>  <span class="at">orientation =</span> <span class="st">&quot;vertical&quot;</span>,</span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>  <span class="at">indicator =</span> <span class="st">&quot;underline&quot;</span></span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>)</span></code></pre></div>
+<p>Use <code>tab_align = &quot;left&quot;</code>, <code>&quot;center&quot;</code>, or
+<code>&quot;right&quot;</code> to control how labels and icons sit inside each tab
+button:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="fu">glassTabsUI</span>(<span class="st">&quot;aligned&quot;</span>,</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>  <span class="fu">glassTabPanel</span>(<span class="st">&quot;drafts&quot;</span>, <span class="st">&quot;Drafts&quot;</span>, <span class="at">selected =</span> <span class="cn">TRUE</span>, <span class="fu">p</span>(<span class="st">&quot;Draft queue&quot;</span>)),</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>  <span class="fu">glassTabPanel</span>(<span class="st">&quot;review&quot;</span>, <span class="st">&quot;Review&quot;</span>, <span class="fu">p</span>(<span class="st">&quot;Review queue&quot;</span>)),</span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>  <span class="fu">glassTabPanel</span>(<span class="st">&quot;done&quot;</span>, <span class="st">&quot;Done&quot;</span>, <span class="fu">p</span>(<span class="st">&quot;Completed queue&quot;</span>)),</span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>  <span class="at">orientation =</span> <span class="st">&quot;vertical&quot;</span>,</span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a>  <span class="at">tab_align =</span> <span class="st">&quot;right&quot;</span>,</span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a>  <span class="at">indicator =</span> <span class="st">&quot;solid&quot;</span></span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a>)</span></code></pre></div>
+</div>
 <div id="placing-a-filter-widget-beside-the-tabs" class="section level2">
 <h2>Placing a filter widget beside the tabs</h2>
 <p>Pass any UI element to <code>extra_ui</code> to place it to the right
 of the tab bar. The most common use is a <code>glassMultiSelect()</code>
 filter:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>choices <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="at">Alpha =</span> <span class="st">&quot;alpha&quot;</span>, <span class="at">Beta =</span> <span class="st">&quot;beta&quot;</span>, <span class="at">Gamma =</span> <span class="st">&quot;gamma&quot;</span>)</span>
-<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a></span>
-<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>ui <span class="ot">&lt;-</span> <span class="fu">fluidPage</span>(</span>
-<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>  <span class="fu">useGlassTabs</span>(),</span>
-<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>  <span class="fu">glassTabsUI</span>(<span class="st">&quot;nav&quot;</span>,</span>
-<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a>    <span class="at">extra_ui =</span> <span class="fu">glassMultiSelect</span>(<span class="st">&quot;cat&quot;</span>, choices, <span class="at">show_style_switcher =</span> <span class="cn">FALSE</span>),</span>
-<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>    <span class="fu">glassTabPanel</span>(<span class="st">&quot;a&quot;</span>, <span class="st">&quot;Tab A&quot;</span>, <span class="at">selected =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a>      <span class="fu">p</span>(<span class="st">&quot;Content A&quot;</span>),</span>
-<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a>      <span class="fu">glassFilterTags</span>(<span class="st">&quot;cat&quot;</span>)   <span class="co"># tag pills synced to the filter</span></span>
-<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a>    ),</span>
-<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a>    <span class="fu">glassTabPanel</span>(<span class="st">&quot;b&quot;</span>, <span class="st">&quot;Tab B&quot;</span>,</span>
-<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a>      <span class="fu">p</span>(<span class="st">&quot;Content B&quot;</span>),</span>
-<span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a>      <span class="fu">glassFilterTags</span>(<span class="st">&quot;cat&quot;</span>)</span>
-<span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a>    )</span>
-<span id="cb3-15"><a href="#cb3-15" tabindex="-1"></a>  )</span>
-<span id="cb3-16"><a href="#cb3-16" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>choices <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="at">Alpha =</span> <span class="st">&quot;alpha&quot;</span>, <span class="at">Beta =</span> <span class="st">&quot;beta&quot;</span>, <span class="at">Gamma =</span> <span class="st">&quot;gamma&quot;</span>)</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a></span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>ui <span class="ot">&lt;-</span> <span class="fu">fluidPage</span>(</span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>  <span class="fu">useGlassTabs</span>(),</span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>  <span class="fu">glassTabsUI</span>(<span class="st">&quot;nav&quot;</span>,</span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>    <span class="at">extra_ui =</span> <span class="fu">glassMultiSelect</span>(<span class="st">&quot;cat&quot;</span>, choices, <span class="at">show_style_switcher =</span> <span class="cn">FALSE</span>),</span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a>    <span class="fu">glassTabPanel</span>(<span class="st">&quot;a&quot;</span>, <span class="st">&quot;Tab A&quot;</span>, <span class="at">selected =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a>      <span class="fu">p</span>(<span class="st">&quot;Content A&quot;</span>),</span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a>      <span class="fu">glassFilterTags</span>(<span class="st">&quot;cat&quot;</span>)   <span class="co"># tag pills synced to the filter</span></span>
+<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a>    ),</span>
+<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a>    <span class="fu">glassTabPanel</span>(<span class="st">&quot;b&quot;</span>, <span class="st">&quot;Tab B&quot;</span>,</span>
+<span id="cb7-12"><a href="#cb7-12" tabindex="-1"></a>      <span class="fu">p</span>(<span class="st">&quot;Content B&quot;</span>),</span>
+<span id="cb7-13"><a href="#cb7-13" tabindex="-1"></a>      <span class="fu">glassFilterTags</span>(<span class="st">&quot;cat&quot;</span>)</span>
+<span id="cb7-14"><a href="#cb7-14" tabindex="-1"></a>    )</span>
+<span id="cb7-15"><a href="#cb7-15" tabindex="-1"></a>  )</span>
+<span id="cb7-16"><a href="#cb7-16" tabindex="-1"></a>)</span></code></pre></div>
 </div>
 <div id="theming" class="section level2">
 <h2>Theming</h2>
 <div id="built-in-presets" class="section level3">
 <h3>Built-in presets</h3>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="co"># Dark (default)</span></span>
-<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="fu">glassTabsUI</span>(<span class="st">&quot;nav&quot;</span>, <span class="at">theme =</span> <span class="st">&quot;dark&quot;</span>, ...)</span>
-<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a></span>
-<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="co"># Light — suits white page backgrounds and bs4Dash cards</span></span>
-<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a><span class="fu">glassTabsUI</span>(<span class="st">&quot;nav&quot;</span>, <span class="at">theme =</span> <span class="st">&quot;light&quot;</span>, ...)</span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="co"># Dark (default)</span></span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a><span class="fu">glassTabsUI</span>(<span class="st">&quot;nav&quot;</span>, <span class="at">theme =</span> <span class="st">&quot;dark&quot;</span>, ...)</span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a></span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a><span class="co"># Light — suits white page backgrounds and bs4Dash cards</span></span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a><span class="fu">glassTabsUI</span>(<span class="st">&quot;nav&quot;</span>, <span class="at">theme =</span> <span class="st">&quot;light&quot;</span>, ...)</span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a></span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a><span class="co"># Auto - follows Bootstrap 5 / bslib data-bs-theme light/dark mode</span></span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a><span class="fu">glassTabsUI</span>(<span class="st">&quot;nav&quot;</span>, <span class="at">theme =</span> <span class="st">&quot;auto&quot;</span>, ...)</span></code></pre></div>
 </div>
 <div id="custom-theme-with-glass_tab_theme" class="section level3">
 <h3>Custom theme with <code>glass_tab_theme()</code></h3>
 <p>Supply only the values you want to change — everything else falls
 back to the dark preset:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="co"># Change only the halo colour</span></span>
-<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a><span class="fu">glassTabsUI</span>(<span class="st">&quot;nav&quot;</span>,</span>
-<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>  <span class="at">theme =</span> <span class="fu">glass_tab_theme</span>(</span>
-<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>    <span class="at">halo_bg         =</span> <span class="st">&quot;rgba(251,191,36,0.18)&quot;</span>,</span>
-<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>    <span class="at">halo_border     =</span> <span class="st">&quot;rgba(251,191,36,0.40)&quot;</span>,</span>
-<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>    <span class="at">tab_active_text =</span> <span class="st">&quot;#fef3c7&quot;</span></span>
-<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>  ),</span>
-<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a>  <span class="fu">glassTabPanel</span>(<span class="st">&quot;a&quot;</span>, <span class="st">&quot;Tab&quot;</span>, <span class="at">selected =</span> <span class="cn">TRUE</span>, <span class="fu">p</span>(<span class="st">&quot;Content&quot;</span>))</span>
-<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="co"># Change only the halo colour</span></span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a><span class="fu">glassTabsUI</span>(<span class="st">&quot;nav&quot;</span>,</span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>  <span class="at">theme =</span> <span class="fu">glass_tab_theme</span>(</span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>    <span class="at">halo_bg         =</span> <span class="st">&quot;rgba(251,191,36,0.18)&quot;</span>,</span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>    <span class="at">halo_border     =</span> <span class="st">&quot;rgba(251,191,36,0.40)&quot;</span>,</span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a>    <span class="at">tab_active_text =</span> <span class="st">&quot;#fef3c7&quot;</span></span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a>  ),</span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a>  <span class="fu">glassTabPanel</span>(<span class="st">&quot;a&quot;</span>, <span class="st">&quot;Tab&quot;</span>, <span class="at">selected =</span> <span class="cn">TRUE</span>, <span class="fu">p</span>(<span class="st">&quot;Content&quot;</span>))</span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a>)</span></code></pre></div>
 <p>All eight handles available in <code>glass_tab_theme()</code>:</p>
 <table>
 <thead>
@@ -501,48 +565,48 @@ back to the dark preset:</p>
 <code>bs4Card</code> or <code>bs4Box</code> — the card body already
 provides a constrained container. Pair with <code>theme = &quot;light&quot;</code>
 to match the card’s white background:</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="fu">library</span>(bs4Dash)</span>
-<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a><span class="fu">library</span>(glasstabs)</span>
-<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a></span>
-<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>ui <span class="ot">&lt;-</span> <span class="fu">bs4DashPage</span>(</span>
-<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>  <span class="at">header  =</span> <span class="fu">bs4DashNavbar</span>(<span class="at">title =</span> <span class="st">&quot;My App&quot;</span>),</span>
-<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a>  <span class="at">sidebar =</span> <span class="fu">bs4DashSidebar</span>(<span class="at">disable =</span> <span class="cn">TRUE</span>),</span>
-<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a>  <span class="at">body    =</span> <span class="fu">bs4DashBody</span>(</span>
-<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a>    <span class="fu">useGlassTabs</span>(),</span>
-<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a>    <span class="fu">bs4Card</span>(</span>
-<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a>      <span class="at">title =</span> <span class="st">&quot;Analysis&quot;</span>, <span class="at">width =</span> <span class="dv">12</span>,</span>
-<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a>      <span class="fu">glassTabsUI</span>(<span class="st">&quot;dash&quot;</span>,</span>
-<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a>        <span class="at">wrap     =</span> <span class="cn">FALSE</span>,</span>
-<span id="cb6-13"><a href="#cb6-13" tabindex="-1"></a>        <span class="at">theme    =</span> <span class="st">&quot;light&quot;</span>,</span>
-<span id="cb6-14"><a href="#cb6-14" tabindex="-1"></a>        <span class="at">extra_ui =</span> <span class="fu">glassMultiSelect</span>(<span class="st">&quot;f&quot;</span>, choices, <span class="at">theme =</span> <span class="st">&quot;light&quot;</span>,</span>
-<span id="cb6-15"><a href="#cb6-15" tabindex="-1"></a>                                    <span class="at">show_style_switcher =</span> <span class="cn">FALSE</span>),</span>
-<span id="cb6-16"><a href="#cb6-16" tabindex="-1"></a>        <span class="fu">glassTabPanel</span>(<span class="st">&quot;a&quot;</span>, <span class="st">&quot;Overview&quot;</span>, <span class="at">selected =</span> <span class="cn">TRUE</span>, <span class="fu">p</span>(<span class="st">&quot;Overview content&quot;</span>)),</span>
-<span id="cb6-17"><a href="#cb6-17" tabindex="-1"></a>        <span class="fu">glassTabPanel</span>(<span class="st">&quot;b&quot;</span>, <span class="st">&quot;Details&quot;</span>,  <span class="fu">p</span>(<span class="st">&quot;Detail content&quot;</span>))</span>
-<span id="cb6-18"><a href="#cb6-18" tabindex="-1"></a>      )</span>
-<span id="cb6-19"><a href="#cb6-19" tabindex="-1"></a>    )</span>
-<span id="cb6-20"><a href="#cb6-20" tabindex="-1"></a>  )</span>
-<span id="cb6-21"><a href="#cb6-21" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="fu">library</span>(bs4Dash)</span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a><span class="fu">library</span>(glasstabs)</span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a></span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a>ui <span class="ot">&lt;-</span> <span class="fu">bs4DashPage</span>(</span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a>  <span class="at">header  =</span> <span class="fu">bs4DashNavbar</span>(<span class="at">title =</span> <span class="st">&quot;My App&quot;</span>),</span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a>  <span class="at">sidebar =</span> <span class="fu">bs4DashSidebar</span>(<span class="at">disable =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a>  <span class="at">body    =</span> <span class="fu">bs4DashBody</span>(</span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a>    <span class="fu">useGlassTabs</span>(),</span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a>    <span class="fu">bs4Card</span>(</span>
+<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a>      <span class="at">title =</span> <span class="st">&quot;Analysis&quot;</span>, <span class="at">width =</span> <span class="dv">12</span>,</span>
+<span id="cb10-11"><a href="#cb10-11" tabindex="-1"></a>      <span class="fu">glassTabsUI</span>(<span class="st">&quot;dash&quot;</span>,</span>
+<span id="cb10-12"><a href="#cb10-12" tabindex="-1"></a>        <span class="at">wrap     =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb10-13"><a href="#cb10-13" tabindex="-1"></a>        <span class="at">theme    =</span> <span class="st">&quot;light&quot;</span>,</span>
+<span id="cb10-14"><a href="#cb10-14" tabindex="-1"></a>        <span class="at">extra_ui =</span> <span class="fu">glassMultiSelect</span>(<span class="st">&quot;f&quot;</span>, choices, <span class="at">theme =</span> <span class="st">&quot;light&quot;</span>,</span>
+<span id="cb10-15"><a href="#cb10-15" tabindex="-1"></a>                                    <span class="at">show_style_switcher =</span> <span class="cn">FALSE</span>),</span>
+<span id="cb10-16"><a href="#cb10-16" tabindex="-1"></a>        <span class="fu">glassTabPanel</span>(<span class="st">&quot;a&quot;</span>, <span class="st">&quot;Overview&quot;</span>, <span class="at">selected =</span> <span class="cn">TRUE</span>, <span class="fu">p</span>(<span class="st">&quot;Overview content&quot;</span>)),</span>
+<span id="cb10-17"><a href="#cb10-17" tabindex="-1"></a>        <span class="fu">glassTabPanel</span>(<span class="st">&quot;b&quot;</span>, <span class="st">&quot;Details&quot;</span>,  <span class="fu">p</span>(<span class="st">&quot;Detail content&quot;</span>))</span>
+<span id="cb10-18"><a href="#cb10-18" tabindex="-1"></a>      )</span>
+<span id="cb10-19"><a href="#cb10-19" tabindex="-1"></a>    )</span>
+<span id="cb10-20"><a href="#cb10-20" tabindex="-1"></a>  )</span>
+<span id="cb10-21"><a href="#cb10-21" tabindex="-1"></a>)</span></code></pre></div>
 </div>
 <div id="multiple-tab-widgets-on-one-page" class="section level2">
 <h2>Multiple tab widgets on one page</h2>
 <p>Each <code>glassTabsUI()</code> instance is scoped to its own
 <code>id</code>, so multiple widgets work fully independently:</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>ui <span class="ot">&lt;-</span> <span class="fu">fluidPage</span>(</span>
-<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>  <span class="fu">useGlassTabs</span>(),    <span class="co"># only needed once per page</span></span>
-<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>  <span class="fu">glassTabsUI</span>(<span class="st">&quot;widget1&quot;</span>,</span>
-<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>    <span class="fu">glassTabPanel</span>(<span class="st">&quot;a&quot;</span>, <span class="st">&quot;One-A&quot;</span>, <span class="at">selected =</span> <span class="cn">TRUE</span>, <span class="fu">p</span>(<span class="st">&quot;Widget 1, pane A&quot;</span>)),</span>
-<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>    <span class="fu">glassTabPanel</span>(<span class="st">&quot;b&quot;</span>, <span class="st">&quot;One-B&quot;</span>, <span class="fu">p</span>(<span class="st">&quot;Widget 1, pane B&quot;</span>))</span>
-<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>  ),</span>
-<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a>  <span class="fu">glassTabsUI</span>(<span class="st">&quot;widget2&quot;</span>,</span>
-<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a>    <span class="fu">glassTabPanel</span>(<span class="st">&quot;x&quot;</span>, <span class="st">&quot;Two-X&quot;</span>, <span class="at">selected =</span> <span class="cn">TRUE</span>, <span class="fu">p</span>(<span class="st">&quot;Widget 2, pane X&quot;</span>)),</span>
-<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a>    <span class="fu">glassTabPanel</span>(<span class="st">&quot;y&quot;</span>, <span class="st">&quot;Two-Y&quot;</span>, <span class="fu">p</span>(<span class="st">&quot;Widget 2, pane Y&quot;</span>))</span>
-<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a>  )</span>
-<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a>)</span>
-<span id="cb7-12"><a href="#cb7-12" tabindex="-1"></a></span>
-<span id="cb7-13"><a href="#cb7-13" tabindex="-1"></a>server <span class="ot">&lt;-</span> <span class="cf">function</span>(input, output, session) {</span>
-<span id="cb7-14"><a href="#cb7-14" tabindex="-1"></a>  <span class="fu">observe</span>(<span class="fu">message</span>(<span class="st">&quot;Widget 1 active: &quot;</span>, input[[<span class="st">&quot;widget1-active_tab&quot;</span>]]))</span>
-<span id="cb7-15"><a href="#cb7-15" tabindex="-1"></a>  <span class="fu">observe</span>(<span class="fu">message</span>(<span class="st">&quot;Widget 2 active: &quot;</span>, input[[<span class="st">&quot;widget2-active_tab&quot;</span>]]))</span>
-<span id="cb7-16"><a href="#cb7-16" tabindex="-1"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a>ui <span class="ot">&lt;-</span> <span class="fu">fluidPage</span>(</span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>  <span class="fu">useGlassTabs</span>(),    <span class="co"># only needed once per page</span></span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>  <span class="fu">glassTabsUI</span>(<span class="st">&quot;widget1&quot;</span>,</span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a>    <span class="fu">glassTabPanel</span>(<span class="st">&quot;a&quot;</span>, <span class="st">&quot;One-A&quot;</span>, <span class="at">selected =</span> <span class="cn">TRUE</span>, <span class="fu">p</span>(<span class="st">&quot;Widget 1, pane A&quot;</span>)),</span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a>    <span class="fu">glassTabPanel</span>(<span class="st">&quot;b&quot;</span>, <span class="st">&quot;One-B&quot;</span>, <span class="fu">p</span>(<span class="st">&quot;Widget 1, pane B&quot;</span>))</span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a>  ),</span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a>  <span class="fu">glassTabsUI</span>(<span class="st">&quot;widget2&quot;</span>,</span>
+<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a>    <span class="fu">glassTabPanel</span>(<span class="st">&quot;x&quot;</span>, <span class="st">&quot;Two-X&quot;</span>, <span class="at">selected =</span> <span class="cn">TRUE</span>, <span class="fu">p</span>(<span class="st">&quot;Widget 2, pane X&quot;</span>)),</span>
+<span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a>    <span class="fu">glassTabPanel</span>(<span class="st">&quot;y&quot;</span>, <span class="st">&quot;Two-Y&quot;</span>, <span class="fu">p</span>(<span class="st">&quot;Widget 2, pane Y&quot;</span>))</span>
+<span id="cb11-10"><a href="#cb11-10" tabindex="-1"></a>  )</span>
+<span id="cb11-11"><a href="#cb11-11" tabindex="-1"></a>)</span>
+<span id="cb11-12"><a href="#cb11-12" tabindex="-1"></a></span>
+<span id="cb11-13"><a href="#cb11-13" tabindex="-1"></a>server <span class="ot">&lt;-</span> <span class="cf">function</span>(input, output, session) {</span>
+<span id="cb11-14"><a href="#cb11-14" tabindex="-1"></a>  <span class="fu">observe</span>(<span class="fu">message</span>(<span class="st">&quot;Widget 1 active: &quot;</span>, input[[<span class="st">&quot;widget1-active_tab&quot;</span>]]))</span>
+<span id="cb11-15"><a href="#cb11-15" tabindex="-1"></a>  <span class="fu">observe</span>(<span class="fu">message</span>(<span class="st">&quot;Widget 2 active: &quot;</span>, input[[<span class="st">&quot;widget2-active_tab&quot;</span>]]))</span>
+<span id="cb11-16"><a href="#cb11-16" tabindex="-1"></a>}</span></code></pre></div>
 </div>
 
 

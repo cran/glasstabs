@@ -46,6 +46,24 @@ knitr::opts_chunk$set(eval = FALSE)
 # # Square - matches selectizeInput()
 # glassSelect("region_square", fruits, shape = "square")
 
+## ----shape-comparison---------------------------------------------------------
+# fluidRow(
+#   column(
+#     6,
+#     selectizeInput("native_region", "Native", choices = fruits)
+#   ),
+#   column(
+#     6,
+#     glassSelect(
+#       "glass_region",
+#       fruits,
+#       label = "glasstabs",
+#       shape = "square",
+#       width = "100%"
+#     )
+#   )
+# )
+
 ## ----parity-------------------------------------------------------------------
 # # Fixed / fluid width
 # glassSelect("region_w", fruits, width = "240px")
@@ -59,6 +77,16 @@ knitr::opts_chunk$set(eval = FALSE)
 # # Disable the whole widget, or specific options
 # glassSelect("region_d", fruits, disabled = TRUE)
 # glassSelect("region_dc", fruits, disabled_choices = "banana")
+
+## ----lifecycle----------------------------------------------------------------
+# observeEvent(input$change_layout, {
+#   closeGlassSelect(session, "pick")
+# })
+
+## ----open-state---------------------------------------------------------------
+# observe({
+#   message("Dropdown open: ", isTRUE(input$pick_open))
+# })
 
 ## ----search-clear-------------------------------------------------------------
 # glassSelect(
@@ -179,6 +207,7 @@ knitr::opts_chunk$set(eval = FALSE)
 ## ----presets------------------------------------------------------------------
 # glassSelect("f", fruits, theme = "dark")
 # glassSelect("f", fruits, theme = "light")
+# glassSelect("f", fruits, theme = "auto")
 
 ## ----custom-theme-------------------------------------------------------------
 # glassSelect(

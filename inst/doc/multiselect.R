@@ -62,6 +62,26 @@ knitr::opts_chunk$set(eval = FALSE)
 # # Square - matches selectizeInput()
 # glassMultiSelect("filters_square", fruits, shape = "square")
 
+## ----shape-comparison---------------------------------------------------------
+# fluidRow(
+#   column(
+#     6,
+#     selectizeInput(
+#       "native_filters", "Native", choices = fruits, multiple = TRUE
+#     )
+#   ),
+#   column(
+#     6,
+#     glassMultiSelect(
+#       "glass_filters",
+#       fruits,
+#       label = "glasstabs",
+#       shape = "square",
+#       width = "100%"
+#     )
+#   )
+# )
+
 ## ----ms-parity----------------------------------------------------------------
 # # Fixed / fluid width
 # glassMultiSelect("filters_w", fruits, width = "100%")
@@ -75,6 +95,11 @@ knitr::opts_chunk$set(eval = FALSE)
 # # Disable the whole widget, or specific options
 # glassMultiSelect("filters_d", fruits, disabled = TRUE)
 # glassMultiSelect("filters_dc", fruits, disabled_choices = "banana")
+
+## ----lifecycle----------------------------------------------------------------
+# observeEvent(input$change_layout, {
+#   closeGlassMultiSelect(session, "pick")
+# })
 
 ## ----chrome-------------------------------------------------------------------
 # glassMultiSelect("f", fruits,
@@ -187,6 +212,7 @@ knitr::opts_chunk$set(eval = FALSE)
 ## ----presets------------------------------------------------------------------
 # glassMultiSelect("f", fruits, theme = "dark")   # default
 # glassMultiSelect("f", fruits, theme = "light")  # white panel, dark text
+# glassMultiSelect("f", fruits, theme = "auto")   # follows Bootstrap/bslib color mode
 
 ## ----custom-theme-------------------------------------------------------------
 # # One field — accent colour only

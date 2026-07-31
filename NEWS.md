@@ -1,4 +1,98 @@
+# glasstabs 0.3.4
+
+## Internal consistency and diagnostics
+
+* Refactored internal rendering, theme CSS, hue generation, serialization, and
+  validation without changing exported signatures, rendered HTML contracts,
+  or Shiny message formats.
+* Package-generated errors now inherit from `glasstabs_error`, with the leaf
+  classes `glasstabs_error_bad_argument`, `glasstabs_error_bad_choice`,
+  `glasstabs_error_bad_theme`, and `glasstabs_error_no_session`. This makes
+  errors easier to catch programmatically while retaining instructive messages.
+* Side-effect update helpers now consistently return `NULL` invisibly, as
+  documented.
+* `glassTabCondition()` now emits valid single-backslash JavaScript escapes for
+  carriage returns, newlines, tabs, and Unicode line separators in tab values.
+* Added golden HTML and message-payload regression tests, lint configuration,
+  and a coverage workflow.
+
+## Vertical orientation
+
+* New `orientation` argument for `glassTabsUI()`: `"vertical"` stacks the
+  tab buttons in a left-hand rail beside the content pane. ArrowUp/ArrowDown
+  navigate in vertical mode, `aria-orientation` is set on the tablist, and
+  `indicator = "underline"` renders as a slim side bar adjacent to the
+  content. Falls back to stacked layout under 760px.
+* New `tab_align` argument for `glassTabsUI()`: `"center"` (default),
+  `"left"`, or `"right"` aligns tab button text and icons.
+
+## bslib / Bootstrap 5 auto theming
+
+* New `theme = "auto"` preset bridges to Bootstrap 5 color modes: light
+  variables apply by default and dark variables apply under
+  `data-bs-theme="dark"`, toggled live in the browser (works with
+  `bslib::input_dark_mode()` / `toggle_dark_mode()` with no server code).
+* `glassSelect()` and `glassMultiSelect()` also support `theme = "auto"` so
+  their triggers and dropdown panels keep the glass look in both light and
+  dark Bootstrap 5 color modes.
+
+## New example and article
+
+* `runGlassExample("indicators")` demos the three indicator styles,
+  vertical orientation, and auto theming side by side.
+* New "Indicator Styles, Vertical Tabs, and Auto Theming" article.
+* `runGlassExample("connect-workflow")` provides a Posit Connect-ready
+  workflow review page showing filters, badges, server-driven tab changes,
+  horizontal/vertical tabs, tab text alignment, and auto theming in one
+  deployable Shiny app.
+* The Connect workflow example now has stronger dark-mode contrast, auto-themed
+  glass select dropdowns, neutral quick-action buttons with selected state,
+  indicator and tab shape controls, and a
+  responsive controls grid for narrower browsers. Closed `glassSelect()` and
+  `glassMultiSelect()` fields remain readable when the page is in dark mode.
+* New "Publishing a glasstabs Workflow to Posit Connect" article.
+
+## Select dropdown positioning
+
+* Teleported `glassSelect()` and `glassMultiSelect()` dropdowns now clamp to
+  the viewport, so narrow browser widths no longer cut off the left or right
+  edge of the dropdown panel.
+
+## Tab indicator
+
+* New `indicator` argument for `glassTabsUI()`: `"glass"` (default),
+  `"solid"` (flat opaque sliding pill, no `backdrop-filter` or shimmer -
+  lighter on the GPU and better suited to plain dashboards), and
+  `"underline"` (slim sliding bar under the active tab).
+
+## Halo alignment fixes
+
+* The halo now fits the active tab exactly from its rendered edges, avoiding
+  the right-side spill that could appear after initial load or tab changes.
+* Initial halo placement now starts at the full tab size instead of briefly
+  rendering a smaller centered outline before the first tab change.
+* Default and compact tab buttons are larger and easier to hit.
+* Halo position now accounts for container borders
+  (`clientLeft`/`clientTop`), fixing a horizontal shift inside bordered
+  fallback containers such as bs4Dash `.card-body`.
+* A `ResizeObserver` re-aligns the halo whenever tab geometry changes
+  without a window resize: badge count updates, label changes via
+  `renderUI`, font swaps, or sidebar collapse.
+
+## Dropdown lifecycle
+
+* Added `closeGlassSelect()`, `closeGlassMultiSelect()`, and
+  `closeAllGlassSelects()` so apps can explicitly close dropdowns before tab
+  switches, modal changes, or dynamic UI replacement.
+* `glassSelect()` and `glassMultiSelect()` now expose open state as
+  `input$<inputId>_open`.
+* Open dropdowns now close on additional lifecycle events, including outside
+  pointer-down, window resize, Bootstrap tab/modal/collapse hiding,
+  sidebar/offcanvas transitions, Shiny value replacement, and Shiny disconnect.
+
 # glasstabs 0.3.3
+
+Released to CRAN.
 
 ## Native-layout parity
 
@@ -300,4 +394,4 @@ Initial release.
 * All theming uses pre-computed CSS variables (no `color-mix()`), ensuring
   compatibility with Shiny's embedded browser.
 * Multiple instances of either widget on the same page work independently;
-  each instance is sc
+  each instance is scoped to its own `id`.

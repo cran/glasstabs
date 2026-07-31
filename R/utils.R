@@ -1,5 +1,7 @@
 #' @noRd
 `%||%` <- function(a, b) {
+  # Unlike rlang's operator, length-zero values intentionally fall back. This
+  # is load-bearing for update helpers where character(0) means "clear".
   if (is.null(a) || length(a) == 0) b else a
 }
 
@@ -109,9 +111,31 @@
 #' @noRd
 .is_light_theme <- function(theme) {
   isTRUE(
-    (is.character(theme) && length(theme) == 1 && identical(theme, "light")) ||
+    (is.character(theme) && length(theme) == 1 && theme %in% c("light", "auto")) ||
       (inherits(theme, "glass_select_theme") && identical(theme$mode, "light"))
   )
+}
+
+#' @noRd
+.is_auto_theme <- function(theme) {
+  is.character(theme) && length(theme) == 1 && identical(theme, "auto")
+}
+
+#' @noRd
+.select_dark_override_style <- function(selector, field_id) {
+  dark <- .ms_resolve_theme("dark")
+  css <- sprintf(
+    "%s #%s{--ms-bg:%s;--ms-border:%s;--ms-text:%s;--ms-accent:%s;--ms-label:%s;%s}",
+    selector,
+    field_id,
+    dark$bg,
+    dark$border,
+    dark$text,
+    dark$accent,
+    dark$label,
+    .to_rgba_vars(dark)
+  )
+  .make_style_tag(css)
 }
 
 #' Label helper for glassSelect
@@ -151,13 +175,14 @@
 #'   JavaScript.
 #' @export
 glassFilterTags <- function(inputId, class = NULL) {
-  if (!is.character(inputId) || length(inputId) != 1L || !nzchar(inputId)) {
-    stop(
+  .gt_check_string(
+    inputId,
+    "inputId",
+    paste0(
       "glassFilterTags(): `inputId` must be a single non-empty string matching ",
-      "the inputId of the glassMultiSelect() widget.",
-      call. = FALSE
+      "the inputId of the glassMultiSelect() widget."
     )
-  }
+  )
   classes <- c("gt-filter-tags", class)
   classes <- classes[!is.na(classes) & nzchar(classes)]
 

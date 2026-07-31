@@ -10,11 +10,7 @@
 #'   or \code{NULL} when nothing is selected
 #' }
 #'
-#' @param inputId Shiny input id.
-#' @param choices Named or unnamed character vector of choices.
 #' @param selected Initially selected value. Defaults to \code{NULL}.
-#' @param label Optional field label shown above the widget.
-#' @param placeholder Trigger label when nothing is selected.
 #' @param searchable Logical. Show search input inside dropdown? Default
 #'   \code{TRUE}.
 #' @param clearable Logical. Show clear control for removing the current
@@ -23,31 +19,14 @@
 #'   \code{FALSE}.
 #' @param all_choice_label Label used for the explicit "All" option.
 #' @param all_choice_value Value used for the explicit "All" option.
-#' @param check_style One of \code{"checkbox"} (default),
-#'   \code{"check-only"}, or \code{"filled"}.
-#' @param theme Color theme. One of \code{"dark"} (default) or \code{"light"},
-#'   or a [glass_select_theme()] object.
-#' @param shape Corner style for the trigger and dropdown. One of
-#'   \code{"rounded"} (default) for the signature glass look, or
-#'   \code{"square"} for crisp, selectize-style corners so the widget sits
-#'   neatly alongside native Shiny \code{selectizeInput()} controls.
-#' @param width Optional widget width passed to
-#'   \code{shiny::validateCssUnit()}, e.g. \code{100\%} or \code{240px}. When
-#'   \code{NULL} (default) the trigger keeps its intrinsic width.
-#' @param disabled Logical. When \code{TRUE} the whole widget is greyed out and
-#'   non-interactive. Default \code{FALSE}.
-#' @param disabled_choices Optional character vector of choice values to render
-#'   as disabled (non-selectable) rows. Default \code{NULL}.
 #' @param server Logical. If \code{TRUE}, render only an initial slice of
 #'   choices and use [glassSelectServer()] to search the full choice set from
 #'   the Shiny server. Default \code{FALSE}.
-#' @param server_limit Maximum number of choices rendered initially and returned
-#'   for each server-side search. Default \code{50}.
-#' @param server_min_chars Minimum search characters required before server-side
-#'   matching filters choices. Default \code{0}.
+#' @inheritParams glassMultiSelect
 #'
 #' @return An \code{htmltools::tagList} containing the single-select trigger,
 #'   dropdown panel, and scoped \code{<style>} block.
+#' @family glass select widgets
 #'
 #' @examples
 #' fruits <- c(Apple = "apple", Banana = "banana", Cherry = "cherry")
@@ -97,14 +76,13 @@ glassSelect <- function(
     server_limit = 50L,
     server_min_chars = 0L
 ) {
-  if (!is.character(inputId) || length(inputId) != 1L || !nzchar(inputId)) {
-    stop(
-      "glassSelect(): `inputId` must be a single non-empty string.",
-      call. = FALSE
-    )
-  }
-  check_style <- match.arg(check_style)
-  shape <- match.arg(shape)
+  .gt_check_string(
+    inputId,
+    "inputId",
+    "glassSelect(): `inputId` must be a single non-empty string."
+  )
+  check_style <- .gt_match_arg(check_style, c("checkbox", "check-only", "filled"), "check_style")
+  shape <- .gt_match_arg(shape, c("rounded", "square"), "shape")
   field_width_style <- .gt_field_width_style(width)
   inner_width_style <- if (is.null(width)) NULL else "width:100%;"
   disabled <- isTRUE(disabled)
@@ -113,6 +91,7 @@ glassSelect <- function(
   server_limit <- .gt_positive_int(server_limit, "server_limit")
   server_min_chars <- .gt_nonnegative_int(server_min_chars, "server_min_chars")
   colors <- .ms_resolve_theme(theme)
+  is_auto <- .is_auto_theme(theme)
 
   normalized <- .gt_normalize_choices(choices)
   vals <- normalized$values
@@ -129,7 +108,7 @@ glassSelect <- function(
     selected <- as.character(selected)
 
     if (length(selected) > 1) {
-      stop(
+      .gt_abort(
         sprintf(
           paste0(
             "glassSelect(): `selected` must be a single value, got %d values: %s\n",
@@ -137,7 +116,10 @@ glassSelect <- function(
           ),
           length(selected), paste(utils::head(selected, 3), collapse = ", ")
         ),
-        call. = FALSE
+        class = "glasstabs_error_bad_choice",
+        argument = "selected",
+        value = selected,
+        expected = "a single choice value"
       )
     }
 
@@ -181,12 +163,18 @@ glassSelect <- function(
     field_id, colors$bg, colors$border, colors$text, colors$accent, colors$label,
     .to_rgba_vars(colors)
   )
+  dark_override_style <- if (is_auto) {
+    .select_dark_override_style('[data-bs-theme="dark"]', field_id)
+  } else {
+    NULL
+  }
 
   wrap_cls <- paste(
     "gt-gs-wrap",
     paste0("style-", check_style),
     if (identical(shape, "square")) "shape-square" else NULL,
     if (disabled) "gt-disabled" else NULL,
+    if (is_auto) "theme-auto" else NULL,
     if (.is_light_theme(theme)) "theme-light" else NULL
   )
 
@@ -270,6 +258,7 @@ glassSelect <- function(
 
   htmltools::tagList(
     .make_style_tag(theme_css),
+    dark_override_style,
     shiny::div(
       class = "gt-gs-field",
       id = field_id,
@@ -393,6 +382,7 @@ glassSelect <- function(
 #' @return No return value. Called for its side effect of updating the client-side
 #'   widget.
 #'
+#' @family glass select widgets
 #' @export
 updateGlassSelect <- function(
     session,
@@ -405,10 +395,10 @@ updateGlassSelect <- function(
     disabled_choices = NULL
 ) {
   if (!is.null(check_style)) {
-    check_style <- match.arg(check_style, c("checkbox", "check-only", "filled"))
+    check_style <- .gt_match_arg(check_style, c("checkbox", "check-only", "filled"), "check_style")
   }
   if (!is.null(shape)) {
-    shape <- match.arg(shape, c("rounded", "square"))
+    shape <- .gt_match_arg(shape, c("rounded", "square"), "shape")
   }
 
   message <- list()
@@ -432,7 +422,7 @@ updateGlassSelect <- function(
     selected <- as.character(selected)
 
     if (length(selected) > 1) {
-      stop(
+      .gt_abort(
         sprintf(
           paste0(
             "updateGlassSelect(): `selected` must be a single value or character(0) to clear,\n",
@@ -440,7 +430,10 @@ updateGlassSelect <- function(
           ),
           length(selected)
         ),
-        call. = FALSE
+        class = "glasstabs_error_bad_choice",
+        argument = "selected",
+        value = selected,
+        expected = "a single choice value or character(0)"
       )
     }
 
@@ -464,6 +457,7 @@ updateGlassSelect <- function(
   }
 
   session$sendInputMessage(inputId, message)
+  invisible(NULL)
 }
 
 #' Reactive helper for glassSelect values
@@ -496,6 +490,7 @@ updateGlassSelect <- function(
 #'   shinyApp(ui, server)
 #' }
 #'
+#' @family glass select widgets
 #' @export
 glassSelectValue <- function(input, inputId) {
   shiny::reactive(input[[inputId]] %||% NULL)
@@ -538,6 +533,7 @@ glassSelectValue <- function(input, inputId) {
 #'   shinyApp(ui, server)
 #' }
 #'
+#' @family glass select widgets
 #' @export
 glassSelectServer <- function(
     inputId,

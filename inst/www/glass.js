@@ -3,15 +3,35 @@
 
   /* UTILITIES */
   function px(n) { return Math.round(n) + 'px'; }
+  function exactPx(n) { return (Math.round(n * 100) / 100) + 'px'; }
 
   function centerOf(el, container) {
     var r = el.getBoundingClientRect();
     var cr = container.getBoundingClientRect();
+    /* Absolutely-positioned children are placed relative to the container's
+       padding box, but getBoundingClientRect() measures its border box.
+       Subtract clientLeft/clientTop so a border on fallback containers
+       (.card-body, .box-body) doesn't shift the halo. */
     return {
-      x: r.left + r.width / 2 - cr.left,
-      y: r.top + r.height / 2 - cr.top,
+      x: r.left + r.width / 2 - cr.left - container.clientLeft,
+      y: r.top + r.height / 2 - cr.top - container.clientTop,
       w: r.width,
       h: r.height
+    };
+  }
+
+  function rectOf(el, container) {
+    var r = el.getBoundingClientRect();
+    var cr = container.getBoundingClientRect();
+    var x1 = r.left - cr.left - container.clientLeft;
+    var y1 = r.top - cr.top - container.clientTop;
+    var x2 = r.right - cr.left - container.clientLeft;
+    var y2 = r.bottom - cr.top - container.clientTop;
+    return {
+      x: x1,
+      y: y1,
+      w: Math.max(0, x2 - x1),
+      h: Math.max(0, y2 - y1)
     };
   }
 
@@ -126,6 +146,15 @@
     return el._gt || null;
   }
 
+  function setDropdownOpenState(wrap, inputId, open) {
+    var value = !!open;
+    if (wrap._gtOpen === value) return;
+    wrap._gtOpen = value;
+    if (window.Shiny && window.Shiny.setInputValue && inputId) {
+      Shiny.setInputValue(inputId + '_open', value, { priority: 'event' });
+    }
+  }
+
   var MS_VARS = [
     '--ms-bg','--ms-border','--ms-text','--ms-accent','--ms-label',
     '--ms-ac-12','--ms-ac-16','--ms-ac-18','--ms-ac-22','--ms-ac-28',
@@ -165,6 +194,35 @@
     dropdown.style.position = 'absolute';
   }
 
+  function positionTeleportedDropdown(trigger, wrap, dropdown) {
+    var rect = trigger.getBoundingClientRect();
+    var scrollX = window.pageXOffset || 0;
+    var scrollY = window.pageYOffset || 0;
+    var vw = window.innerWidth;
+    var vh = window.innerHeight;
+    var margin = 8;
+    var maxWidth = Math.max(160, vw - margin * 2);
+    dropdown.style.maxWidth = maxWidth + 'px';
+    dropdown.style.minWidth = Math.min(232, maxWidth) + 'px';
+
+    var ddHeight = dropdown.offsetHeight || 0;
+    var ddWidth = Math.min(dropdown.offsetWidth || rect.width, maxWidth);
+    var top = rect.bottom + scrollY + margin;
+    if (rect.bottom + ddHeight + margin > vh - margin && rect.top - ddHeight - margin > 0) {
+      top = rect.top + scrollY - ddHeight - margin;
+    }
+
+    var docEl = document.documentElement;
+    var dirEl = wrap.closest ? wrap.closest('[dir]') : null;
+    var isRtl = (dirEl || docEl).getAttribute('dir') === 'rtl';
+    var left = isRtl ? rect.left : rect.right - ddWidth;
+    left = Math.max(margin, Math.min(left, vw - ddWidth - margin));
+
+    dropdown.style.top = top + 'px';
+    dropdown.style.left = (left + scrollX) + 'px';
+    dropdown.style.right = 'auto';
+  }
+
   /** Move a teleported dropdown back to its wrap */
   function teleportClose(wrap, dropdown) {
     if (dropdown.parentNode !== document.body) return;
@@ -173,26 +231,45 @@
     dropdown.style.removeProperty('top');
     dropdown.style.removeProperty('right');
     dropdown.style.removeProperty('left');
+    dropdown.style.removeProperty('max-width');
+    dropdown.style.removeProperty('min-width');
     TELEPORT_CLASSES.forEach(function (cls) { dropdown.classList.remove(cls); });
     wrap.appendChild(dropdown);
+  }
+
+  function closeDropdownWrap(w) {
+    if (!w) return;
+    if (w._gt && typeof w._gt.close === 'function') {
+      w._gt.close();
+      return;
+    }
+
+    w.classList.remove('gt-layer-active');
+    var dd = w._gtDropdown || w.querySelector('.gt-gs-dropdown, .gt-ms-dropdown');
+    if (dd) {
+      dd.classList.remove('open');
+      teleportClose(w, dd);
+    }
+    var trig = w.querySelector('.gt-gs-trigger, .gt-ms-trigger');
+    if (trig) {
+      trig.classList.remove('open');
+      trig.setAttribute('aria-expanded', 'false');
+    }
+    setDropdownOpenState(w, w.getAttribute('data-input-id'), false);
   }
 
   /** Close every open glasstabs dropdown except the one being opened */
   function closeAllDropdowns(except) {
     document.querySelectorAll('.gt-gs-wrap.gt-layer-active, .gt-ms-wrap.gt-layer-active').forEach(function (w) {
       if (w === except) return;
-      w.classList.remove('gt-layer-active');
-      var dd = w._gtDropdown || w.querySelector('.gt-gs-dropdown, .gt-ms-dropdown');
-      if (dd) {
-        dd.classList.remove('open');
-        teleportClose(w, dd);
-      }
-      var trig = w.querySelector('.gt-gs-trigger, .gt-ms-trigger');
-      if (trig) {
-        trig.classList.remove('open');
-        trig.setAttribute('aria-expanded', 'false');
-      }
+      closeDropdownWrap(w);
     });
+  }
+
+  function closeDropdownById(inputId, type) {
+    if (!inputId) return;
+    var selector = type === 'multi' ? '.gt-ms-wrap' : '.gt-gs-wrap';
+    closeDropdownWrap(document.querySelector(selector + attrEquals('data-input-id', inputId)));
   }
 
   /* TAB ENGINE */
@@ -210,7 +287,9 @@
       if (navbar._gtClickHandler)  navbar.removeEventListener('click',   navbar._gtClickHandler);
       if (navbar._gtKeyHandler)    document.removeEventListener('keydown', navbar._gtKeyHandler);
       if (navbar._gtResizeHandler) window.removeEventListener('resize',  navbar._gtResizeHandler);
+      if (navbar._gtResizeObserver) navbar._gtResizeObserver.disconnect();
       navbar._gtClickHandler = navbar._gtKeyHandler = navbar._gtResizeHandler = navbar._gtActivate = null;
+      navbar._gtResizeObserver = null;
     }
     navbar._gtTabsInit = true;
     navbar._gtTabTimers = navbar._gtTabTimers || [];
@@ -264,17 +343,39 @@
 
     function placeHalo(el, immediate, scale) {
       if (!el || !container.isConnected) return;
-      var c = centerOf(el, container);
+      var r = rectOf(el, container);
       var s = scale || 1;
-      var w = Math.floor((c.w + 8) * s);
-      var h = Math.floor((c.h + 4) * s);
-      var br = (parseFloat(getComputedStyle(el).borderRadius) || 12) + 1;
+      /* Tight fit: derive from the tab's exact rendered edges. This avoids
+         center/width rounding mismatches that can leave a visible right spill. */
+      var w = r.w * s;
+      var h = r.h * s;
+      var x = r.x + (r.w - w) / 2;
+      var y = r.y + (r.h - h) / 2;
+      var br = parseFloat(getComputedStyle(el).borderRadius) || 12;
+
+      /* indicator = "underline": slim bar flush with the tab's bottom edge.
+         In vertical orientation it becomes a side bar on the edge adjacent
+         to the content pane. */
+      if (container.classList.contains('indicator-underline')) {
+        br = 2;
+        if (container.classList.contains('gt-vertical')) {
+          w = 3;
+          h = r.h;
+          x = r.x + r.w - w;
+          y = r.y;
+        } else {
+          h = 3;
+          w = r.w;
+          x = r.x;
+          y = r.y + r.h - h;
+        }
+      }
 
       function set() {
-        halo.style.left = c.x + 'px';
-        halo.style.top = c.y + 'px';
-        halo.style.width = w + 'px';
-        halo.style.height = h + 'px';
+        halo.style.left = exactPx(x);
+        halo.style.top = exactPx(y);
+        halo.style.width = exactPx(w);
+        halo.style.height = exactPx(h);
         halo.style.borderRadius = br + 'px';
       }
 
@@ -444,8 +545,7 @@
       requestAnimationFrame(function () {
         requestAnimationFrame(function () {
           requestAnimationFrame(function () {
-            placeHalo(el, true, 0.90);
-            setTimeout(function () { placeHalo(el, false, 1.0); }, 80);
+            placeHalo(el, true, 1.0);
           });
         });
       });
@@ -479,17 +579,24 @@
         return;
       }
 
-      if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+      var isNext = e.key === 'ArrowRight' || e.key === 'ArrowDown';
+      var isPrev = e.key === 'ArrowLeft'  || e.key === 'ArrowUp';
+      if (!isNext && !isPrev) return;
+
+      /* Up/Down only act in vertical orientation (so they don't hijack
+         page scrolling in horizontal layouts); Left/Right always work. */
+      var vertical = container.classList.contains('gt-vertical');
+      if (!vertical && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) return;
 
       var visibleOrder = currentVisibleOrder();
       var idx = visibleOrder.indexOf(active);
       if (idx < 0) return;
 
-      if (e.key === 'ArrowRight') {
-        activateTab(visibleOrder[(idx + 1) % visibleOrder.length]);
-      }
+      e.preventDefault();
 
-      if (e.key === 'ArrowLeft') {
+      if (isNext) {
+        activateTab(visibleOrder[(idx + 1) % visibleOrder.length]);
+      } else {
         activateTab(visibleOrder[(idx - 1 + visibleOrder.length) % visibleOrder.length]);
       }
     };
@@ -500,6 +607,17 @@
       if (activeLink) placeHalo(activeLink, true, 1.0);
     };
     window.addEventListener('resize', navbar._gtResizeHandler);
+
+    /* Re-place the halo whenever tab geometry changes without a window
+       resize: badge count updates, label changes via renderUI, font swaps,
+       or container reflow (e.g. dashboard sidebar collapse). */
+    if (window.ResizeObserver) {
+      var realign = debounce(function () { navbar._gtResizeHandler(); }, 20);
+      navbar._gtResizeObserver = new ResizeObserver(realign);
+      navbar._gtResizeObserver.observe(navbar);
+      navbar._gtResizeObserver.observe(container);
+      links.forEach(function (l) { navbar._gtResizeObserver.observe(l); });
+    }
   }
 
   /* SINGLE-SELECT ENGINE */
@@ -801,29 +919,7 @@
        position:absolute on the body-appended teleported element.
        This avoids the position:fixed + overflow:hidden quirk in AdminLTE. */
     function positionDropdown() {
-      var rect = trigger.getBoundingClientRect();
-      var scrollY = window.pageYOffset || 0;
-      var vw = window.innerWidth;
-      var vh = window.innerHeight;
-      var ddHeight = dropdown.offsetHeight || 0;
-      var top = rect.bottom + scrollY + 8;
-      /* Flip upward if not enough room below */
-      if (rect.bottom + ddHeight + 8 > vh - 8 && rect.top - ddHeight - 8 > 0) {
-        top = rect.top + scrollY - ddHeight - 8;
-      }
-      dropdown.style.top = top + 'px';
-      if ((wrap.closest('[dir]') || document.documentElement).getAttribute('dir') === 'rtl') {
-        var left = rect.left;
-        if (left < 4) left = 4;
-        dropdown.style.left = left + 'px';
-        dropdown.style.right = 'auto';
-      } else {
-        /* Right-align with trigger; clamp to viewport edge */
-        var right = vw - rect.right;
-        if (right < 4) right = 4;
-        dropdown.style.right = right + 'px';
-        dropdown.style.left = 'auto';
-      }
+      positionTeleportedDropdown(trigger, wrap, dropdown);
     }
 
     var openedAt = 0;
@@ -841,6 +937,7 @@
         trigger.classList.add('open');
         trigger.setAttribute('aria-expanded', 'true');
       });
+      setDropdownOpenState(wrap, inputId, true);
       openedAt = Date.now();
       /* Delay focus so synthetic-click re-fires from AdminLTE don't close us */
       if (searchIn) setTimeout(function () { searchIn.focus(); }, 100);
@@ -852,6 +949,7 @@
       trigger.classList.remove('open');
       trigger.setAttribute('aria-expanded', 'false');
       teleportClose(wrap, dropdown);
+      setDropdownOpenState(wrap, inputId, false);
     }
 
     function closeAndReturnFocus() {
@@ -892,11 +990,13 @@
       if (Date.now() - openedAt < 500) return;
       if (!wrap.contains(e.target) && !dropdown.contains(e.target)) close();
     };
-    document.addEventListener('click', wrap._gtDocClickHandler);
+    document.addEventListener('pointerdown', wrap._gtDocClickHandler);
 
     /* Reposition on scroll/resize while open */
-    wrap._gtScrollHandler = function () {
-      if (dropdown.classList.contains('open')) positionDropdown();
+    wrap._gtScrollHandler = function (e) {
+      if (!dropdown.classList.contains('open')) return;
+      if (e && e.type === 'resize') close();
+      else positionDropdown();
     };
     window.addEventListener('scroll', wrap._gtScrollHandler, true);
     window.addEventListener('resize', wrap._gtScrollHandler);
@@ -915,7 +1015,7 @@
     /* Destroy (lifecycle teardown) */
     function destroy() {
       if (wrap._gtDocClickHandler) {
-        document.removeEventListener('click', wrap._gtDocClickHandler);
+        document.removeEventListener('pointerdown', wrap._gtDocClickHandler);
         wrap._gtDocClickHandler = null;
       }
       if (wrap._gtScrollHandler) {
@@ -923,6 +1023,7 @@
         window.removeEventListener('resize', wrap._gtScrollHandler);
         wrap._gtScrollHandler = null;
       }
+      close();
       teleportClose(wrap, dropdown);
       wrap._gtDropdown = null;
       wrap._gt = null;
@@ -935,6 +1036,7 @@
     /* Emit initial value to Shiny */
     if (window.Shiny && window.Shiny.setInputValue) {
       Shiny.setInputValue(inputId, state.selected, { priority: 'deferred' });
+      Shiny.setInputValue(inputId + '_open', false, { priority: 'deferred' });
       Shiny.setInputValue(inputId + '_ready', true, { priority: 'deferred' });
     }
 
@@ -988,6 +1090,7 @@
       clear: function (opts) {
         setValue(null, opts);
       },
+      close: close,
       destroy: destroy,
       commitSelection: commitSelection
     };
@@ -1418,29 +1521,7 @@
        Uses document-space coordinates (viewport + scrollY) to match
        position:absolute on the body-appended teleported element. */
     function positionDropdown() {
-      var rect = trigger.getBoundingClientRect();
-      var scrollY = window.pageYOffset || 0;
-      var vw = window.innerWidth;
-      var vh = window.innerHeight;
-      var ddHeight = dropdown.offsetHeight || 0;
-      var top = rect.bottom + scrollY + 8;
-      /* Flip upward if not enough room below */
-      if (rect.bottom + ddHeight + 8 > vh - 8 && rect.top - ddHeight - 8 > 0) {
-        top = rect.top + scrollY - ddHeight - 8;
-      }
-      dropdown.style.top = top + 'px';
-      if ((wrap.closest('[dir]') || document.documentElement).getAttribute('dir') === 'rtl') {
-        var left = rect.left;
-        if (left < 4) left = 4;
-        dropdown.style.left = left + 'px';
-        dropdown.style.right = 'auto';
-      } else {
-        /* Right-align with trigger; clamp to viewport edge */
-        var right = vw - rect.right;
-        if (right < 4) right = 4;
-        dropdown.style.right = right + 'px';
-        dropdown.style.left = 'auto';
-      }
+      positionTeleportedDropdown(trigger, wrap, dropdown);
     }
 
     var openedAt = 0;
@@ -1456,6 +1537,7 @@
         trigger.classList.add('open');
         trigger.setAttribute('aria-expanded', 'true');
       });
+      setDropdownOpenState(wrap, inputId, true);
       openedAt = Date.now();
       /* Delay focus so synthetic-click re-fires from AdminLTE don't close us */
       if (searchIn) setTimeout(function () { searchIn.focus(); }, 100);
@@ -1467,6 +1549,7 @@
       trigger.classList.remove('open');
       trigger.setAttribute('aria-expanded', 'false');
       teleportClose(wrap, dropdown);
+      setDropdownOpenState(wrap, inputId, false);
     }
 
     function closeAndReturnFocus() {
@@ -1507,11 +1590,13 @@
       if (Date.now() - openedAt < 500) return;
       if (!wrap.contains(e.target) && !dropdown.contains(e.target)) close();
     };
-    document.addEventListener('click', wrap._gtDocClickHandler);
+    document.addEventListener('pointerdown', wrap._gtDocClickHandler);
 
     /* Reposition on scroll/resize while open */
-    wrap._gtScrollHandler = function () {
-      if (dropdown.classList.contains('open')) positionDropdown();
+    wrap._gtScrollHandler = function (e) {
+      if (!dropdown.classList.contains('open')) return;
+      if (e && e.type === 'resize') close();
+      else positionDropdown();
     };
     window.addEventListener('scroll', wrap._gtScrollHandler, true);
     window.addEventListener('resize', wrap._gtScrollHandler);
@@ -1568,7 +1653,7 @@
     /* Destroy (lifecycle teardown) */
     function destroy() {
       if (wrap._gtDocClickHandler) {
-        document.removeEventListener('click', wrap._gtDocClickHandler);
+        document.removeEventListener('pointerdown', wrap._gtDocClickHandler);
         wrap._gtDocClickHandler = null;
       }
       if (wrap._gtScrollHandler) {
@@ -1576,6 +1661,7 @@
         window.removeEventListener('resize', wrap._gtScrollHandler);
         wrap._gtScrollHandler = null;
       }
+      close();
       teleportClose(wrap, dropdown);
       wrap._gtDropdown = null;
       wrap._gt = null;
@@ -1589,6 +1675,7 @@
     if (window.Shiny && window.Shiny.setInputValue) {
       Shiny.setInputValue(inputId, getValue(), { priority: 'deferred' });
       Shiny.setInputValue(inputId + '_style', currentStyle, { priority: 'deferred' });
+      Shiny.setInputValue(inputId + '_open', false, { priority: 'deferred' });
       Shiny.setInputValue(inputId + '_ready', true, { priority: 'deferred' });
     }
 
@@ -1652,6 +1739,7 @@
       clear: function (opts) {
         setValue([], opts);
       },
+      close: close,
       destroy: destroy,
       /* Expose for binding - stable reference, not the closure var */
       commitSelection: commitSelection
@@ -1751,6 +1839,10 @@
           ctrl.setDisabledChoices(data.disabled_choices);
         }
 
+        if (hasOwn(data, 'close') && data.close && typeof ctrl.close === 'function') {
+          ctrl.close();
+        }
+
         /* Single commit after all fields are set */
         if (shouldCommit && ctrl.commitSelection) ctrl.commitSelection();
         if (shouldCommit) triggerShinyChange(el);
@@ -1815,12 +1907,40 @@
           ctrl.setDisabledChoices(data.disabled_choices);
         }
 
+        if (hasOwn(data, 'close') && data.close && typeof ctrl.close === 'function') {
+          ctrl.close();
+        }
+
         /* Single commit after all fields are set */
         if (shouldCommit && ctrl.commitSelection) ctrl.commitSelection();
         if (shouldCommit) triggerShinyChange(el);
       }
     });
     Shiny.inputBindings.register(glassMultiSelectBinding, 'glasstabs.glassMultiSelect');
+  }
+
+  /* THEME AUTO-BRIDGE (theme = "auto")
+     Containers carrying .theme-auto follow the Bootstrap 5 / bslib color
+     mode: the structural .theme-light class is toggled from the nearest
+     data-bs-theme attribute (CSS variables are handled by scoped <style>
+     blocks emitted from R). */
+  function syncAutoThemes() {
+    document.querySelectorAll('.theme-auto').forEach(function (el) {
+      var scope = el.closest('[data-bs-theme]');
+      var mode = scope ? scope.getAttribute('data-bs-theme') : 'light';
+      el.classList.toggle('theme-light', mode !== 'dark');
+    });
+  }
+
+  var themeAutoObserver = null;
+  function watchAutoThemes() {
+    if (themeAutoObserver || !window.MutationObserver) return;
+    themeAutoObserver = new MutationObserver(syncAutoThemes);
+    themeAutoObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-bs-theme'],
+      subtree: true
+    });
   }
 
   /* BOOT */
@@ -1835,6 +1955,9 @@
   }
 
   function bootAll() {
+    syncAutoThemes();
+    watchAutoThemes();
+
     document.querySelectorAll('.gt-navbar').forEach(function (nb) {
       initTabs(nb);
     });
@@ -1849,6 +1972,43 @@
 
     registerBindings();
     registerCustomMessageHandlers();
+    registerDropdownLifecycleHandlers();
+  }
+
+  function registerDropdownLifecycleHandlers() {
+    if (registerDropdownLifecycleHandlers._done) return;
+    registerDropdownLifecycleHandlers._done = true;
+
+    window.addEventListener('resize', function () {
+      closeAllDropdowns();
+    });
+
+    document.addEventListener('hide.bs.tab', function () {
+      closeAllDropdowns();
+    });
+
+    document.addEventListener('hidden.bs.modal', function () {
+      closeAllDropdowns();
+    });
+
+    document.addEventListener('hidden.bs.collapse', function () {
+      closeAllDropdowns();
+    });
+
+    document.addEventListener('transitionstart', function (e) {
+      var t = e.target;
+      if (t && t.closest && t.closest('.sidebar, .main-sidebar, .bslib-sidebar-layout, .offcanvas')) {
+        closeAllDropdowns();
+      }
+    });
+
+    document.addEventListener('shiny:value', function () {
+      closeAllDropdowns();
+    });
+
+    document.addEventListener('shiny:disconnected', function () {
+      closeAllDropdowns();
+    });
   }
 
   document.addEventListener('click', function (e) {
@@ -1911,6 +2071,13 @@
         Shiny.setInputValue(ns + '-active_tab', activeLink.getAttribute('data-value'));
       }
     });
+
+    document.querySelectorAll('.gt-gs-wrap, .gt-ms-wrap').forEach(function (w) {
+      var inputId = w.getAttribute('data-input-id');
+      var dd = w._gtDropdown || w.querySelector('.gt-gs-dropdown, .gt-ms-dropdown');
+      w._gtOpen = undefined;
+      setDropdownOpenState(w, inputId, !!(dd && dd.classList.contains('open')));
+    });
   });
 
   function registerCustomMessageHandlers() {
@@ -1962,6 +2129,15 @@
 
     Shiny.addCustomMessageHandler('glasstabs_update_multiselect', function (msg) {
       setTimeout(function () { applyMultiSelectUpdate(msg, 0); }, 50);
+    });
+
+    Shiny.addCustomMessageHandler('glasstabs_close_select', function (msg) {
+      if (!msg || !msg.inputId) return;
+      closeDropdownById(msg.inputId, msg.type);
+    });
+
+    Shiny.addCustomMessageHandler('glasstabs_close_selects', function () {
+      closeAllDropdowns();
     });
 
     Shiny.addCustomMessageHandler('glasstabs_server_choices', function (msg) {

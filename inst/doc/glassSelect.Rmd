@@ -31,6 +31,7 @@ It supports:
 - custom theming with `glass_select_theme()`
 - selectable marker styles via `check_style`
 - server-side updates with `updateGlassSelect()`
+- lifecycle helpers with `closeGlassSelect()` and `input$<inputId>_open`
 
 ## Basic usage
 
@@ -104,9 +105,28 @@ glassSelect("region_rounded", fruits, shape = "rounded")
 glassSelect("region_square", fruits, shape = "square")
 ```
 
-The shape can also be switched at runtime from the server with
-`updateGlassSelect(session, "region_square", shape = "square")`. See the corner shape
-side by side with native selectize in `runGlassExample("square-corners")`.
+The shape can also be switched at runtime with
+`updateGlassSelect(session, "region_square", shape = "square")`. Here is the
+complete side-by-side layout with a native Shiny control:
+
+```{r shape-comparison}
+fluidRow(
+  column(
+    6,
+    selectizeInput("native_region", "Native", choices = fruits)
+  ),
+  column(
+    6,
+    glassSelect(
+      "glass_region",
+      fruits,
+      label = "glasstabs",
+      shape = "square",
+      width = "100%"
+    )
+  )
+)
+```
 
 ## Width, grouped choices, and disabled options
 
@@ -130,6 +150,28 @@ glassSelect("region_dc", fruits, disabled_choices = "banana")
 
 `disabled` and `disabled_choices` can also be toggled at runtime with
 `updateGlassSelect()`.
+
+## Dropdown lifecycle
+
+For dynamic layouts, modals, sidebars, or tab changes, you can explicitly close
+an open dropdown from the server:
+
+```{r lifecycle}
+observeEvent(input$change_layout, {
+  closeGlassSelect(session, "pick")
+})
+```
+
+The widget also reports whether its dropdown is open:
+
+```{r open-state}
+observe({
+  message("Dropdown open: ", isTRUE(input$pick_open))
+})
+```
+
+`closeAllGlassSelects(session)` closes every open glasstabs select dropdown in
+the current session.
 
 ## Searchable and clearable
 
@@ -317,7 +359,11 @@ current value if it still exists in the new set of choices.
 ```{r presets}
 glassSelect("f", fruits, theme = "dark")
 glassSelect("f", fruits, theme = "light")
+glassSelect("f", fruits, theme = "auto")
 ```
+
+Use `theme = "auto"` inside Bootstrap 5 / bslib apps to follow
+`data-bs-theme` light and dark modes without server code.
 
 
 ### Custom theme with `glass_select_theme()`

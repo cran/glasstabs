@@ -36,11 +36,11 @@ test_that("glassTabsUI() returns an htmltools object", {
 })
 
 test_that("glassTabsUI() errors with no panels", {
-  expect_error(glassTabsUI("nav"), "at least one")
+  expect_error(glassTabsUI("nav"), "at least one", class = "glasstabs_error_bad_argument")
 })
 
 test_that("glassTabsUI() errors if non-glassTabPanel passed", {
-  expect_error(glassTabsUI("nav", "not a panel"), "glassTabPanel")
+  expect_error(glassTabsUI("nav", "not a panel"), "glassTabPanel", class = "glasstabs_error_bad_argument")
 })
 
 test_that("glassTabsUI() errors on invalid selected value", {
@@ -49,7 +49,8 @@ test_that("glassTabsUI() errors on invalid selected value", {
                 glassTabPanel("a", "A"),
                 glassTabPanel("b", "B"),
                 selected = "zzz"),
-    "zzz"
+    "zzz",
+    class = "glasstabs_error_bad_choice"
   )
 })
 
@@ -78,9 +79,16 @@ test_that("glassTabsUI() accepts glass_tab_theme() object", {
                               glassTabPanel("a", "A", selected = TRUE), theme = t))
 })
 
+test_that("glassTabsUI() accepts auto theme string", {
+  expect_no_error(glassTabsUI("nav",
+                              glassTabPanel("a", "A", selected = TRUE), theme = "auto"))
+})
+
 test_that("glassTabsUI() errors on invalid theme string", {
-  expect_error(glassTabsUI("nav",
-                           glassTabPanel("a", "A", selected = TRUE), theme = "hot-pink"))
+  expect_error(
+    glassTabsUI("nav", glassTabPanel("a", "A", selected = TRUE), theme = "hot-pink"),
+    class = "glasstabs_error_bad_theme"
+  )
 })
 
 test_that("glassTabsUI() renders HTML containing all tab values", {
@@ -128,6 +136,18 @@ test_that("glassTabsUI() dark_selector uses dark content colors", {
   expect_true(grepl("--gt-card-text:#cfe6ff", html, fixed = TRUE))
 })
 
+test_that("glassTabsUI() theme auto emits auto class and Bootstrap dark override", {
+  html <- as.character(glassTabsUI(
+    "nav",
+    glassTabPanel("a", "A", selected = TRUE),
+    theme = "auto"
+  ))
+
+  expect_true(grepl("theme-auto", html, fixed = TRUE))
+  expect_true(grepl("theme-light", html, fixed = TRUE))
+  expect_true(grepl('[data-bs-theme="dark"] #nav-wrap', html, fixed = TRUE))
+})
+
 test_that("glassTabsUI() wrap = TRUE adds gt-container class", {
   html <- as.character(glassTabsUI("nav",
                                    glassTabPanel("a", "A", selected = TRUE), wrap = TRUE))
@@ -143,6 +163,18 @@ test_that("glassTabsUI() wrap = FALSE omits gt-container class", {
 test_that("glassTabsUI() renders role=tablist on navbar", {
   html <- as.character(glassTabsUI("nav", glassTabPanel("a", "A", selected = TRUE)))
   expect_true(grepl('role="tablist"', html, fixed = TRUE))
+})
+
+test_that("glassTabsUI() renders aria-orientation on navbar", {
+  horizontal <- as.character(glassTabsUI("nav", glassTabPanel("a", "A", selected = TRUE)))
+  vertical <- as.character(glassTabsUI(
+    "nav",
+    glassTabPanel("a", "A", selected = TRUE),
+    orientation = "vertical"
+  ))
+
+  expect_true(grepl('aria-orientation="horizontal"', horizontal, fixed = TRUE))
+  expect_true(grepl('aria-orientation="vertical"', vertical, fixed = TRUE))
 })
 
 test_that("glassTabsUI() renders role=tab and aria-selected on links", {
@@ -172,6 +204,69 @@ test_that("glassTabsUI() respects explicit selected argument", {
                                    glassTabPanel("second", "Second"),
                                    selected = "second"))
   expect_true(grepl('data-value="second"', html, fixed = TRUE))
+})
+
+test_that("glassTabsUI() indicator and orientation classes are emitted", {
+  solid <- as.character(glassTabsUI(
+    "nav",
+    glassTabPanel("a", "A", selected = TRUE),
+    indicator = "solid"
+  ))
+  underline_vertical <- as.character(glassTabsUI(
+    "nav",
+    glassTabPanel("a", "A", selected = TRUE),
+    indicator = "underline",
+    orientation = "vertical"
+  ))
+  glass <- as.character(glassTabsUI(
+    "nav",
+    glassTabPanel("a", "A", selected = TRUE),
+    indicator = "glass"
+  ))
+
+  expect_true(grepl("indicator-solid", solid, fixed = TRUE))
+  expect_true(grepl("indicator-underline", underline_vertical, fixed = TRUE))
+  expect_true(grepl("gt-vertical", underline_vertical, fixed = TRUE))
+  expect_false(grepl("indicator-glass", glass, fixed = TRUE))
+})
+
+test_that("glassTabsUI() tab alignment classes are emitted", {
+  centered <- as.character(glassTabsUI(
+    "nav",
+    glassTabPanel("a", "A", selected = TRUE)
+  ))
+  left <- as.character(glassTabsUI(
+    "nav",
+    glassTabPanel("a", "A", selected = TRUE),
+    tab_align = "left"
+  ))
+  right <- as.character(glassTabsUI(
+    "nav",
+    glassTabPanel("a", "A", selected = TRUE),
+    tab_align = "right"
+  ))
+
+  expect_true(grepl("gt-align-center", centered, fixed = TRUE))
+  expect_true(grepl("gt-align-left", left, fixed = TRUE))
+  expect_true(grepl("gt-align-right", right, fixed = TRUE))
+})
+
+test_that("glassTabsUI() rejects invalid indicator, orientation, and tab alignment", {
+  expect_error(glassTabsUI(
+    "nav",
+    glassTabPanel("a", "A", selected = TRUE),
+    indicator = "neon"
+  ), class = "glasstabs_error_bad_argument")
+  expect_error(glassTabsUI(
+    "nav",
+    glassTabPanel("a", "A", selected = TRUE),
+    orientation = "diagonal"
+  ), class = "glasstabs_error_bad_argument")
+  expect_error(glassTabsUI(
+    "nav",
+    glassTabPanel("a", "A", selected = TRUE),
+    tab_align = "wide"
+  ), class = "glasstabs_error_bad_argument")
 })
 
 
@@ -250,7 +345,11 @@ test_that("appendGlassTab() errors on non-glassTabPanel input", {
     sendCustomMessage = function(...) NULL,
     ns = shiny::NS(NULL)
   )
-  expect_error(appendGlassTab(fake_session, "tabs", "not a panel"), "glassTabPanel")
+  expect_error(
+    appendGlassTab(fake_session, "tabs", "not a panel"),
+    "glassTabPanel",
+    class = "glasstabs_error_bad_argument"
+  )
 })
 
 test_that("appendGlassTab() sends correct message fields", {

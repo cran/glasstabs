@@ -27,7 +27,7 @@ test_that("glassSelect() renders labels in HTML", {
 })
 
 test_that("glassSelect() errors when choices is NULL", {
-  expect_error(glassSelect("f", NULL))
+  expect_error(glassSelect("f", NULL), class = "glasstabs_error_bad_choice")
 })
 
 
@@ -50,7 +50,8 @@ test_that("glassSelect() drops invalid selected values", {
 
 test_that("glassSelect() rejects multiple selected values", {
   expect_error(
-    glassSelect("f", choices, selected = c("apple", "banana"))
+    glassSelect("f", choices, selected = c("apple", "banana")),
+    class = "glasstabs_error_bad_choice"
   )
 })
 
@@ -141,6 +142,13 @@ test_that("glassSelect() light theme injects light accent color", {
   expect_match(html, "#2563eb")
 })
 
+test_that("glassSelect() auto theme emits auto class and Bootstrap dark override", {
+  html <- as.character(glassSelect("f", choices, theme = "auto"))
+  expect_match(html, "theme-auto", fixed = TRUE)
+  expect_match(html, "theme-light", fixed = TRUE)
+  expect_match(html, 'data-bs-theme="dark"', fixed = TRUE)
+})
+
 test_that("glassSelect() glass_select_theme() accent appears in HTML", {
   t <- glass_select_theme(accent_color = "#abcdef")
   html <- as.character(glassSelect("f", choices, theme = t))
@@ -148,7 +156,7 @@ test_that("glassSelect() glass_select_theme() accent appears in HTML", {
 })
 
 test_that("glassSelect() errors on invalid theme string", {
-  expect_error(glassSelect("f", choices, theme = "monokai"))
+  expect_error(glassSelect("f", choices, theme = "monokai"), class = "glasstabs_error_bad_theme")
 })
 
 
@@ -236,7 +244,7 @@ test_that("updateGlassSelect() omits shape when not supplied", {
 
 test_that("updateGlassSelect() rejects an invalid shape", {
   fake_session <- list(sendInputMessage = function(...) NULL)
-  expect_error(updateGlassSelect(fake_session, "pick", shape = "oval"))
+  expect_error(updateGlassSelect(fake_session, "pick", shape = "oval"), class = "glasstabs_error_bad_argument")
 })
 
 test_that("updateGlassSelect() allows clearing with character(0)", {
@@ -253,7 +261,8 @@ test_that("updateGlassSelect() rejects multiple selected values", {
   fake_session <- list(sendInputMessage = function(...) NULL)
 
   expect_error(
-    updateGlassSelect(fake_session, "pick", selected = c("apple", "banana"))
+    updateGlassSelect(fake_session, "pick", selected = c("apple", "banana")),
+    class = "glasstabs_error_bad_choice"
   )
 })
 
@@ -342,5 +351,5 @@ test_that("glassSelect(shape = 'rounded') is the explicit default", {
 })
 
 test_that("glassSelect() rejects an invalid shape", {
-  expect_error(glassSelect("f", choices, shape = "circle"))
+  expect_error(glassSelect("f", choices, shape = "circle"), class = "glasstabs_error_bad_argument")
 })

@@ -22,7 +22,8 @@ in any Shiny page.
 
 The widget behaves like a standard Shiny input:
 `input$<inputId>` stores the selected values, and
-`input$<inputId>_style` stores the active indicator style.
+`input$<inputId>_style` stores the active indicator style. The
+`input$<inputId>_open` value reports whether the dropdown is currently open.
 
 It also supports server-side updates with
 `updateGlassMultiSelect()`.
@@ -58,6 +59,7 @@ if (interactive()) shinyApp(ui, server)
 |-------------------------|------------------|---------------------------|
 | `input$<inputId>`       | character vector | Currently selected values |
 | `input$<inputId>_style` | character        | Active checkbox style     |
+| `input$<inputId>_open`  | logical          | Whether the dropdown is open |
 
 ## Initial selection
 
@@ -125,10 +127,30 @@ glassMultiSelect("filters_rounded", fruits, shape = "rounded")
 glassMultiSelect("filters_square", fruits, shape = "square")
 ```
 
-The shape can also be switched at runtime from the server with
-`updateGlassMultiSelect(session, "filters_square", shape = "square")`. The
-`runGlassExample("square-corners")` app shows the square shape next to native
-selectize.
+The shape can also be switched at runtime with
+`updateGlassMultiSelect(session, "filters_square", shape = "square")`. This
+complete layout places it beside a native multiple select:
+
+```{r shape-comparison}
+fluidRow(
+  column(
+    6,
+    selectizeInput(
+      "native_filters", "Native", choices = fruits, multiple = TRUE
+    )
+  ),
+  column(
+    6,
+    glassMultiSelect(
+      "glass_filters",
+      fruits,
+      label = "glasstabs",
+      shape = "square",
+      width = "100%"
+    )
+  )
+)
+```
 
 ## Width, grouped choices, and disabled options
 
@@ -152,6 +174,20 @@ glassMultiSelect("filters_dc", fruits, disabled_choices = "banana")
 
 `disabled_choices` are skipped by "Select all", and both can be toggled at
 runtime with `updateGlassMultiSelect()`.
+
+## Dropdown lifecycle
+
+For dynamic layouts, modals, sidebars, or tab changes, you can explicitly close
+an open dropdown from the server:
+
+```{r lifecycle}
+observeEvent(input$change_layout, {
+  closeGlassMultiSelect(session, "pick")
+})
+```
+
+Use `closeAllGlassSelects(session)` when a layout change should close any open
+glasstabs select dropdown.
 
 ## Show / hide UI chrome
 
@@ -328,7 +364,11 @@ intersection of the current selection and the new choice set.
 ```{r presets}
 glassMultiSelect("f", fruits, theme = "dark")   # default
 glassMultiSelect("f", fruits, theme = "light")  # white panel, dark text
+glassMultiSelect("f", fruits, theme = "auto")   # follows Bootstrap/bslib color mode
 ```
+
+Use `theme = "auto"` inside Bootstrap 5 / bslib apps to follow
+`data-bs-theme` light and dark modes without server code.
 
 ### Custom theme with `glass_select_theme()`
 

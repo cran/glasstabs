@@ -12,13 +12,18 @@
 
 /* Tab links */
 .gt-tab-link{
-  position:relative;padding:10px 18px;border-radius:12px;
+  position:relative;padding:11px 20px;border-radius:12px;
+  display:inline-flex;align-items:center;justify-content:center;gap:0.35em;
+  text-align:center;
   background:rgba(255,255,255,0.02);
   color:var(--gt-tab-text,#cfe6ff);
-  cursor:pointer;font-weight:600;font-size:14px;
+  cursor:pointer;font-weight:600;font-size:15px;line-height:1.25;
   transition:color 120ms ease,background 120ms ease;
   z-index:6;user-select:none;white-space:nowrap;
 }
+.gt-align-left .gt-tab-link{justify-content:flex-start;text-align:left;}
+.gt-align-center .gt-tab-link{justify-content:center;text-align:center;}
+.gt-align-right .gt-tab-link{justify-content:flex-end;text-align:right;}
 .gt-tab-link:hover{background:rgba(255,255,255,0.04);}
 .gt-tab-link.active{color:var(--gt-tab-active-text,#ffffff);}
 .gt-tab-link.gt-tab-hidden{display:none;}
@@ -34,7 +39,6 @@
     inset 0 -1px 0 rgba(255,255,255,0.06),
     0 6px 20px rgba(0,0,0,0.38),
     0 0 0 1px rgba(255,255,255,0.03));
-  transform:translate(-50%,-50%);
   transition:
     left 130ms cubic-bezier(.15,.9,.2,1),
     top 130ms cubic-bezier(.15,.9,.2,1),
@@ -800,6 +804,59 @@
   display:none;
 }
 
+/*
+   VERTICAL ORIENTATION - glassTabsUI(orientation = "vertical")
+   Tab buttons stack in a left-hand rail; content sits beside them.
+   Halo geometry is JS-driven from element rects, so it follows free.
+ */
+.gt-vertical{display:flex;align-items:flex-start;gap:18px;}
+.gt-vertical > .gt-topbar{
+  flex:0 0 auto;flex-direction:column;align-items:stretch;
+  margin-bottom:0;min-width:170px;
+}
+.gt-vertical .gt-navbar{flex-direction:column;align-items:stretch;gap:8px;}
+.gt-vertical .gt-tab-link{white-space:normal;}
+.gt-vertical > .gt-tab-wrap{flex:1 1 auto;min-width:0;}
+.gt-vertical.gt-compact{gap:10px;}
+.gt-vertical.gt-compact > .gt-topbar{min-width:120px;}
+
+/* Stack before a left rail becomes cramped on narrow screens. */
+@media(max-width:760px){
+  .gt-vertical{flex-direction:column;}
+  .gt-vertical > .gt-topbar{min-width:0;width:100%;}
+}
+
+/*
+   INDICATOR VARIANTS - glassTabsUI(indicator = "solid" | "underline")
+   "glass" is the default look; these modifiers strip the expensive /
+   showy effects for flatter designs.
+ */
+
+/* Solid: flat opaque sliding pill - no blur, shimmer, or particle */
+.indicator-solid .gt-halo{
+  backdrop-filter:none;-webkit-backdrop-filter:none;
+  background:var(--gt-halo-bg,rgba(126,195,247,0.22));
+  box-shadow:none;
+  filter:none;
+}
+.indicator-solid .gt-halo::before{display:none;}
+.indicator-solid .gt-transfer{display:none;}
+
+/* Underline: slim sliding bar under the active tab; tabs lose the pill */
+.indicator-underline .gt-tab-link{background:transparent;}
+.indicator-underline .gt-tab-link:hover{background:rgba(255,255,255,0.03);}
+.indicator-underline.theme-light .gt-tab-link{background:transparent;}
+.indicator-underline.theme-light .gt-tab-link:hover{background:rgba(37,99,235,0.05);}
+.indicator-underline .gt-halo{
+  backdrop-filter:none;-webkit-backdrop-filter:none;
+  background:var(--gt-halo-border,rgba(126,195,247,0.85));
+  border:none;
+  box-shadow:none;
+  filter:none;
+}
+.indicator-underline .gt-halo::before{display:none;}
+.indicator-underline .gt-transfer{display:none;}
+
 /* Tab disabled state */
 .gt-tab-link.gt-tab-disabled{
   opacity:0.38;
@@ -811,7 +868,6 @@
 .gt-tab-icon{
   display:inline-flex;
   align-items:center;
-  margin-right:0.35em;
   font-size:0.9em;
   opacity:0.85;
   vertical-align:middle;
@@ -856,6 +912,13 @@
 }
 .theme-light .gt-tab-link.active{
   color:var(--gt-tab-active-text,#1e40af);
+}
+.indicator-underline.theme-light .gt-tab-link,
+.indicator-underline.theme-light .gt-tab-link.active{
+  background:transparent;
+}
+.indicator-underline.theme-light .gt-tab-link:hover{
+  background:rgba(37,99,235,0.05);
 }
 
 /* Halo shimmer - replace white gradient with blue-tinted glass */
@@ -918,8 +981,8 @@
 /* Applied when glassTabsUI(compact = TRUE) */
 /* compact has no extra container margin to override - spacing handled below */
 .gt-compact .gt-topbar{margin-bottom:6px;}
-.gt-compact .gt-navbar{gap:4px;}
-.gt-compact .gt-tab-link{padding:5px 10px;font-size:13px;border-radius:8px;}
+.gt-compact .gt-navbar{gap:6px;}
+.gt-compact .gt-tab-link{padding:10px 16px;font-size:15px;border-radius:10px;}
 .gt-compact .gt-tab-wrap{padding:12px;min-height:60px;}
 .gt-compact .gt-tab-pane{padding:12px;}
 .gt-compact .gt-card{padding:10px;}

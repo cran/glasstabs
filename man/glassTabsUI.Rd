@@ -11,6 +11,9 @@ glassTabsUI(
   wrap = TRUE,
   compact = FALSE,
   shape = c("rounded", "square"),
+  indicator = c("glass", "solid", "underline"),
+  orientation = c("horizontal", "vertical"),
+  tab_align = c("center", "left", "right"),
   extra_ui = NULL,
   theme = NULL,
   dark_selector = NULL
@@ -34,9 +37,37 @@ layouts (e.g. bs4Dash).}
 selectize-style corners that match \code{\link[=glassSelect]{glassSelect()}} and
 \code{\link[=glassMultiSelect]{glassMultiSelect()}} when \code{shape = "square"}.}
 
-\item{extra_ui}{Optional additional UI placed to the right of the tab bar.}
+\item{indicator}{Style of the sliding active-tab indicator. One of:
+\itemize{
+\item \code{"glass"} (default) - the signature frosted-glass halo with
+backdrop blur, shimmer, and transfer particle.
+\item \code{"solid"} - a flat, opaque sliding pill. No \code{backdrop-filter} or
+shimmer; lighter on the GPU and better suited to plain or
+enterprise-style dashboards. Colors still follow the theme's
+\code{halo_bg} / \code{halo_border}.
+\item \code{"underline"} - a slim sliding bar under the active tab; tab
+buttons lose their pill background for a classic tabbed look.
+The bar color follows the theme's \code{halo_border}.
+}}
 
-\item{theme}{One of \code{"dark"}, \code{"light"}, or a \code{\link[=glass_tab_theme]{glass_tab_theme()}} object.}
+\item{orientation}{One of \code{"horizontal"} (default) or \code{"vertical"}. In
+vertical mode the tab buttons stack in a left-hand rail and the content
+pane sits beside them. The sliding halo follows automatically, arrow-key
+navigation switches to Up/Down, and \code{indicator = "underline"} renders as
+a slim bar on the edge of the active tab adjacent to the content.}
+
+\item{tab_align}{Alignment for text and icons inside each tab button. One
+of \code{"center"} (default), \code{"left"}, or \code{"right"}.}
+
+\item{extra_ui}{Optional additional UI placed to the right of the tab bar
+(below the tab rail when \code{orientation = "vertical"}).}
+
+\item{theme}{One of \code{"dark"}, \code{"light"}, \code{"auto"}, or a
+\code{\link[=glass_tab_theme]{glass_tab_theme()}} object. \code{"auto"} bridges to Bootstrap 5 / bslib
+color modes: light-theme variables apply by default and dark-theme
+variables apply whenever an ancestor carries \code{data-bs-theme="dark"}
+(e.g. \code{bslib::toggle_dark_mode()} or \code{input_dark_mode()}), with the
+switch handled live in the browser - no server round-trip.}
 
 \item{dark_selector}{Optional CSS selector for a parent element that signals
 dark mode (e.g. \code{"body.dark-mode"} for bs4Dash, \code{"[data-bs-theme=dark]"}
@@ -51,3 +82,17 @@ An \code{htmltools::tagList} ready to use in a Shiny UI.
 \description{
 Animated glass-style tab navigation UI
 }
+\seealso{
+Other glass tabs: 
+\code{\link{appendGlassTab}()},
+\code{\link{disableGlassTab}()},
+\code{\link{glassTabCondition}()},
+\code{\link{glassTabPanel}()},
+\code{\link{glassTabsOutput}()},
+\code{\link{glassTabsServer}()},
+\code{\link{renderGlassTabs}()},
+\code{\link{showGlassTab}()},
+\code{\link{updateGlassTabBadge}()},
+\code{\link{updateGlassTabsUI}()}
+}
+\concept{glass tabs}

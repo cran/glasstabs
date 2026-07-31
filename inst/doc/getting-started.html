@@ -634,21 +634,39 @@ relative to the card body rather than a full-page container. Pair with
 <span id="cb15-34"><a href="#cb15-34" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">interactive</span>()) <span class="fu">shinyApp</span>(ui, server)</span></code></pre></div>
 <hr />
 </div>
-<div id="next-steps" class="section level2">
-<h2>Next steps</h2>
-<ul>
-<li><strong><a href="tabs.html">Animated Tabs</a></strong> — full
-reference for <code>glassTabsUI()</code>: theming, keyboard nav,
-multiple instances, server patterns</li>
-<li><strong><a href="multiselect.html">Multi-Select Filter</a></strong>
-— full reference for <code>glassMultiSelect()</code>: checkbox styles,
-custom hues, tag pills, theming</li>
-<li><strong><a href="glassSelect.html">Single-Select
-Dropdown</a></strong>: search, clearable inputs, explicit “All” choices,
-and server-side updates</li>
-<li><strong>Reference</strong> — complete function documentation at
-<code>help(package = &quot;glasstabs&quot;)</code></li>
-</ul>
+<div id="a-useful-starting-pattern" class="section level2">
+<h2>A useful starting pattern</h2>
+<p>Most apps only need one setup call, one navigation widget, and the
+controls that belong near it. This compact pattern is ready to
+adapt:</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a>ui <span class="ot">&lt;-</span> <span class="fu">fluidPage</span>(</span>
+<span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a>  <span class="fu">useGlassTabs</span>(),</span>
+<span id="cb16-3"><a href="#cb16-3" tabindex="-1"></a>  <span class="fu">glassTabsUI</span>(</span>
+<span id="cb16-4"><a href="#cb16-4" tabindex="-1"></a>    <span class="st">&quot;main&quot;</span>,</span>
+<span id="cb16-5"><a href="#cb16-5" tabindex="-1"></a>    <span class="fu">glassTabPanel</span>(<span class="st">&quot;summary&quot;</span>, <span class="st">&quot;Summary&quot;</span>, <span class="at">selected =</span> <span class="cn">TRUE</span>, summary_ui),</span>
+<span id="cb16-6"><a href="#cb16-6" tabindex="-1"></a>    <span class="fu">glassTabPanel</span>(<span class="st">&quot;details&quot;</span>, <span class="st">&quot;Details&quot;</span>, details_ui),</span>
+<span id="cb16-7"><a href="#cb16-7" tabindex="-1"></a>    <span class="at">extra_ui =</span> <span class="fu">glassSelect</span>(</span>
+<span id="cb16-8"><a href="#cb16-8" tabindex="-1"></a>      <span class="st">&quot;region&quot;</span>,</span>
+<span id="cb16-9"><a href="#cb16-9" tabindex="-1"></a>      <span class="fu">c</span>(<span class="at">North =</span> <span class="st">&quot;north&quot;</span>, <span class="at">South =</span> <span class="st">&quot;south&quot;</span>),</span>
+<span id="cb16-10"><a href="#cb16-10" tabindex="-1"></a>      <span class="at">clearable =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb16-11"><a href="#cb16-11" tabindex="-1"></a>      <span class="at">theme =</span> <span class="st">&quot;auto&quot;</span></span>
+<span id="cb16-12"><a href="#cb16-12" tabindex="-1"></a>    ),</span>
+<span id="cb16-13"><a href="#cb16-13" tabindex="-1"></a>    <span class="at">theme =</span> <span class="st">&quot;auto&quot;</span></span>
+<span id="cb16-14"><a href="#cb16-14" tabindex="-1"></a>  )</span>
+<span id="cb16-15"><a href="#cb16-15" tabindex="-1"></a>)</span>
+<span id="cb16-16"><a href="#cb16-16" tabindex="-1"></a></span>
+<span id="cb16-17"><a href="#cb16-17" tabindex="-1"></a>server <span class="ot">&lt;-</span> <span class="cf">function</span>(input, output, session) {</span>
+<span id="cb16-18"><a href="#cb16-18" tabindex="-1"></a>  active_tab <span class="ot">&lt;-</span> <span class="fu">glassTabsServer</span>(<span class="st">&quot;main&quot;</span>)</span>
+<span id="cb16-19"><a href="#cb16-19" tabindex="-1"></a></span>
+<span id="cb16-20"><a href="#cb16-20" tabindex="-1"></a>  <span class="fu">observe</span>({</span>
+<span id="cb16-21"><a href="#cb16-21" tabindex="-1"></a>    region <span class="ot">&lt;-</span> <span class="cf">if</span> (<span class="fu">is.null</span>(input<span class="sc">$</span>region)) <span class="st">&quot;all&quot;</span> <span class="cf">else</span> input<span class="sc">$</span>region</span>
+<span id="cb16-22"><a href="#cb16-22" tabindex="-1"></a>    <span class="fu">message</span>(<span class="st">&quot;Tab: &quot;</span>, <span class="fu">active_tab</span>(), <span class="st">&quot;; region: &quot;</span>, region)</span>
+<span id="cb16-23"><a href="#cb16-23" tabindex="-1"></a>  })</span>
+<span id="cb16-24"><a href="#cb16-24" tabindex="-1"></a>}</span></code></pre></div>
+<p>From here, add only the options the app actually needs. Every widget
+keeps the usual Shiny model: place it in the UI, read its value from
+<code>input</code>, and use an update helper when the server needs to
+change it.</p>
 </div>
 
 

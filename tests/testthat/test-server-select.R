@@ -10,7 +10,7 @@ test_that("all built-in examples have app files and README coverage", {
 
   expect_true(all(file.exists(app_files)))
   expect_no_error(lapply(app_files, parse))
-  expect_true(all(examples %in% c("basic", "bs4dash", "bslib", "dashboard", "server-select", "smoke-test", "square-corners")))
+  expect_true(all(examples %in% c("basic", "bs4dash", "bslib", "connect-workflow", "dashboard", "indicators", "server-select", "smoke-test", "square-corners")))
 
   readme_path <- test_path("..", "..", "README.md")
   if (file.exists(readme_path)) {
@@ -28,6 +28,33 @@ test_that("bslib example app exists, parses, and demonstrates square selects", {
   expect_match(app_src, "bslib::bs_theme", fixed = TRUE)
   expect_match(app_src, "bslib::navset_card_tab", fixed = TRUE)
   expect_gte(lengths(regmatches(app_src, gregexpr('shape = "square"', app_src, fixed = TRUE))), 2L)
+})
+
+test_that("connect workflow example exists, parses, and demonstrates workflow features", {
+  app <- system.file("examples", "connect-workflow", "app.R", package = "glasstabs")
+  manifest <- system.file("examples", "connect-workflow", "manifest.json", package = "glasstabs")
+  expect_true(nzchar(app) && file.exists(app))
+  expect_true(nzchar(manifest) && file.exists(manifest))
+  expect_no_error(parse(app))
+
+  app_src <- paste(readLines(app, warn = FALSE), collapse = "\n")
+  manifest_src <- paste(readLines(manifest, warn = FALSE), collapse = "\n")
+  expect_match(app_src, "Posit Connect", fixed = TRUE)
+  expect_match(app_src, '"Horizontal" = "horizontal"', fixed = TRUE)
+  expect_match(app_src, '"Vertical" = "vertical"', fixed = TRUE)
+  expect_match(app_src, '"Square" = "square"', fixed = TRUE)
+  expect_match(app_src, 'tab_align = "center"', fixed = TRUE)
+  expect_match(app_src, 'shape = "rounded"', fixed = TRUE)
+  expect_match(app_src, '"Glass" = "glass"', fixed = TRUE)
+  expect_match(app_src, 'indicator = "glass"', fixed = TRUE)
+  expect_match(app_src, 'theme = "auto"', fixed = TRUE)
+  expect_match(app_src, "names(formals(glassTabsUI))", fixed = TRUE)
+  expect_match(app_src, "updateGlassTabBadge", fixed = TRUE)
+  expect_match(app_src, "updateGlassTabsUI", fixed = TRUE)
+  expect_match(manifest_src, '"appmode"\\s*:\\s*"shiny"')
+  expect_match(manifest_src, '"app.R"', fixed = TRUE)
+  expect_match(manifest_src, '"Source"\\s*:\\s*"github"')
+  expect_match(manifest_src, '"RemoteType"\\s*:\\s*"github"')
 })
 
 test_that("pkgdown reference includes server select helpers", {
@@ -49,7 +76,7 @@ test_that("server-side select APIs are documented in top-level docs", {
     readme <- paste(readLines(readme_path, warn = FALSE), collapse = "\n")
     expect_match(readme, "glassSelectServer", fixed = TRUE)
     expect_match(readme, "glassMultiSelectServer", fixed = TRUE)
-    expect_match(readme, 'runGlassExample("server-select")', fixed = TRUE)
+    expect_match(readme, "`server-select`", fixed = TRUE)
   }
 })
 

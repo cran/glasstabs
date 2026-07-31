@@ -39,6 +39,50 @@ knitr::opts_chunk$set(eval = FALSE)
 #   observe(message("Active: ", active()))
 # }
 
+## ----indicators---------------------------------------------------------------
+# glassTabsUI("nav",
+#   glassTabPanel("overview", "Overview", selected = TRUE, p("Overview")),
+#   glassTabPanel("data", "Data", p("Data")),
+#   glassTabPanel("settings", "Settings", p("Settings")),
+#   indicator = "solid"
+# )
+
+## ----indicator-comparison-----------------------------------------------------
+# make_tabs <- function(id, indicator) {
+#   glassTabsUI(
+#     id,
+#     glassTabPanel("overview", "Overview", selected = TRUE, p("Overview")),
+#     glassTabPanel("data", "Data", p("Data")),
+#     indicator = indicator,
+#     compact = TRUE
+#   )
+# }
+# 
+# tagList(
+#   make_tabs("glass_tabs", "glass"),
+#   make_tabs("solid_tabs", "solid"),
+#   make_tabs("underline_tabs", "underline")
+# )
+
+## ----vertical-----------------------------------------------------------------
+# glassTabsUI("side",
+#   glassTabPanel("inbox", "Inbox", selected = TRUE, p("Inbox")),
+#   glassTabPanel("sent", "Sent", p("Sent")),
+#   glassTabPanel("archive", "Archive", p("Archive")),
+#   orientation = "vertical",
+#   indicator = "underline"
+# )
+
+## ----tab-align----------------------------------------------------------------
+# glassTabsUI("aligned",
+#   glassTabPanel("drafts", "Drafts", selected = TRUE, p("Draft queue")),
+#   glassTabPanel("review", "Review", p("Review queue")),
+#   glassTabPanel("done", "Done", p("Completed queue")),
+#   orientation = "vertical",
+#   tab_align = "right",
+#   indicator = "solid"
+# )
+
 ## ----extra-ui-----------------------------------------------------------------
 # choices <- c(Alpha = "alpha", Beta = "beta", Gamma = "gamma")
 # 
@@ -63,6 +107,9 @@ knitr::opts_chunk$set(eval = FALSE)
 # 
 # # Light — suits white page backgrounds and bs4Dash cards
 # glassTabsUI("nav", theme = "light", ...)
+# 
+# # Auto - follows Bootstrap 5 / bslib data-bs-theme light/dark mode
+# glassTabsUI("nav", theme = "auto", ...)
 
 ## ----theme-custom-------------------------------------------------------------
 # # Change only the halo colour

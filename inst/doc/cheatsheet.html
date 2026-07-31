@@ -652,6 +652,10 @@ function.</p>
 <code>glassMultiSelectValue(input, &quot;metric&quot;)$style()</code></td>
 </tr>
 <tr class="even">
+<td>select open state</td>
+<td><code>input$metric_open</code> / <code>input$region_open</code></td>
+</tr>
+<tr class="odd">
 <td><code>glassSelect(&quot;region&quot;, ...)</code></td>
 <td><code>input$region</code> or
 <code>glassSelectValue(input, &quot;region&quot;)()</code></td>
@@ -704,6 +708,9 @@ layout to reduce widget spacing.</li>
 <li>If you add new JS/CSS behavior during development, reinstall or
 <code>load_all()</code> before retesting.</li>
 </ul>
+<p>That is the whole working model: load the dependency once, compose
+widgets in the UI, and read their values through ordinary Shiny
+inputs.</p>
 </div>
 
 

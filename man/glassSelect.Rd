@@ -53,8 +53,10 @@ selection? Default \code{FALSE}.}
 \item{check_style}{One of \code{"checkbox"} (default),
 \code{"check-only"}, or \code{"filled"}.}
 
-\item{theme}{Color theme. One of \code{"dark"} (default) or \code{"light"},
-or a \code{\link[=glass_select_theme]{glass_select_theme()}} object.}
+\item{theme}{Color theme. One of \code{"dark"} (default), \code{"light"},
+\code{"auto"}, or a \code{\link[=glass_select_theme]{glass_select_theme()}} object. \code{"auto"} uses the
+light preset by default and switches to the dark preset when an ancestor
+carries \code{data-bs-theme="dark"}.}
 
 \item{shape}{Corner style for the trigger and dropdown. One of
 \code{"rounded"} (default) for the signature glass look, or
@@ -124,3 +126,14 @@ filled_fruit <- glassSelect(
 )
 
 }
+\seealso{
+Other glass select widgets: 
+\code{\link{glassMultiSelect}()},
+\code{\link{glassMultiSelectServer}()},
+\code{\link{glassMultiSelectValue}()},
+\code{\link{glassSelectServer}()},
+\code{\link{glassSelectValue}()},
+\code{\link{updateGlassMultiSelect}()},
+\code{\link{updateGlassSelect}()}
+}
+\concept{glass select widgets}
