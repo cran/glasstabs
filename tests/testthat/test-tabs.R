@@ -191,6 +191,52 @@ test_that("glassTabsUI() renders role=tabpanel on panes", {
   expect_true(grepl('role="tabpanel"', html, fixed = TRUE))
 })
 
+test_that("glassTabsUI() links tabs and panels with roving focus", {
+  html <- as.character(glassTabsUI(
+    "nav",
+    glassTabPanel("first", "First", selected = TRUE),
+    glassTabPanel("second", "Second")
+  ))
+
+  expect_match(html, 'id="nav-tab-first"[^>]+tabindex="0"')
+  expect_match(html, 'id="nav-tab-second"[^>]+tabindex="-1"')
+  expect_match(html, 'aria-controls="nav-pane-first"')
+  expect_match(html, 'id="nav-pane-first"[^>]+aria-labelledby="nav-tab-first"')
+  expect_match(html, 'id="nav-pane-second"[^>]+aria-hidden="true"[^>]+inert=""[^>]+tabindex="-1"')
+})
+
+test_that("glassTabsUI() renders each overflow mode and swipe preference", {
+  panel <- glassTabPanel("one", "One")
+
+  expect_match(as.character(glassTabsUI("a", panel)), "gt-overflow-scroll")
+  expect_match(
+    as.character(glassTabsUI("b", panel, overflow = "multiline")),
+    "gt-overflow-multiline"
+  )
+  menu <- as.character(glassTabsUI("c", panel, overflow = "menu"))
+  expect_match(menu, "gt-overflow-menu")
+  expect_match(menu, "gt-tab-menu-select")
+  expect_match(
+    as.character(glassTabsUI("d", panel, swipe = TRUE)),
+    'data-swipe="true"'
+  )
+})
+
+test_that("glassTabsUI() explains invalid responsive arguments", {
+  panel <- glassTabPanel("one", "One")
+
+  expect_error(
+    glassTabsUI("tabs", panel, overflow = "collapse"),
+    "scroll.*multiline.*menu",
+    class = "glasstabs_error_bad_argument"
+  )
+  expect_error(
+    glassTabsUI("tabs", panel, swipe = "yes"),
+    "TRUE or FALSE",
+    class = "glasstabs_error_bad_argument"
+  )
+})
+
 test_that("glassTabsUI() first panel is active by default", {
   html <- as.character(glassTabsUI("nav",
                                    glassTabPanel("first",  "First"),
@@ -230,7 +276,7 @@ test_that("glassTabsUI() indicator and orientation classes are emitted", {
   expect_false(grepl("indicator-glass", glass, fixed = TRUE))
 })
 
-test_that("glassTabsUI() tab alignment classes are emitted", {
+test_that("glassTabsUI() tab and text alignment classes are emitted", {
   centered <- as.character(glassTabsUI(
     "nav",
     glassTabPanel("a", "A", selected = TRUE)
@@ -243,12 +289,15 @@ test_that("glassTabsUI() tab alignment classes are emitted", {
   right <- as.character(glassTabsUI(
     "nav",
     glassTabPanel("a", "A", selected = TRUE),
-    tab_align = "right"
+    tab_align = "right",
+    text_align = "left"
   ))
 
   expect_true(grepl("gt-align-center", centered, fixed = TRUE))
+  expect_true(grepl("gt-text-align-center", centered, fixed = TRUE))
   expect_true(grepl("gt-align-left", left, fixed = TRUE))
   expect_true(grepl("gt-align-right", right, fixed = TRUE))
+  expect_true(grepl("gt-text-align-left", right, fixed = TRUE))
 })
 
 test_that("glassTabsUI() rejects invalid indicator, orientation, and tab alignment", {
@@ -267,6 +316,21 @@ test_that("glassTabsUI() rejects invalid indicator, orientation, and tab alignme
     glassTabPanel("a", "A", selected = TRUE),
     tab_align = "wide"
   ), class = "glasstabs_error_bad_argument")
+  expect_error(glassTabsUI(
+    "nav",
+    glassTabPanel("a", "A", selected = TRUE),
+    text_align = "wide"
+  ), class = "glasstabs_error_bad_argument")
+  expect_error(
+    glassTabsUI(
+      "nav",
+      glassTabPanel("a", "A", selected = TRUE),
+      orientation = "vertical",
+      overflow = "menu"
+    ),
+    "available only for horizontal tabs",
+    class = "glasstabs_error_bad_choice"
+  )
 })
 
 

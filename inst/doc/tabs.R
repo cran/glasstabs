@@ -39,6 +39,33 @@ knitr::opts_chunk$set(eval = FALSE)
 #   observe(message("Active: ", active()))
 # }
 
+## ----overflow-scroll----------------------------------------------------------
+# glassTabsUI(
+#   "reports",
+#   glassTabPanel("summary", "Summary", selected = TRUE, summary_ui),
+#   glassTabPanel("activity", "Recent activity", activity_ui),
+#   glassTabPanel("quality", "Data quality", quality_ui),
+#   glassTabPanel("settings", "Team settings", settings_ui),
+#   overflow = "scroll"
+# )
+
+## ----overflow-menu------------------------------------------------------------
+# glassTabsUI(
+#   "compact_nav",
+#   glassTabPanel("queue", "Queue", selected = TRUE, queue_ui),
+#   glassTabPanel("review", "In review", review_ui),
+#   glassTabPanel("complete", "Complete", complete_ui),
+#   overflow = "menu"
+# )
+
+## ----swipe--------------------------------------------------------------------
+# glassTabsUI(
+#   "story",
+#   glassTabPanel("today", "Today", selected = TRUE, today_ui),
+#   glassTabPanel("week", "This week", week_ui),
+#   swipe = TRUE
+# )
+
 ## ----indicators---------------------------------------------------------------
 # glassTabsUI("nav",
 #   glassTabPanel("overview", "Overview", selected = TRUE, p("Overview")),
@@ -80,6 +107,7 @@ knitr::opts_chunk$set(eval = FALSE)
 #   glassTabPanel("done", "Done", p("Completed queue")),
 #   orientation = "vertical",
 #   tab_align = "right",
+#   text_align = "left",
 #   indicator = "solid"
 # )
 

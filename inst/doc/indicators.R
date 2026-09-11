@@ -95,6 +95,7 @@ knitr::opts_chunk$set(eval = FALSE)
 #     orientation = "vertical",
 #     indicator = "solid",
 #     tab_align = "left",
+#     text_align = "left",
 #     theme = "auto"
 #   )
 # )

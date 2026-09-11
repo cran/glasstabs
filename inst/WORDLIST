@@ -8,6 +8,7 @@ DOM
 Dropdown
 HSL
 JS
+Multiline
 README
 RTL
 Shiny's
@@ -16,6 +17,11 @@ UI
 bootAll
 bs
 bslib
+fallbacks
+fillable
+glassPage
+scrollable
+scrollers
 changelog
 cheatsheet
 checkmarks
@@ -45,6 +51,8 @@ initialised
 initialises
 lifecycle
 listbox
+multiline
+teleported
 morphism
 namespaced
 namespacing

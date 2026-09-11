@@ -8,6 +8,14 @@ knitr::opts_chunk$set(eval = FALSE)
 # )
 
 ## -----------------------------------------------------------------------------
+# ui <- glassPage(
+#   title = "Review",
+#   lang = "en",
+#   theme = bslib::bs_theme(version = 5),
+#   h2("Review queue")
+# )
+
+## -----------------------------------------------------------------------------
 # ui <- fluidPage(
 #   useGlassTabs(),
 #   glassTabsUI(

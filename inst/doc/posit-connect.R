@@ -9,9 +9,11 @@ knitr::opts_chunk$set(eval = FALSE)
 # }
 
 ## -----------------------------------------------------------------------------
+# pak::pak("PrigasG/glasstabs")
 # rsconnect::writeManifest(appDir = "inst/examples/connect-workflow")
 
 ## -----------------------------------------------------------------------------
+# rsconnect::writeManifest(appDir = "inst/examples/connect-workflow")
 # rsconnect::deployApp(
 #   appDir = "inst/examples/connect-workflow",
 #   appName = "glasstabs-connect-workflow",
@@ -22,6 +24,7 @@ knitr::opts_chunk$set(eval = FALSE)
 # example_dir <- system.file("examples", "connect-workflow", package = "glasstabs")
 # file.copy(example_dir, "connect-workflow", recursive = TRUE)
 # 
+# rsconnect::writeManifest(appDir = "connect-workflow")
 # rsconnect::deployApp(
 #   appDir = "connect-workflow",
 #   appName = "glasstabs-connect-workflow",

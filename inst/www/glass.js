@@ -13,8 +13,8 @@
        Subtract clientLeft/clientTop so a border on fallback containers
        (.card-body, .box-body) doesn't shift the halo. */
     return {
-      x: r.left + r.width / 2 - cr.left - container.clientLeft,
-      y: r.top + r.height / 2 - cr.top - container.clientTop,
+      x: r.left + r.width / 2 - cr.left - container.clientLeft + container.scrollLeft,
+      y: r.top + r.height / 2 - cr.top - container.clientTop + container.scrollTop,
       w: r.width,
       h: r.height
     };
@@ -23,10 +23,10 @@
   function rectOf(el, container) {
     var r = el.getBoundingClientRect();
     var cr = container.getBoundingClientRect();
-    var x1 = r.left - cr.left - container.clientLeft;
-    var y1 = r.top - cr.top - container.clientTop;
-    var x2 = r.right - cr.left - container.clientLeft;
-    var y2 = r.bottom - cr.top - container.clientTop;
+    var x1 = r.left - cr.left - container.clientLeft + container.scrollLeft;
+    var y1 = r.top - cr.top - container.clientTop + container.scrollTop;
+    var x2 = r.right - cr.left - container.clientLeft + container.scrollLeft;
+    var y2 = r.bottom - cr.top - container.clientTop + container.scrollTop;
     return {
       x: x1,
       y: y1,
@@ -103,6 +103,23 @@
     }
   }
 
+  function reducedMotion() {
+    return !!(window.matchMedia &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  }
+
+  /* Keep inactive panels out of both keyboard focus and the accessibility
+     tree. `inert` is the behavioral guard; ARIA remains useful to older
+     assistive technology and makes the panel state explicit. */
+  function setPaneActive(pane, isActive) {
+    if (!pane) return;
+    pane.classList.toggle('active', isActive);
+    pane.setAttribute('aria-hidden', isActive ? 'false' : 'true');
+    pane.setAttribute('tabindex', isActive ? '0' : '-1');
+    if (isActive) pane.removeAttribute('inert');
+    else pane.setAttribute('inert', '');
+  }
+
   /** Hide group headers whose options are all hidden (e.g. by search).
       Walks the options container once; a header is shown only when at least
       one option between it and the next header is visible. */
@@ -126,6 +143,68 @@
       }
     }
     if (header) header.classList.toggle('hidden', !anyVisible);
+  }
+
+  function createOptionNavigator(dropdown, selector, owner, idPrefix) {
+    var active = null;
+
+    function options() {
+      return Array.from(dropdown.querySelectorAll(selector)).filter(function (el) {
+        return !el.classList.contains('hidden') && !el.classList.contains('disabled');
+      });
+    }
+
+    function prepare() {
+      Array.from(dropdown.querySelectorAll(selector)).forEach(function (el, index) {
+        if (!el.id) el.id = idPrefix + '-' + (index + 1);
+      });
+      if (active && !options().includes(active)) setActive(null);
+    }
+
+    function setActive(el) {
+      if (active) active.classList.remove('gt-option-active');
+      active = el || null;
+      var focusOwner = owner();
+      if (active) {
+        active.classList.add('gt-option-active');
+        if (focusOwner) focusOwner.setAttribute('aria-activedescendant', active.id);
+        if (active.scrollIntoView) active.scrollIntoView({ block: 'nearest' });
+      } else if (focusOwner) {
+        focusOwner.removeAttribute('aria-activedescendant');
+      }
+    }
+
+    function move(where) {
+      prepare();
+      var available = options();
+      if (!available.length) {
+        setActive(null);
+        return null;
+      }
+      var index = available.indexOf(active);
+      if (index < 0) {
+        index = available.findIndex(function (el) {
+          return el.classList.contains('selected') || el.classList.contains('checked');
+        });
+      }
+      if (where === 'current') index = index < 0 ? 0 : index;
+      else if (where === 'first') index = 0;
+      else if (where === 'last') index = available.length - 1;
+      else if (where > 0) index = index < 0 ? 0 : (index + 1) % available.length;
+      else index = index < 0 ? available.length - 1
+        : (index - 1 + available.length) % available.length;
+      setActive(available[index]);
+      return active;
+    }
+
+    prepare();
+    return {
+      current: function () { return active; },
+      move: move,
+      prepare: prepare,
+      clear: function () { setActive(null); },
+      set: setActive
+    };
   }
 
   /** Build a group-header node for the rebuilt-from-payload path. */
@@ -156,7 +235,7 @@
   }
 
   var MS_VARS = [
-    '--ms-bg','--ms-border','--ms-text','--ms-accent','--ms-label',
+    '--ms-bg','--ms-border','--ms-text','--ms-accent','--ms-focus-ring','--ms-label',
     '--ms-ac-12','--ms-ac-16','--ms-ac-18','--ms-ac-22','--ms-ac-28',
     '--ms-ac-32','--ms-ac-40','--ms-ac-55','--ms-ac-60','--ms-ac-75',
     '--ms-tx-03','--ms-tx-04','--ms-tx-05','--ms-tx-06','--ms-tx-08',
@@ -175,9 +254,11 @@
     var isLight = wrap.classList.contains('theme-light');
     var fallbacks = isLight
       ? { '--ms-bg': 'rgba(255,255,255,0.98)', '--ms-border': 'rgba(0,0,0,0.12)',
-          '--ms-text': '#111111', '--ms-accent': '#2563eb', '--ms-label': '#111111' }
+          '--ms-text': '#111111', '--ms-accent': '#2563eb',
+          '--ms-focus-ring': '#1d4ed8', '--ms-label': '#111111' }
       : { '--ms-bg': 'rgba(9,20,42,0.97)', '--ms-border': 'rgba(255,255,255,0.10)',
-          '--ms-text': '#cfe6ff', '--ms-accent': '#7ec3f7', '--ms-label': '#cfe6ff' };
+          '--ms-text': '#cfe6ff', '--ms-accent': '#7ec3f7',
+          '--ms-focus-ring': '#7ec3f7', '--ms-label': '#cfe6ff' };
     MS_VARS.forEach(function (v) {
       var val = cs.getPropertyValue(v).trim();
       if (val) dropdown.style.setProperty(v, val);
@@ -272,6 +353,46 @@
     closeDropdownWrap(document.querySelector(selector + attrEquals('data-input-id', inputId)));
   }
 
+  /** Release all listeners, observers, timers, and animations owned by a tab bar. */
+  function destroyTabs(navbar) {
+    if (!navbar) return;
+
+    if (navbar._gtTabTimers) {
+      navbar._gtTabTimers.forEach(function (id) { clearTimeout(id); });
+    }
+    if (navbar._gtClickHandler) navbar.removeEventListener('click', navbar._gtClickHandler);
+    if (navbar._gtKeyHandler) document.removeEventListener('keydown', navbar._gtKeyHandler);
+    if (navbar._gtResizeHandler) window.removeEventListener('resize', navbar._gtResizeHandler);
+    if (navbar._gtScrollHandler && navbar._gtViewport) {
+      navbar._gtViewport.removeEventListener('scroll', navbar._gtScrollHandler);
+    }
+    if (navbar._gtMenuHandler && navbar._gtMenuSelect) {
+      navbar._gtMenuSelect.removeEventListener('change', navbar._gtMenuHandler);
+    }
+    if (navbar._gtSwipeStart && navbar._gtPaneWrap) {
+      navbar._gtPaneWrap.removeEventListener('touchstart', navbar._gtSwipeStart);
+      navbar._gtPaneWrap.removeEventListener('touchend', navbar._gtSwipeEnd);
+      navbar._gtPaneWrap.removeEventListener('touchcancel', navbar._gtSwipeCancel);
+    }
+    if (navbar._gtResizeObserver) navbar._gtResizeObserver.disconnect();
+
+    [navbar._gtHalo, navbar._gtTransfer].forEach(function (element) {
+      if (element && typeof element.getAnimations === 'function') {
+        element.getAnimations().forEach(function (animation) { animation.cancel(); });
+      }
+    });
+
+    navbar._gtTabTimers = [];
+    navbar._gtClickHandler = navbar._gtKeyHandler = navbar._gtResizeHandler = null;
+    navbar._gtScrollHandler = navbar._gtMenuHandler = navbar._gtRefresh = null;
+    navbar._gtActivate = navbar._gtSwipeStart = navbar._gtSwipeEnd = null;
+    navbar._gtSwipeCancel = navbar._gtResizeObserver = null;
+    navbar._gtViewport = navbar._gtMenuSelect = navbar._gtPaneWrap = null;
+    navbar._gtHalo = navbar._gtTransfer = navbar._gtHaloTarget = null;
+    navbar._gtAnimationUntil = 0;
+    navbar._gtTabsInit = false;
+  }
+
   /* TAB ENGINE */
   function initTabs(navbar) {
     function clearTabTimers() {
@@ -281,17 +402,8 @@
       navbar._gtTabTimers = [];
     }
 
-    /* Clean up previous init so dynamic tabs can safely re-initialize */
-    if (navbar._gtTabsInit) {
-      clearTabTimers();
-      if (navbar._gtClickHandler)  navbar.removeEventListener('click',   navbar._gtClickHandler);
-      if (navbar._gtKeyHandler)    document.removeEventListener('keydown', navbar._gtKeyHandler);
-      if (navbar._gtResizeHandler) window.removeEventListener('resize',  navbar._gtResizeHandler);
-      if (navbar._gtResizeObserver) navbar._gtResizeObserver.disconnect();
-      navbar._gtClickHandler = navbar._gtKeyHandler = navbar._gtResizeHandler = navbar._gtActivate = null;
-      navbar._gtResizeObserver = null;
-    }
-    navbar._gtTabsInit = true;
+    /* Clean up previous init so dynamic tabs can safely re-initialize. */
+    if (navbar._gtTabsInit) destroyTabs(navbar);
     navbar._gtTabTimers = navbar._gtTabTimers || [];
 
     var ns = navbar.getAttribute('data-ns');
@@ -304,14 +416,24 @@
 
     if (!container) return;
 
-    var halo = container.querySelector('.gt-halo');
-    var trf = container.querySelector('.gt-transfer');
+    var viewport = navbar.closest('.gt-tab-viewport') || container;
+    var indicatorHost = viewport;
+    var paneWrap = container.querySelector(':scope > .gt-tab-wrap');
+    var menuSelect = document.getElementById(ns + '-menu');
+    var halo = viewport.querySelector('.gt-halo') || container.querySelector('.gt-halo');
+    var trf = viewport.querySelector('.gt-transfer') || container.querySelector('.gt-transfer');
     var links = Array.from(navbar.querySelectorAll('.gt-tab-link'));
     var activeEl = links.find(function (l) { return l.classList.contains('active'); }) || links[0];
 
     if (!halo || !trf || links.length === 0 || !activeEl) return;
 
+    navbar._gtTabsInit = true;
+    navbar._gtHalo = halo;
+    navbar._gtTransfer = trf;
+
     var active = activeEl.getAttribute('data-value');
+    var pending = null;
+    var lastNotified = active;
     if (window.Shiny && window.Shiny.setInputValue) {
       Shiny.setInputValue(ns + '-active_tab', active, { priority: 'deferred' });
     }
@@ -325,12 +447,25 @@
       var v = l.getAttribute('data-value');
       var pane = document.getElementById(ns + '-pane-' + v);
       if (!pane) return;
-      if (l === activeEl) {
-        pane.classList.add('active');
-      } else {
-        pane.classList.remove('active');
-      }
+      setPaneActive(pane, l === activeEl);
     });
+
+    function isVisible(link) {
+      return link && !link.classList.contains('gt-tab-hidden');
+    }
+
+    function isAvailable(link) {
+      return isVisible(link) &&
+        !link.classList.contains('gt-tab-disabled');
+    }
+
+    function availableLinks() {
+      return Array.from(navbar.querySelectorAll('.gt-tab-link')).filter(isAvailable);
+    }
+
+    function navigableLinks() {
+      return Array.from(navbar.querySelectorAll('.gt-tab-link')).filter(isVisible);
+    }
 
     function currentVisibleOrder() {
       return Array.from(navbar.querySelectorAll('.gt-tab-link'))
@@ -338,12 +473,77 @@
         .map(function (l) { return l.getAttribute('data-value'); });
     }
 
+    function syncTabStops() {
+      var available = navigableLinks();
+      var activeLink = navbar.querySelector('.gt-tab-link.active');
+      var focusable = isVisible(activeLink) ? activeLink : available[0];
+      Array.from(navbar.querySelectorAll('.gt-tab-link')).forEach(function (link) {
+        link.setAttribute('tabindex', link === focusable ? '0' : '-1');
+      });
+    }
+
+    /* Horizontal buttons usually shrink to their labels, leaving no visible
+       space for left/right text alignment. When a non-centered alignment is
+       requested, match every visible button to the widest one. The tab group
+       still keeps its own independent alignment and overflow behavior. */
+    function syncTextWidths() {
+      links.forEach(function (link) { link.style.minWidth = ''; });
+      if (container.classList.contains('gt-vertical') ||
+          container.classList.contains('gt-text-align-center')) return;
+
+      var visible = links.filter(function (link) {
+        return !link.classList.contains('gt-tab-hidden');
+      });
+      var widest = visible.reduce(function (width, link) {
+        return Math.max(width, link.getBoundingClientRect().width);
+      }, 0);
+      if (widest <= 0) return;
+      visible.forEach(function (link) {
+        link.style.minWidth = Math.ceil(widest) + 'px';
+      });
+    }
+
+    function syncMenu() {
+      if (!menuSelect) return;
+      var previous = menuSelect.value;
+      menuSelect.innerHTML = '';
+      Array.from(navbar.querySelectorAll('.gt-tab-link')).forEach(function (link) {
+        if (link.classList.contains('gt-tab-hidden')) return;
+        var option = document.createElement('option');
+        option.value = link.getAttribute('data-value');
+        var label = link.querySelector('.gt-tab-label');
+        option.textContent = (label || link).textContent.trim();
+        option.disabled = link.classList.contains('gt-tab-disabled');
+        option.selected = link.classList.contains('active');
+        menuSelect.appendChild(option);
+      });
+      var selected = navbar.querySelector('.gt-tab-link.active');
+      if (selected) menuSelect.value = selected.getAttribute('data-value');
+      else if (previous) menuSelect.value = previous;
+    }
+
+    function ensureTabVisible(el, smooth) {
+      if (!el || viewport === container || container.classList.contains('gt-vertical')) return;
+      if (!container.classList.contains('gt-overflow-scroll')) return;
+      var er = el.getBoundingClientRect();
+      var vr = viewport.getBoundingClientRect();
+      var delta = 0;
+      if (er.left < vr.left + 8) delta = er.left - vr.left - 12;
+      else if (er.right > vr.right - 8) delta = er.right - vr.right + 12;
+      if (delta) {
+        viewport.scrollBy({
+          left: delta,
+          behavior: smooth && !reducedMotion() ? 'smooth' : 'auto'
+        });
+      }
+    }
+
     var cs = getComputedStyle(container);
     if (cs.position === 'static') container.style.position = 'relative';
 
     function placeHalo(el, immediate, scale) {
       if (!el || !container.isConnected) return;
-      var r = rectOf(el, container);
+      var r = rectOf(el, indicatorHost);
       var s = scale || 1;
       /* Tight fit: derive from the tab's exact rendered edges. This avoids
          center/width rounding mismatches that can leave a visible right spill. */
@@ -425,7 +625,7 @@
     }
 
     function animateTransfer(fromEl, toEl) {
-      if (!fromEl || !toEl) return 200;
+      if (!fromEl || !toEl || reducedMotion()) return 0;
 
       var order = currentVisibleOrder();
       var fi = order.indexOf(fromEl.getAttribute('data-value'));
@@ -436,8 +636,8 @@
       var pts = [];
 
       for (var i = fi; step > 0 ? i <= ti : i >= ti; i += step) {
-        var link = navbar.querySelector('.gt-tab-link[data-value="' + order[i] + '"]');
-        if (link) pts.push(centerOf(link, container));
+        var link = navbar.querySelector('.gt-tab-link' + attrEquals('data-value', order[i]));
+        if (link) pts.push(centerOf(link, indicatorHost));
       }
 
       if (pts.length === 0) return 200;
@@ -478,42 +678,118 @@
       return dur;
     }
 
+    function cancelVisualTransfer() {
+      if (trf.getAnimations) {
+        trf.getAnimations().forEach(function (animation) { animation.cancel(); });
+      }
+      if (halo.getAnimations) {
+        halo.getAnimations().forEach(function (animation) { animation.cancel(); });
+      }
+      trf.style.opacity = '0';
+      halo.classList.remove('gt-arrival-pulse');
+      halo.style.opacity = '0.92';
+      navbar._gtAnimationUntil = 0;
+      navbar._gtHaloTarget = null;
+    }
+
+    function pulseArrival(el) {
+      placeHalo(el, true, 1.0);
+      halo.style.opacity = '0.92';
+      if (reducedMotion()) return;
+      halo.classList.remove('gt-arrival-pulse');
+      void halo.offsetWidth;
+      halo.classList.add('gt-arrival-pulse');
+    }
+
+    function commitSwitch(target, options) {
+      var settings = options || {};
+      if (settings.cancelAnimation) cancelVisualTransfer();
+
+      var targetLink = navbar.querySelector(
+        '.gt-tab-link' + attrEquals('data-value', target)
+      );
+      if (!targetLink) return false;
+
+      Array.from(navbar.querySelectorAll('.gt-tab-link')).forEach(function (link) {
+        var selected = link === targetLink;
+        link.classList.toggle('active', selected);
+        link.setAttribute('aria-selected', selected ? 'true' : 'false');
+        var value = link.getAttribute('data-value');
+        setPaneActive(document.getElementById(ns + '-pane-' + value), selected);
+      });
+
+      active = target;
+      pending = null;
+      syncTabStops();
+      syncMenu();
+
+      if (settings.notify && lastNotified !== target) {
+        lastNotified = target;
+        if (window.Shiny) {
+          Shiny.setInputValue(ns + '-active_tab', target, { priority: 'event' });
+        }
+        triggerShinyChange(navbar);
+      }
+      return true;
+    }
+
     /* Activate a tab by value. skipFromAnim = true skips the transfer
        animation (used when the previous tab is hidden or removed). */
-    function activateTab(target, skipFromAnim) {
+    function activateTab(target, skipFromAnim, moveFocus) {
+      var interrupted = pending !== null ||
+        (navbar._gtAnimationUntil && Date.now() < navbar._gtAnimationUntil);
       clearTabTimers();
 
-      var toEl = navbar.querySelector('.gt-tab-link[data-value="' + target + '"]');
-      if (!toEl || target === active) return;
+      if (pending !== null) {
+        /* Reconcile the abandoned destination without notifying Shiny. The
+           next settled destination is the only state the server should see. */
+        commitSwitch(pending, { cancelAnimation: true, notify: false });
+      } else if (interrupted) {
+        cancelVisualTransfer();
+      }
+
+      if (interrupted) skipFromAnim = true;
+
+      var toEl = navbar.querySelector('.gt-tab-link' + attrEquals('data-value', target));
+      if (!isAvailable(toEl)) return;
+      if (target === active) {
+        if (interrupted) pulseArrival(toEl);
+        syncTabStops();
+        syncMenu();
+        ensureTabVisible(toEl, true);
+        if (moveFocus) toEl.focus();
+        return;
+      }
 
       var fromEl = skipFromAnim ? null
-        : navbar.querySelector('.gt-tab-link[data-value="' + active + '"]');
+        : navbar.querySelector('.gt-tab-link' + attrEquals('data-value', active));
+
+      navbar._gtHaloTarget = target;
 
       navbar.querySelectorAll('.gt-tab-link').forEach(function (t) {
         t.classList.remove('active');
         t.setAttribute('aria-selected', 'false');
+        t.setAttribute('tabindex', '-1');
       });
       toEl.classList.add('active');
       toEl.setAttribute('aria-selected', 'true');
+      toEl.setAttribute('tabindex', '0');
+      syncMenu();
+      ensureTabVisible(toEl, true);
+      if (moveFocus) toEl.focus();
 
-      var animated = fromEl && !fromEl.classList.contains('gt-tab-hidden');
+      var animated = !reducedMotion() && fromEl && !fromEl.classList.contains('gt-tab-hidden');
       if (animated) {
         placeHalo(fromEl, true, 1.0);
         halo.style.opacity = '0.38';
       }
 
       var dur = animated ? animateTransfer(fromEl, toEl) : 0;
+      if (dur > 0) navbar._gtAnimationUntil = Date.now() + dur;
+      pending = target;
 
       navbar._gtTabTimers.push(setTimeout(function () {
-        /* Use the namespace-qualified ID so we never accidentally deactivate
-           a nested glassTabsUI pane that also carries gt-tab-pane.active */
-        var ap = document.getElementById(ns + '-pane-' + active);
-        if (ap) ap.classList.remove('active');
-        var next = document.getElementById(ns + '-pane-' + target);
-        if (next) next.classList.add('active');
-        active = target;
-        if (window.Shiny) Shiny.setInputValue(ns + '-active_tab', target, { priority: 'event' });
-        triggerShinyChange(navbar);
+        commitSwitch(target, { notify: true });
       }, dur > 0 ? Math.max(100, dur * 0.50) : 0));
 
       if (dur > 0) {
@@ -525,13 +801,14 @@
         }, dur * 0.60));
 
         navbar._gtTabTimers.push(setTimeout(function () {
-          placeHalo(toEl, true, 1.0);
-          halo.classList.remove('gt-arrival-pulse');
-          void halo.offsetWidth;
-          halo.classList.add('gt-arrival-pulse');
+          navbar._gtAnimationUntil = 0;
+          pulseArrival(toEl);
+          navbar._gtHaloTarget = null;
         }, dur));
       } else {
-        placeHalo(toEl, true, 1.0);
+        if (interrupted || skipFromAnim) pulseArrival(toEl);
+        else placeHalo(toEl, true, 1.0);
+        navbar._gtHaloTarget = null;
         navbar._gtTabTimers.push(setTimeout(function () { placeHalo(toEl, false, 1.0); }, 80));
       }
     }
@@ -546,22 +823,30 @@
         requestAnimationFrame(function () {
           requestAnimationFrame(function () {
             placeHalo(el, true, 1.0);
+            ensureTabVisible(el, false);
           });
         });
       });
     }
 
+    syncTextWidths();
     initHalo();
+    syncTabStops();
+    syncMenu();
 
     if (document.fonts && document.fonts.ready) {
-      document.fonts.ready.then(initHalo).catch(function () {});
+      document.fonts.ready.then(function () {
+        syncTextWidths();
+        initHalo();
+      }).catch(function () {});
     }
 
     /* Single delegated click handler - covers dynamically appended tabs */
     navbar._gtClickHandler = function (e) {
       var link = e.target.closest ? e.target.closest('.gt-tab-link') : null;
       if (!link || link.classList.contains('gt-tab-hidden')) return;
-      activateTab(link.getAttribute('data-value'));
+      if (link.classList.contains('gt-tab-disabled')) return;
+      activateTab(link.getAttribute('data-value'), false, true);
     };
     navbar.addEventListener('click', navbar._gtClickHandler);
 
@@ -572,41 +857,149 @@
         var focused = document.activeElement && document.activeElement.closest
           ? document.activeElement.closest('.gt-tab-link')
           : null;
-        if (focused && !focused.classList.contains('gt-tab-hidden')) {
+        if (isVisible(focused)) {
           e.preventDefault();
-          activateTab(focused.getAttribute('data-value'));
+          if (isAvailable(focused)) {
+            activateTab(focused.getAttribute('data-value'), false, true);
+          }
         }
         return;
       }
 
       var isNext = e.key === 'ArrowRight' || e.key === 'ArrowDown';
       var isPrev = e.key === 'ArrowLeft'  || e.key === 'ArrowUp';
-      if (!isNext && !isPrev) return;
+      var isEdge = e.key === 'Home' || e.key === 'End';
+      if (!isNext && !isPrev && !isEdge) return;
 
       /* Up/Down only act in vertical orientation (so they don't hijack
          page scrolling in horizontal layouts); Left/Right always work. */
       var vertical = container.classList.contains('gt-vertical');
       if (!vertical && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) return;
 
-      var visibleOrder = currentVisibleOrder();
-      var idx = visibleOrder.indexOf(active);
+      var choices = navigableLinks();
+      if (!choices.length) return;
+      var focusedTab = document.activeElement && document.activeElement.closest
+        ? document.activeElement.closest('.gt-tab-link') : null;
+      var idx = choices.indexOf(focusedTab);
+      if (idx < 0) idx = choices.findIndex(function (link) {
+        return link.getAttribute('data-value') === active;
+      });
       if (idx < 0) return;
 
       e.preventDefault();
 
-      if (isNext) {
-        activateTab(visibleOrder[(idx + 1) % visibleOrder.length]);
+      var destination;
+      if (e.key === 'Home') destination = choices[0];
+      else if (e.key === 'End') destination = choices[choices.length - 1];
+      else if (isNext) destination = choices[(idx + 1) % choices.length];
+      else destination = choices[(idx - 1 + choices.length) % choices.length];
+      if (isAvailable(destination)) {
+        activateTab(destination.getAttribute('data-value'), false, true);
       } else {
-        activateTab(visibleOrder[(idx - 1 + visibleOrder.length) % visibleOrder.length]);
+        choices.forEach(function (link) {
+          link.setAttribute('tabindex', link === destination ? '0' : '-1');
+        });
+        ensureTabVisible(destination, true);
+        destination.focus();
       }
     };
     document.addEventListener('keydown', navbar._gtKeyHandler);
 
-    navbar._gtResizeHandler = function () {
-      var activeLink = navbar.querySelector('.gt-tab-link[data-value="' + active + '"]');
+    function realignHalo() {
+      /* Pane changes can resize a vertical widget halfway through a tab
+         transition. Ignore that temporary geometry change so ResizeObserver
+         does not snap the halo before its movement begins. The final animation
+         timer places it exactly once the transition completes. */
+      if (navbar._gtAnimationUntil && Date.now() < navbar._gtAnimationUntil) return;
+      var haloValue = navbar._gtHaloTarget || active;
+      var activeLink = navbar.querySelector(
+        '.gt-tab-link' + attrEquals('data-value', haloValue)
+      );
       if (activeLink) placeHalo(activeLink, true, 1.0);
+    }
+
+    navbar._gtResizeHandler = function () {
+      syncTextWidths();
+      realignHalo();
+      syncTabStops();
+      syncMenu();
     };
     window.addEventListener('resize', navbar._gtResizeHandler);
+
+    navbar._gtViewport = viewport;
+    navbar._gtScrollHandler = debounce(function () {
+      realignHalo();
+    }, 10);
+    viewport.addEventListener('scroll', navbar._gtScrollHandler, { passive: true });
+
+    if (menuSelect) {
+      navbar._gtMenuSelect = menuSelect;
+      navbar._gtMenuHandler = function () {
+        activateTab(menuSelect.value, false, false);
+      };
+      menuSelect.addEventListener('change', navbar._gtMenuHandler);
+    }
+
+    navbar._gtRefresh = function () {
+      links = Array.from(navbar.querySelectorAll('.gt-tab-link'));
+      syncTextWidths();
+      syncTabStops();
+      syncMenu();
+      navbar._gtResizeHandler();
+    };
+
+    function swipeIgnored(target) {
+      var node = target;
+      var blocked = 'a,button,input,select,textarea,label,[contenteditable="true"],' +
+        '[role="button"],[role="slider"],.html-widget,.shiny-bound-output,[data-gt-no-swipe]';
+      while (node && node !== paneWrap) {
+        if (node.matches && node.matches(blocked)) return true;
+        if (node.nodeType === 1 && node.clientWidth > 0 && node.scrollWidth > node.clientWidth + 2) {
+          var overflowX = getComputedStyle(node).overflowX;
+          if (overflowX === 'auto' || overflowX === 'scroll') return true;
+        }
+        node = node.parentElement;
+      }
+      return false;
+    }
+
+    if (paneWrap && parseBoolAttr(container, 'data-swipe')) {
+      var swipeState = null;
+      navbar._gtPaneWrap = paneWrap;
+      navbar._gtSwipeStart = function (e) {
+        if (e.touches.length !== 1 || swipeIgnored(e.target)) {
+          swipeState = null;
+          return;
+        }
+        swipeState = { x: e.touches[0].clientX, y: e.touches[0].clientY, at: Date.now() };
+      };
+      navbar._gtSwipeEnd = function (e) {
+        if (!swipeState || !e.changedTouches.length) return;
+        var touch = e.changedTouches[0];
+        var dx = touch.clientX - swipeState.x;
+        var dy = touch.clientY - swipeState.y;
+        var elapsed = Date.now() - swipeState.at;
+        swipeState = null;
+        if (elapsed > 800 || Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy) * 1.25) return;
+
+        var choices = availableLinks();
+        var idx = choices.findIndex(function (link) {
+          return link.getAttribute('data-value') === active;
+        });
+        if (idx < 0 || choices.length < 2) return;
+        var rtl = getComputedStyle(container).direction === 'rtl';
+        var forward = dx < 0;
+        if (rtl) forward = !forward;
+        var next = forward
+          ? choices[(idx + 1) % choices.length]
+          : choices[(idx - 1 + choices.length) % choices.length];
+        activateTab(next.getAttribute('data-value'), false, false);
+      };
+      navbar._gtSwipeCancel = function () { swipeState = null; };
+      paneWrap.addEventListener('touchstart', navbar._gtSwipeStart, { passive: true });
+      paneWrap.addEventListener('touchend', navbar._gtSwipeEnd, { passive: true });
+      paneWrap.addEventListener('touchcancel', navbar._gtSwipeCancel, { passive: true });
+    }
 
     /* Re-place the halo whenever tab geometry changes without a window
        resize: badge count updates, label changes via renderUI, font swaps,
@@ -616,6 +1009,7 @@
       navbar._gtResizeObserver = new ResizeObserver(realign);
       navbar._gtResizeObserver.observe(navbar);
       navbar._gtResizeObserver.observe(container);
+      navbar._gtResizeObserver.observe(viewport);
       links.forEach(function (l) { navbar._gtResizeObserver.observe(l); });
     }
   }
@@ -688,6 +1082,13 @@
       }
       bindOption(el);
     });
+
+    var optionNav = createOptionNavigator(
+      dropdown,
+      '.gt-gs-option',
+      function () { return searchIn || trigger; },
+      inputId + '-option'
+    );
 
     /* State readers */
     function getValue() {
@@ -794,7 +1195,11 @@
       if (!opt || opt._gtBound) return;
       opt._gtBound = true;
 
+      opt.addEventListener('mouseenter', function () {
+        if (!opt.classList.contains('disabled')) optionNav.set(opt);
+      });
       opt.addEventListener('click', function () {
+        if (opt.classList.contains('disabled')) return;
         setValue(opt.getAttribute('data-value'), { notify: true });
         close();
         trigger.focus();
@@ -871,6 +1276,7 @@
       optionsBox.innerHTML = '';
       optionsBox.appendChild(frag);
       optionsBox.appendChild(statusRow);
+      optionNav.prepare();
 
       /* Re-apply search if active */
       if (!serverMode && state.query) {
@@ -893,6 +1299,7 @@
       });
 
       patchVisibility();
+      optionNav.prepare();
       updateStatus();
     }
 
@@ -914,7 +1321,7 @@
       else applySearchNow(searchIn ? searchIn.value : '');
     }, 75);
 
-    /* Position the dropdown below the trigger 
+    /* Position the dropdown below the trigger
        Uses document-space coordinates (viewport + scrollY) to match
        position:absolute on the body-appended teleported element.
        This avoids the position:fixed + overflow:hidden quirk in AdminLTE. */
@@ -923,6 +1330,8 @@
     }
 
     var openedAt = 0;
+    var openFrame = null;
+    var focusTimer = null;
 
     /* Open / Close */
     function open() {
@@ -931,7 +1340,9 @@
       teleportOpen(wrap, dropdown);
       /* rAF ensures the browser has laid out the element in body before we
          read offsetHeight (needed for the upward-flip calculation) */
-      requestAnimationFrame(function () {
+      openFrame = requestAnimationFrame(function () {
+        openFrame = null;
+        if (!wrap.classList.contains('gt-layer-active')) return;
         positionDropdown();
         dropdown.classList.add('open');
         trigger.classList.add('open');
@@ -940,16 +1351,30 @@
       setDropdownOpenState(wrap, inputId, true);
       openedAt = Date.now();
       /* Delay focus so synthetic-click re-fires from AdminLTE don't close us */
-      if (searchIn) setTimeout(function () { searchIn.focus(); }, 100);
+      focusTimer = setTimeout(function () {
+        focusTimer = null;
+        if (!wrap.classList.contains('gt-layer-active')) return;
+        optionNav.move('current');
+        if (searchIn) searchIn.focus();
+      }, 100);
     }
 
     function close() {
+      if (openFrame !== null) {
+        cancelAnimationFrame(openFrame);
+        openFrame = null;
+      }
+      if (focusTimer !== null) {
+        clearTimeout(focusTimer);
+        focusTimer = null;
+      }
       wrap.classList.remove('gt-layer-active');
       dropdown.classList.remove('open');
       trigger.classList.remove('open');
       trigger.setAttribute('aria-expanded', 'false');
       teleportClose(wrap, dropdown);
       setDropdownOpenState(wrap, inputId, false);
+      optionNav.clear();
     }
 
     function closeAndReturnFocus() {
@@ -977,20 +1402,39 @@
         e.preventDefault();
         if (dropdown.classList.contains('open')) closeAndReturnFocus();
         else open();
+      } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp' ||
+                 e.key === 'Home' || e.key === 'End') {
+        e.preventDefault();
+        if (!dropdown.classList.contains('open')) open();
+        setTimeout(function () {
+          if (e.key === 'Home') optionNav.move('first');
+          else if (e.key === 'End') optionNav.move('last');
+          else optionNav.move(e.key === 'ArrowDown' ? 1 : -1);
+        }, 110);
       } else if (e.key === 'Escape' || e.key === 'Tab') {
         closeAndReturnFocus();
       }
     });
 
     dropdown.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape' || e.key === 'Tab') closeAndReturnFocus();
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp' ||
+          e.key === 'Home' || e.key === 'End') {
+        e.preventDefault();
+        if (e.key === 'Home') optionNav.move('first');
+        else if (e.key === 'End') optionNav.move('last');
+        else optionNav.move(e.key === 'ArrowDown' ? 1 : -1);
+      } else if (e.key === 'Enter') {
+        var option = optionNav.current();
+        if (option) {
+          e.preventDefault();
+          setValue(option.getAttribute('data-value'), { notify: true });
+          close();
+          trigger.focus();
+        }
+      } else if (e.key === 'Escape' || e.key === 'Tab') {
+        closeAndReturnFocus();
+      }
     });
-
-    wrap._gtDocClickHandler = function (e) {
-      if (Date.now() - openedAt < 500) return;
-      if (!wrap.contains(e.target) && !dropdown.contains(e.target)) close();
-    };
-    document.addEventListener('pointerdown', wrap._gtDocClickHandler);
 
     /* Reposition on scroll/resize while open */
     wrap._gtScrollHandler = function (e) {
@@ -1014,10 +1458,6 @@
 
     /* Destroy (lifecycle teardown) */
     function destroy() {
-      if (wrap._gtDocClickHandler) {
-        document.removeEventListener('pointerdown', wrap._gtDocClickHandler);
-        wrap._gtDocClickHandler = null;
-      }
       if (wrap._gtScrollHandler) {
         window.removeEventListener('scroll', wrap._gtScrollHandler, true);
         window.removeEventListener('resize', wrap._gtScrollHandler);
@@ -1176,6 +1616,13 @@
       state.selected.add(v);
     });
 
+    var optionNav = createOptionNavigator(
+      dropdown,
+      '.gt-ms-option',
+      function () { return searchIn || trigger; },
+      inputId + '-option'
+    );
+
     /* State readers */
     function getValue() {
       /* Return in choice order, not Set insertion order */
@@ -1312,7 +1759,7 @@
 
     /* renderTags: reads from state, not DOM */
     function renderTags() {
-      var tagPanes = document.querySelectorAll('[data-tags-for="' + inputId + '"]');
+      var tagPanes = document.querySelectorAll(attrEquals('data-tags-for', inputId));
       if (tagPanes.length === 0) return;
 
       tagPanes.forEach(function (pane) {
@@ -1376,7 +1823,11 @@
       if (!opt || opt._gtBound) return;
       opt._gtBound = true;
 
+      opt.addEventListener('mouseenter', function () {
+        if (!opt.classList.contains('disabled')) optionNav.set(opt);
+      });
       opt.addEventListener('click', function () {
+        if (opt.classList.contains('disabled')) return;
         var v = opt.getAttribute('data-value');
         if (state.selected.has(v)) {
           state.selected.delete(v);
@@ -1461,6 +1912,7 @@
       optionsBox.innerHTML = '';
       optionsBox.appendChild(frag);
       optionsBox.appendChild(statusRow);
+      optionNav.prepare();
 
       /* Re-apply search if active */
       if (!serverMode && state.query) {
@@ -1483,6 +1935,7 @@
       });
 
       patchVisibility();
+      optionNav.prepare();
       /* Update allRow and counts without notifying Shiny */
       var vis = visibleChoices().length;
       var visSel = visibleSelectedCount();
@@ -1517,7 +1970,7 @@
       else applySearchNow(searchIn ? searchIn.value : '');
     }, 75);
 
-    /* Position the dropdown below the trigger 
+    /* Position the dropdown below the trigger
        Uses document-space coordinates (viewport + scrollY) to match
        position:absolute on the body-appended teleported element. */
     function positionDropdown() {
@@ -1525,13 +1978,17 @@
     }
 
     var openedAt = 0;
+    var openFrame = null;
+    var focusTimer = null;
 
     /* Open / Close */
     function open() {
       closeAllDropdowns(wrap);
       wrap.classList.add('gt-layer-active');
       teleportOpen(wrap, dropdown);
-      requestAnimationFrame(function () {
+      openFrame = requestAnimationFrame(function () {
+        openFrame = null;
+        if (!wrap.classList.contains('gt-layer-active')) return;
         positionDropdown();
         dropdown.classList.add('open');
         trigger.classList.add('open');
@@ -1540,16 +1997,30 @@
       setDropdownOpenState(wrap, inputId, true);
       openedAt = Date.now();
       /* Delay focus so synthetic-click re-fires from AdminLTE don't close us */
-      if (searchIn) setTimeout(function () { searchIn.focus(); }, 100);
+      focusTimer = setTimeout(function () {
+        focusTimer = null;
+        if (!wrap.classList.contains('gt-layer-active')) return;
+        optionNav.move('current');
+        if (searchIn) searchIn.focus();
+      }, 100);
     }
 
     function close() {
+      if (openFrame !== null) {
+        cancelAnimationFrame(openFrame);
+        openFrame = null;
+      }
+      if (focusTimer !== null) {
+        clearTimeout(focusTimer);
+        focusTimer = null;
+      }
       wrap.classList.remove('gt-layer-active');
       dropdown.classList.remove('open');
       trigger.classList.remove('open');
       trigger.setAttribute('aria-expanded', 'false');
       teleportClose(wrap, dropdown);
       setDropdownOpenState(wrap, inputId, false);
+      optionNav.clear();
     }
 
     function closeAndReturnFocus() {
@@ -1577,20 +2048,37 @@
         e.preventDefault();
         if (dropdown.classList.contains('open')) closeAndReturnFocus();
         else open();
+      } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp' ||
+                 e.key === 'Home' || e.key === 'End') {
+        e.preventDefault();
+        if (!dropdown.classList.contains('open')) open();
+        setTimeout(function () {
+          if (e.key === 'Home') optionNav.move('first');
+          else if (e.key === 'End') optionNav.move('last');
+          else optionNav.move(e.key === 'ArrowDown' ? 1 : -1);
+        }, 110);
       } else if (e.key === 'Escape' || e.key === 'Tab') {
         closeAndReturnFocus();
       }
     });
 
     dropdown.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape' || e.key === 'Tab') closeAndReturnFocus();
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp' ||
+          e.key === 'Home' || e.key === 'End') {
+        e.preventDefault();
+        if (e.key === 'Home') optionNav.move('first');
+        else if (e.key === 'End') optionNav.move('last');
+        else optionNav.move(e.key === 'ArrowDown' ? 1 : -1);
+      } else if (e.key === 'Enter' || e.key === ' ') {
+        var option = optionNav.current();
+        if (option) {
+          e.preventDefault();
+          option.click();
+        }
+      } else if (e.key === 'Escape' || e.key === 'Tab') {
+        closeAndReturnFocus();
+      }
     });
-
-    wrap._gtDocClickHandler = function (e) {
-      if (Date.now() - openedAt < 500) return;
-      if (!wrap.contains(e.target) && !dropdown.contains(e.target)) close();
-    };
-    document.addEventListener('pointerdown', wrap._gtDocClickHandler);
 
     /* Reposition on scroll/resize while open */
     wrap._gtScrollHandler = function (e) {
@@ -1652,10 +2140,6 @@
 
     /* Destroy (lifecycle teardown) */
     function destroy() {
-      if (wrap._gtDocClickHandler) {
-        document.removeEventListener('pointerdown', wrap._gtDocClickHandler);
-        wrap._gtDocClickHandler = null;
-      }
       if (wrap._gtScrollHandler) {
         window.removeEventListener('scroll', wrap._gtScrollHandler, true);
         window.removeEventListener('resize', wrap._gtScrollHandler);
@@ -1763,18 +2247,19 @@
         return ns ? ns + '-active_tab' : null;
       },
       getValue: function (el) {
-        initTabs(el);
+        if (!el._gtTabsInit || !el._gtActivate) initTabs(el);
         var activeLink = el.querySelector('.gt-tab-link.active');
         return activeLink ? activeLink.getAttribute('data-value') : null;
       },
       subscribe: function (el, callback) {
-        initTabs(el);
+        if (!el._gtTabsInit || !el._gtActivate) initTabs(el);
         $(el).on('change.glasstabs', function () {
           callback();
         });
       },
       unsubscribe: function (el) {
         $(el).off('.glasstabs');
+        destroyTabs(el);
       }
     });
     Shiny.inputBindings.register(glassTabsBinding, 'glasstabs.glassTabs');
@@ -1979,21 +2464,45 @@
     if (registerDropdownLifecycleHandlers._done) return;
     registerDropdownLifecycleHandlers._done = true;
 
+    /* Capture outside presses before overlays or other UI frameworks can stop
+       propagation. Dropdowns are teleported to <body>, so check the composed
+       event path rather than relying only on widget ancestry. */
+    document.addEventListener('pointerdown', function (e) {
+      var path = typeof e.composedPath === 'function' ? e.composedPath() : null;
+      document.querySelectorAll('.gt-gs-wrap.gt-layer-active, .gt-ms-wrap.gt-layer-active').forEach(function (w) {
+        var dd = w._gtDropdown || w.querySelector('.gt-gs-dropdown, .gt-ms-dropdown');
+        var insideWrap = path ? path.indexOf(w) !== -1 : w.contains(e.target);
+        var insideDropdown = dd && (path ? path.indexOf(dd) !== -1 : dd.contains(e.target));
+        if (!insideWrap && !insideDropdown) closeDropdownWrap(w);
+      });
+    }, true);
+
     window.addEventListener('resize', function () {
       closeAllDropdowns();
     });
 
-    document.addEventListener('hide.bs.tab', function () {
+    var bootstrapCloseEvents = [
+      'hide.bs.tab',
+      'hidden.bs.modal',
+      'hidden.bs.collapse',
+      'show.bs.modal',
+      'show.bs.offcanvas'
+    ];
+    var closeForBootstrapLayer = function () {
       closeAllDropdowns();
-    });
+    };
 
-    document.addEventListener('hidden.bs.modal', function () {
-      closeAllDropdowns();
+    /* Bootstrap 5 dispatches native events. Bootstrap 3 and 4 use jQuery
+       events, so register through both paths to cover the Shiny ecosystem. */
+    bootstrapCloseEvents.forEach(function (eventName) {
+      document.addEventListener(eventName, closeForBootstrapLayer);
     });
-
-    document.addEventListener('hidden.bs.collapse', function () {
-      closeAllDropdowns();
-    });
+    if (window.jQuery) {
+      window.jQuery(document).on(
+        bootstrapCloseEvents.join(' '),
+        closeForBootstrapLayer
+      );
+    }
 
     document.addEventListener('transitionstart', function (e) {
       var t = e.target;
@@ -2016,6 +2525,11 @@
     if (!link || link.classList.contains('gt-tab-hidden') || link.classList.contains('gt-tab-disabled')) return;
     var navbar = link.closest ? link.closest('.gt-navbar') : null;
     if (!navbar) return;
+    /* An initialized navbar already handled this event while it bubbled up.
+       Re-initializing here would clear its animation timers and snap the halo
+       straight to the destination. Keep this as a fallback only for markup
+       that was clicked before bootAll() or the mutation observer reached it. */
+    if (navbar._gtClickHandler && navbar._gtActivate) return;
     initTabs(navbar);
     if (navbar._gtActivate) navbar._gtActivate(link.getAttribute('data-value'));
   });
@@ -2028,6 +2542,7 @@
     if (!link || link.classList.contains('gt-tab-hidden') || link.classList.contains('gt-tab-disabled')) return;
     var navbar = link.closest ? link.closest('.gt-navbar') : null;
     if (!navbar) return;
+    if (navbar._gtKeyHandler && navbar._gtActivate) return;
     e.preventDefault();
     initTabs(navbar);
     if (navbar._gtActivate) navbar._gtActivate(link.getAttribute('data-value'));
@@ -2136,7 +2651,7 @@
       closeDropdownById(msg.inputId, msg.type);
     });
 
-    Shiny.addCustomMessageHandler('glasstabs_close_selects', function () {
+    Shiny.addCustomMessageHandler('glasstabs_close_selects', function (msg) {
       closeAllDropdowns();
     });
 
@@ -2168,6 +2683,7 @@
       link.classList.remove('gt-tab-hidden');
       link.style.display = '';
       link.setAttribute('aria-hidden', 'false');
+      if (navbar._gtRefresh) navbar._gtRefresh();
       if (navbar._gtResizeHandler) {
         setTimeout(function () { navbar._gtResizeHandler(); }, 0);
       }
@@ -2178,11 +2694,6 @@
       if (!navbar) return;
       var link = navbar.querySelector('.gt-tab-link' + attrEquals('data-value', msg.value));
       if (!link) return;
-      var container = navbar.closest('.gt-container, .gt-wrap-shell')
-        || navbar.closest('.card-body')
-        || navbar.closest('.box-body')
-        || (navbar.parentElement && navbar.parentElement.parentElement)
-        || navbar.parentElement;
       var pane = document.getElementById(msg.ns + '-pane-' + msg.value);
       var wasActive = link.classList.contains('active');
 
@@ -2191,21 +2702,28 @@
       link.style.display = 'none';
       link.setAttribute('aria-selected', 'false');
       link.setAttribute('aria-hidden', 'true');
-      if (pane) pane.classList.remove('active');
+      if (pane) {
+        setPaneActive(pane, false);
+      }
 
       if (wasActive && navbar._gtActivate) {
-        var first = navbar.querySelector('.gt-tab-link:not(.gt-tab-hidden)');
+        var first = navbar.querySelector(
+          '.gt-tab-link:not(.gt-tab-hidden):not(.gt-tab-disabled)'
+        );
         if (first) navbar._gtActivate(first.getAttribute('data-value'), true);
       } else if (!wasActive) {
         var currentActive = navbar.querySelector('.gt-tab-link.active:not(.gt-tab-hidden)');
         if (currentActive) {
           var currentPane = document.getElementById(msg.ns + '-pane-' + currentActive.getAttribute('data-value'));
-          if (currentPane && !currentPane.classList.contains('active')) currentPane.classList.add('active');
+          if (currentPane) {
+            setPaneActive(currentPane, true);
+          }
         }
       }
       if (!wasActive && navbar._gtResizeHandler) {
         setTimeout(function () { navbar._gtResizeHandler(); }, 0);
       }
+      if (navbar._gtRefresh) navbar._gtRefresh();
     });
 
     Shiny.addCustomMessageHandler('glasstabs_append_tab', function (msg) {
@@ -2220,7 +2738,7 @@
         || navbar.parentElement;
       if (!container) return;
 
-      var paneWrap = container.querySelector('.gt-tab-wrap');
+      var paneWrap = container.querySelector(':scope > .gt-tab-wrap');
       if (!paneWrap) return;
 
       if (msg.select) {
@@ -2230,7 +2748,7 @@
           /* Deactivate only this namespace's pane - not nested glassTabsUI panes */
           var v = l.getAttribute('data-value');
           var p = document.getElementById(msg.ns + '-pane-' + v);
-          if (p) p.classList.remove('active');
+          setPaneActive(p, false);
         });
       }
 
@@ -2245,7 +2763,11 @@
 
       tmp.innerHTML = msg.pane_html;
       var newPane = tmp.firstElementChild;
-      if (msg.select) newPane.classList.add('active');
+      if (msg.select) {
+        setPaneActive(newPane, true);
+      } else {
+        setPaneActive(newPane, false);
+      }
       paneWrap.appendChild(newPane);
 
       initTabs(navbar);
@@ -2274,16 +2796,18 @@
       var nextValue = null;
 
       if (wasActive) {
-        var remaining = Array.from(navbar.querySelectorAll('.gt-tab-link:not(.gt-tab-hidden)'))
+        var remaining = Array.from(navbar.querySelectorAll(
+          '.gt-tab-link:not(.gt-tab-hidden):not(.gt-tab-disabled)'
+        ))
           .filter(function (l) { return l.getAttribute('data-value') !== msg.value; });
         if (remaining.length) {
           nextValue = remaining[0].getAttribute('data-value');
           remaining[0].classList.add('active');
           remaining[0].setAttribute('aria-selected', 'true');
           var ap = document.getElementById(msg.ns + '-pane-' + msg.value);
-          if (ap) ap.classList.remove('active');
+          setPaneActive(ap, false);
           var nextPane = document.getElementById(msg.ns + '-pane-' + nextValue);
-          if (nextPane) nextPane.classList.add('active');
+          setPaneActive(nextPane, true);
         }
       }
 
@@ -2311,6 +2835,16 @@
       link.classList.add('gt-tab-disabled');
       link.setAttribute('aria-disabled', 'true');
       link.setAttribute('tabindex', '-1');
+      if (link.classList.contains('active') && navbar._gtActivate) {
+        var next = Array.from(navbar.querySelectorAll('.gt-tab-link'))
+          .find(function (candidate) {
+            return candidate !== link &&
+              !candidate.classList.contains('gt-tab-hidden') &&
+              !candidate.classList.contains('gt-tab-disabled');
+          });
+        if (next) navbar._gtActivate(next.getAttribute('data-value'), true, false);
+      }
+      if (navbar._gtRefresh) navbar._gtRefresh();
     });
 
     Shiny.addCustomMessageHandler('glasstabs_enable_tab', function (msg) {
@@ -2320,7 +2854,7 @@
       if (!link) return;
       link.classList.remove('gt-tab-disabled');
       link.removeAttribute('aria-disabled');
-      link.setAttribute('tabindex', '0');
+      if (navbar._gtRefresh) navbar._gtRefresh();
     });
 
     Shiny.addCustomMessageHandler('glasstabs_tab_badge', function (msg) {
@@ -2334,6 +2868,7 @@
         badge.className = 'gt-tab-badge';
         link.appendChild(badge);
       }
+      var previous = badge.textContent;
       var n = parseInt(msg.count, 10);
       if (isNaN(n) || n <= 0) {
         badge.textContent = '';
@@ -2342,6 +2877,12 @@
         badge.textContent = n > 99 ? '99+' : String(n);
         badge.style.display = '';
       }
+      if (badge.textContent !== previous && !reducedMotion()) {
+        badge.classList.remove('gt-badge-updated');
+        void badge.offsetWidth;
+        badge.classList.add('gt-badge-updated');
+      }
+      if (navbar._gtRefresh) navbar._gtRefresh();
     });
 
     registerCustomMessageHandlers._done = true;
