@@ -42,6 +42,20 @@
 }
 
 #' @noRd
+.gt_check_no_missing <- function(x, argument, fn_name) {
+  if (anyNA(x)) {
+    .gt_abort(
+      sprintf("%s(): `%s` cannot contain `NA`.", fn_name, argument),
+      class = "glasstabs_error_bad_choice",
+      argument = argument,
+      value = x,
+      expected = "non-missing choice values"
+    )
+  }
+  invisible(x)
+}
+
+#' @noRd
 .gt_check_session <- function(session, method) {
   if (is.null(session) || !is.function(session[[method]])) {
     .gt_abort(
@@ -76,4 +90,18 @@
   }
 
   matched
+}
+
+#' @noRd
+.gt_check_text <- function(x, argument, fn_name) {
+  if (!is.character(x) || length(x) != 1L || is.na(x)) {
+    .gt_abort(
+      sprintf("%s(): `%s` must be a single string.", fn_name, argument),
+      class = "glasstabs_error_bad_argument",
+      argument = argument,
+      value = x,
+      expected = "a single character string"
+    )
+  }
+  invisible(x)
 }

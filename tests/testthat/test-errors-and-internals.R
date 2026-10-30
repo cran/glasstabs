@@ -52,6 +52,50 @@ test_that("shared validators preserve accepted and rejected inputs", {
   }
 })
 
+test_that("integer validators reject fractional, non-finite, and overflowing values", {
+  expect_identical(.gt_positive_int(2, "count"), 2L)
+  expect_identical(.gt_nonnegative_int(0, "count"), 0L)
+
+  for (value in list(1.5, Inf, -Inf, NaN, .Machine$integer.max + 1)) {
+    expect_error(
+      .gt_positive_int(value, "count"),
+      class = "glasstabs_error_bad_argument"
+    )
+    expect_error(
+      .gt_nonnegative_int(value, "count"),
+      class = "glasstabs_error_bad_argument"
+    )
+  }
+})
+
+test_that("search mode errors list every accepted spelling", {
+  expect_error(
+    .gt_search_mode(123),
+    "always.*never",
+    class = "glasstabs_error_bad_argument"
+  )
+})
+
+test_that("select update choice payload preserves groups and optional disabled state", {
+  choices <- list(
+    Fruit = c(Apple = "apple", Pear = "pear"),
+    Veg = c(Kale = "kale", Pea = "pea")
+  )
+
+  unchanged <- .gt_update_choice_payload(choices)
+  expect_equal(
+    vapply(unchanged, `[[`, character(1), "group"),
+    c("Fruit", "Fruit", "Veg", "Veg")
+  )
+  expect_false(any(vapply(unchanged, function(choice) "disabled" %in% names(choice), logical(1))))
+
+  updated <- .gt_update_choice_payload(choices, "kale")
+  expect_equal(
+    vapply(updated, `[[`, logical(1), "disabled"),
+    c(FALSE, FALSE, TRUE, FALSE)
+  )
+})
+
 test_that("side-effect helpers return NULL invisibly", {
   session <- list(
     ns = shiny::NS("mod"),
@@ -80,6 +124,36 @@ test_that("side-effect helpers return NULL invisibly", {
   }
 })
 
+test_that("tab helpers validate sessions and logical controls", {
+  tab <- glassTabPanel("new", "New")
+  tab_calls <- list(
+    function() updateGlassTabsUI(NULL, "tabs", "new"),
+    function() updateGlassTabBadge(NULL, "tabs", "new", 1L),
+    function() showGlassTab(NULL, "tabs", "new"),
+    function() hideGlassTab(NULL, "tabs", "new"),
+    function() disableGlassTab(NULL, "tabs", "new"),
+    function() enableGlassTab(NULL, "tabs", "new"),
+    function() appendGlassTab(NULL, "tabs", tab),
+    function() removeGlassTab(NULL, "tabs", "new")
+  )
+  for (call in tab_calls) {
+    expect_error(call(), class = "glasstabs_error_no_session")
+  }
+
+  session <- list(
+    ns = shiny::NS("mod"),
+    sendCustomMessage = function(...) NULL
+  )
+  expect_error(
+    appendGlassTab(session, "tabs", tab, select = "yes"),
+    class = "glasstabs_error_bad_argument"
+  )
+  expect_error(
+    glassTabsServer("tabs", bookmark = "yes"),
+    class = "glasstabs_error_bad_argument"
+  )
+})
+
 test_that("JSON and JavaScript string serialization cover edge cases", {
   expect_identical(.gt_json_array(c("a", "b")), '["a","b"]')
   expect_identical(.gt_json_array(character(0)), "[]")
@@ -102,6 +176,16 @@ test_that("choice filtering never matches across label-value boundaries", {
   expect_equal(.gt_filter_choices(choices, "Ban")$values, "banana")
   expect_equal(.gt_filter_choices(choices, "nana")$values, "banana")
   expect_length(.gt_filter_choices(choices, "na ba")$values, 0L)
+})
+
+test_that(".gt_filter_choices() reuses pre-normalized choices", {
+  choices <- c(Apple = "apple", Banana = "banana", Cherry = "cherry")
+  normalized <- .gt_normalize_choices(choices)
+
+  expect_identical(
+    .gt_filter_choices(choices, "an", normalized = normalized),
+    .gt_filter_choices(choices, "an")
+  )
 })
 
 test_that("dependency version follows DESCRIPTION", {

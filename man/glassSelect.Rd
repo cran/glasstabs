@@ -23,13 +23,24 @@ glassSelect(
   disabled_choices = NULL,
   server = FALSE,
   server_limit = 50L,
-  server_min_chars = 0L
+  server_min_chars = 0L,
+  no_matches_text = "No matches",
+  tongue = TRUE,
+  label_bold = TRUE,
+  label_size = "14px",
+  search_focus_ring = FALSE,
+  overflow_tooltip = c("auto", "never"),
+  search_threshold = 15L,
+  dark_selector = NULL
 )
 }
 \arguments{
 \item{inputId}{Shiny input id.}
 
-\item{choices}{Named or unnamed character vector of choices.}
+\item{choices}{Named or unnamed character vector of choices, or a named
+list for grouped choices (selectInput()-style). A one-element named list
+such as \code{list(Group = "x")} is treated as a flat, ungrouped choice,
+mirroring \code{\link[shiny:selectInput]{shiny::selectInput()}}.}
 
 \item{selected}{Initially selected value. Defaults to \code{NULL}.}
 
@@ -37,8 +48,9 @@ glassSelect(
 
 \item{placeholder}{Trigger label when nothing is selected.}
 
-\item{searchable}{Logical. Show search input inside dropdown? Default
-\code{TRUE}.}
+\item{searchable}{Search visibility. Use \code{TRUE} (default) to always
+show search, \code{FALSE} to hide it, or \code{"auto"} to show it only
+when the choice count reaches \code{search_threshold}.}
 
 \item{clearable}{Logical. Show clear control for removing the current
 selection? Default \code{FALSE}.}
@@ -65,7 +77,8 @@ neatly alongside native Shiny \code{selectizeInput()} controls.}
 
 \item{width}{Optional widget width passed to
 \code{shiny::validateCssUnit()}, e.g. \code{100\%} or \code{240px}. When
-\code{NULL} (default) the trigger keeps its intrinsic width.}
+\code{NULL} (default) the trigger uses a stable compact width of
+\code{160px}. Explicit widths continue to be capped by the container.}
 
 \item{disabled}{Logical. When \code{TRUE} the whole widget is greyed out and
 non-interactive. Default \code{FALSE}.}
@@ -77,11 +90,47 @@ as disabled (non-selectable) rows. Default \code{NULL}.}
 choices and use \code{\link[=glassSelectServer]{glassSelectServer()}} to search the full choice set from
 the Shiny server. Default \code{FALSE}.}
 
-\item{server_limit}{Maximum number of choices rendered initially and returned
-for each server-side search. Default \code{50}.}
+\item{server_limit}{Maximum number of choices rendered initially.
+Search results are bounded separately by the \code{limit} argument of
+the \code{*Server()} helper. Default \code{50}. Explicitly selected
+values that fall outside the initial slice are still rendered as extra
+rows so they stay visible and checked.}
 
 \item{server_min_chars}{Minimum search characters required before server-side
 matching filters choices. Default \code{0}.}
+
+\item{no_matches_text}{Text shown when a search matches no choices.
+Default \code{"No matches"}.}
+
+\item{tongue}{Logical. When \code{TRUE} (default), the dropdown attaches to
+the trigger and uses the signature tongue unfurl/retract animation. Set to
+\code{FALSE} for a detached panel with a short fade that sits more
+naturally beside native Shiny inputs.}
+
+\item{label_bold}{Logical. Use a semibold field label, matching native Shiny
+inputs, when \code{TRUE} (default). Set to \code{FALSE} for regular-weight
+label text.}
+
+\item{label_size}{CSS size for the field label. The default, \code{"14px"},
+keeps the title visually distinct from the dropdown options.}
+
+\item{search_focus_ring}{Logical. When \code{TRUE}, focusing the dropdown
+search field adds the accent-colored outline. The default, \code{FALSE},
+uses a quieter background and border change without the outer ring.}
+
+\item{overflow_tooltip}{Tooltip behavior for trigger text that is visually
+truncated with an ellipsis. \code{"auto"} (default) shows the complete
+text on pointer hover or keyboard focus only when truncation is detected;
+\code{"never"} disables it. On touch devices, opening the dropdown remains
+the primary way to inspect the full, wrapped option text.}
+
+\item{search_threshold}{Choice count at which \code{searchable = "auto"}
+shows the search field. Default \code{15}.}
+
+\item{dark_selector}{Optional CSS selector that signals dark mode (e.g.
+\code{"body.dark-mode"} for bs4Dash). When provided, emits an extra
+scoped \code{<style>} block that
+reverts colors to the dark-mode defaults whenever that selector is active.}
 }
 \value{
 An \code{htmltools::tagList} containing the single-select trigger,

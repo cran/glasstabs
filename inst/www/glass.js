@@ -2,6 +2,18 @@
   'use strict';
 
   /* UTILITIES */
+
+  /* Monotonic sequence for server searches, shared by every select
+     controller. Each search takes the next value; the server echoes it and
+     the response handler drops anything older than the latest issued
+     response for that widget. One shared counter (rather than one per
+     widget) also stays monotonic if a widget is replaced via renderUI,
+     so a re-created widget's first response can never look stale next to
+     a response in flight from its predecessor. The sequence also replaces
+     the old Date.now() nonce: every send differs, so Shiny still
+     retriggers on a repeated query. */
+  var serverSearchSeq = 0;
+
   function px(n) { return Math.round(n) + 'px'; }
   function exactPx(n) { return (Math.round(n * 100) / 100) + 'px'; }
 
@@ -108,6 +120,281 @@
       window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   }
 
+  var OVERFLOW_TOOLTIP_MAX_TEXT = 600;
+  var OVERFLOW_TOOLTIP_HIDE_EVENT = 'glasstabs:hide-overflow-tooltips';
+
+  function overflowTooltipText(text) {
+    text = String(text || '');
+    if (text.length <= OVERFLOW_TOOLTIP_MAX_TEXT) return text;
+    return text.slice(0, OVERFLOW_TOOLTIP_MAX_TEXT).trimEnd() + '\u2026';
+  }
+
+  function hideAllOverflowTooltips() {
+    document.dispatchEvent(new Event(OVERFLOW_TOOLTIP_HIDE_EVENT));
+  }
+
+  /* Ellipsized trigger labels reveal their complete text on desktop hover or
+     keyboard focus. Touch users already get the full wrapped label by opening
+     the dropdown, so a tap never has to manage a second overlay. */
+  function createOverflowTooltip(trigger, labelEl, id, mode) {
+    var enabled = mode === 'auto';
+    var tooltip = null;
+    var showTimer = null;
+    var hideTimer = null;
+    var fullText = '';
+
+    function isTruncated() {
+      return enabled && labelEl && labelEl.clientWidth > 0 &&
+        labelEl.scrollWidth > labelEl.clientWidth + 1;
+    }
+
+    function ensureTooltip() {
+      if (tooltip) return tooltip;
+      tooltip = document.createElement('div');
+      tooltip.id = id;
+      tooltip.className = 'gt-overflow-tooltip';
+      tooltip.setAttribute('role', 'tooltip');
+      tooltip.setAttribute('aria-hidden', 'true');
+      document.body.appendChild(tooltip);
+      return tooltip;
+    }
+
+    function position() {
+      if (!tooltip) return;
+      var triggerRect = trigger.getBoundingClientRect();
+      var tipRect = tooltip.getBoundingClientRect();
+      var edge = 12;
+      var gap = 8;
+      var left = triggerRect.left + (triggerRect.width - tipRect.width) / 2;
+      left = Math.max(edge, Math.min(left, window.innerWidth - tipRect.width - edge));
+      var top = triggerRect.bottom + gap;
+      var above = top + tipRect.height > window.innerHeight - edge &&
+        triggerRect.top - tipRect.height - gap >= edge;
+      if (above) top = triggerRect.top - tipRect.height - gap;
+      top = Math.max(edge, Math.min(top, window.innerHeight - tipRect.height - edge));
+      tooltip.classList.toggle('gt-tooltip-above', above);
+      tooltip.style.left = Math.round(left) + 'px';
+      tooltip.style.top = Math.round(top) + 'px';
+    }
+
+    function hide() {
+      if (showTimer !== null) {
+        clearTimeout(showTimer);
+        showTimer = null;
+      }
+      if (hideTimer !== null) {
+        clearTimeout(hideTimer);
+        hideTimer = null;
+      }
+      if (!tooltip) return;
+      tooltip.classList.remove('visible');
+      tooltip.setAttribute('aria-hidden', 'true');
+      trigger.removeAttribute('aria-describedby');
+    }
+
+    function show() {
+      showTimer = null;
+      if (!fullText || trigger.classList.contains('open') || !isTruncated()) return;
+      var node = ensureTooltip();
+      node.textContent = overflowTooltipText(fullText);
+      node.setAttribute('data-full-length', String(fullText.length));
+      node.setAttribute('aria-hidden', 'false');
+      node.classList.add('visible');
+      trigger.setAttribute('aria-describedby', id);
+      position();
+    }
+
+    function schedule(delay) {
+      hide();
+      if (!isTruncated()) return;
+      showTimer = setTimeout(show, delay);
+    }
+
+    function scheduleHide() {
+      if (showTimer !== null) {
+        clearTimeout(showTimer);
+        showTimer = null;
+      }
+      if (hideTimer !== null) clearTimeout(hideTimer);
+      hideTimer = setTimeout(hide, 120);
+    }
+
+    function hasFineHover() {
+      return !window.matchMedia ||
+        window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+    }
+
+    function focusVisible() {
+      if (!trigger.matches) return true;
+      try { return trigger.matches(':focus-visible'); }
+      catch (e) { return true; }
+    }
+
+    function onMouseEnter() {
+      if (hasFineHover()) schedule(420);
+    }
+    function onFocus() {
+      if (focusVisible()) schedule(160);
+    }
+    function onViewportChange() { hide(); }
+
+    trigger.addEventListener('mouseenter', onMouseEnter);
+    trigger.addEventListener('mouseleave', scheduleHide);
+    trigger.addEventListener('focus', onFocus);
+    trigger.addEventListener('blur', hide);
+    trigger.addEventListener('click', hide);
+    document.addEventListener(OVERFLOW_TOOLTIP_HIDE_EVENT, hide);
+    window.addEventListener('scroll', onViewportChange, true);
+    window.addEventListener('resize', onViewportChange);
+
+    return {
+      refresh: function (text) {
+        fullText = String(text || '').trim();
+        if (fullText) trigger.setAttribute('aria-label', fullText);
+        else trigger.removeAttribute('aria-label');
+        if (tooltip && tooltip.classList.contains('visible')) {
+          if (!isTruncated()) hide();
+          else {
+            tooltip.textContent = overflowTooltipText(fullText);
+            tooltip.setAttribute('data-full-length', String(fullText.length));
+            position();
+          }
+        }
+      },
+      hide: hide,
+      destroy: function () {
+        hide();
+        trigger.removeEventListener('mouseenter', onMouseEnter);
+        trigger.removeEventListener('mouseleave', scheduleHide);
+        trigger.removeEventListener('focus', onFocus);
+        trigger.removeEventListener('blur', hide);
+        trigger.removeEventListener('click', hide);
+        document.removeEventListener(OVERFLOW_TOOLTIP_HIDE_EVENT, hide);
+        window.removeEventListener('scroll', onViewportChange, true);
+        window.removeEventListener('resize', onViewportChange);
+        if (tooltip && tooltip.parentNode) tooltip.parentNode.removeChild(tooltip);
+        tooltip = null;
+      }
+    };
+  }
+
+  /* Reveal only the truncated option currently under the pointer or keyboard
+     active descendant. One controller owns one tooltip for the panel. */
+  function createOptionOverflowTooltip(dropdown, id, mode) {
+    var enabled = mode === 'auto';
+    var tooltip = null;
+    var activeOption = null;
+    var activeLabel = null;
+    var showTimer = null;
+    var hideTimer = null;
+
+    function isTruncated(label) {
+      return enabled && label && label.clientWidth > 0 &&
+        (label.scrollWidth > label.clientWidth + 1 ||
+          label.scrollHeight > label.clientHeight + 1);
+    }
+
+    function ensureTooltip() {
+      if (tooltip) return tooltip;
+      tooltip = document.createElement('div');
+      tooltip.id = id;
+      tooltip.className = 'gt-overflow-tooltip gt-option-overflow-tooltip';
+      tooltip.setAttribute('role', 'tooltip');
+      tooltip.setAttribute('aria-hidden', 'true');
+      document.body.appendChild(tooltip);
+      return tooltip;
+    }
+
+    function position() {
+      if (!tooltip || !activeOption) return;
+      var optionRect = activeOption.getBoundingClientRect();
+      var tipRect = tooltip.getBoundingClientRect();
+      var edge = 12;
+      var gap = 6;
+      var left = optionRect.left + (optionRect.width - tipRect.width) / 2;
+      left = Math.max(edge, Math.min(left, window.innerWidth - tipRect.width - edge));
+      var top = optionRect.bottom + gap;
+      var above = top + tipRect.height > window.innerHeight - edge &&
+        optionRect.top - tipRect.height - gap >= edge;
+      if (above) top = optionRect.top - tipRect.height - gap;
+      top = Math.max(edge, Math.min(top, window.innerHeight - tipRect.height - edge));
+      tooltip.classList.toggle('gt-tooltip-above', above);
+      tooltip.style.left = Math.round(left) + 'px';
+      tooltip.style.top = Math.round(top) + 'px';
+    }
+
+    function hide() {
+      if (showTimer !== null) {
+        clearTimeout(showTimer);
+        showTimer = null;
+      }
+      if (hideTimer !== null) {
+        clearTimeout(hideTimer);
+        hideTimer = null;
+      }
+      if (activeOption) activeOption.removeAttribute('aria-describedby');
+      if (tooltip) {
+        tooltip.classList.remove('visible');
+        tooltip.setAttribute('aria-hidden', 'true');
+      }
+      activeOption = null;
+      activeLabel = null;
+    }
+
+    function show() {
+      showTimer = null;
+      if (!activeOption || !activeLabel ||
+          !dropdown.classList.contains('open') || !isTruncated(activeLabel)) return;
+      var text = activeLabel.textContent.trim();
+      if (!text) return;
+      var node = ensureTooltip();
+      node.textContent = overflowTooltipText(text);
+      node.setAttribute('data-full-length', String(text.length));
+      node.setAttribute('aria-hidden', 'false');
+      node.classList.add('visible');
+      activeOption.setAttribute('aria-describedby', id);
+      position();
+    }
+
+    function enter(option) {
+      hide();
+      if (!enabled || !option) return;
+      var label = option.querySelector('span:last-child');
+      if (!isTruncated(label)) return;
+      activeOption = option;
+      activeLabel = label;
+      showTimer = setTimeout(show, 180);
+    }
+
+    function leave(option) {
+      if (option !== activeOption) return;
+      if (showTimer !== null) {
+        clearTimeout(showTimer);
+        showTimer = null;
+      }
+      hideTimer = setTimeout(hide, 100);
+    }
+
+    function onViewportChange() { hide(); }
+    document.addEventListener(OVERFLOW_TOOLTIP_HIDE_EVENT, hide);
+    window.addEventListener('scroll', onViewportChange, true);
+    window.addEventListener('resize', onViewportChange);
+
+    return {
+      enter: enter,
+      leave: leave,
+      hide: hide,
+      destroy: function () {
+        hide();
+        document.removeEventListener(OVERFLOW_TOOLTIP_HIDE_EVENT, hide);
+        window.removeEventListener('scroll', onViewportChange, true);
+        window.removeEventListener('resize', onViewportChange);
+        if (tooltip && tooltip.parentNode) tooltip.parentNode.removeChild(tooltip);
+        tooltip = null;
+      }
+    };
+  }
+
   /* Keep inactive panels out of both keyboard focus and the accessibility
      tree. `inert` is the behavioral guard; ARIA remains useful to older
      assistive technology and makes the panel state explicit. */
@@ -203,7 +490,11 @@
       move: move,
       prepare: prepare,
       clear: function () { setActive(null); },
-      set: setActive
+      set: setActive,
+      /* Visible options (hidden/disabled skipped), for chrome-boundary
+         checks in the controllers. Identity comparison only; move()
+         remains the place that prepares ids. */
+      options: options
     };
   }
 
@@ -236,13 +527,17 @@
 
   var MS_VARS = [
     '--ms-bg','--ms-border','--ms-text','--ms-accent','--ms-focus-ring','--ms-label',
+    '--ms-dropdown-max-height',
     '--ms-ac-12','--ms-ac-16','--ms-ac-18','--ms-ac-22','--ms-ac-28',
     '--ms-ac-32','--ms-ac-40','--ms-ac-55','--ms-ac-60','--ms-ac-75',
     '--ms-tx-03','--ms-tx-04','--ms-tx-05','--ms-tx-06','--ms-tx-08',
     '--ms-tx-35','--ms-tx-45','--ms-tx-50','--ms-tx-80','--ms-ac-tx-75'
   ];
 
-  var TELEPORT_CLASSES = ['style-checkbox','style-check-only','style-filled','theme-light','shape-square'];
+  var TELEPORT_CLASSES = [
+    'style-checkbox','style-check-only','style-filled','fill-single','gt-search-ring',
+    'theme-light','shape-square','gt-no-tongue'
+  ];
 
   /** Teleport a dropdown to <body> so no parent overflow/transform can clip it */
   function teleportOpen(wrap, dropdown) {
@@ -255,10 +550,12 @@
     var fallbacks = isLight
       ? { '--ms-bg': 'rgba(255,255,255,0.98)', '--ms-border': 'rgba(0,0,0,0.12)',
           '--ms-text': '#111111', '--ms-accent': '#2563eb',
-          '--ms-focus-ring': '#1d4ed8', '--ms-label': '#111111' }
+          '--ms-focus-ring': '#1d4ed8', '--ms-label': '#111111',
+          '--ms-dropdown-max-height': '260px' }
       : { '--ms-bg': 'rgba(9,20,42,0.97)', '--ms-border': 'rgba(255,255,255,0.10)',
           '--ms-text': '#cfe6ff', '--ms-accent': '#7ec3f7',
-          '--ms-focus-ring': '#7ec3f7', '--ms-label': '#cfe6ff' };
+          '--ms-focus-ring': '#7ec3f7', '--ms-label': '#cfe6ff',
+          '--ms-dropdown-max-height': '260px' };
     MS_VARS.forEach(function (v) {
       var val = cs.getPropertyValue(v).trim();
       if (val) dropdown.style.setProperty(v, val);
@@ -281,23 +578,45 @@
     var scrollY = window.pageYOffset || 0;
     var vw = window.innerWidth;
     var vh = window.innerHeight;
-    var margin = 8;
-    var maxWidth = Math.max(160, vw - margin * 2);
-    dropdown.style.maxWidth = maxWidth + 'px';
-    dropdown.style.minWidth = Math.min(232, maxWidth) + 'px';
+    var edge = 8;
+    /* Tongue mode overlaps the borders into one continuous surface. Detached
+       mode keeps a small native-like gap and skips the unfurl animation. */
+    var tongue = !wrap.classList.contains('gt-no-tongue');
+    var overlap = tongue ? 1 : -6;
+    var maxWidth = Math.max(0, vw - edge * 2);
+    var triggerWidth = Math.ceil(rect.width || 160);
+
+    /* The trigger and its panel form one tongue-shaped control, so their
+       rendered widths must match. Long labels wrap inside this shared width;
+       only a viewport narrower than the trigger may clamp the panel further. */
+    var dropdownWidth = Math.min(triggerWidth, maxWidth);
+    var preferredMaxWidth = dropdownWidth;
+    dropdown.style.maxWidth = dropdownWidth + 'px';
+    dropdown.style.width = dropdownWidth + 'px';
+    dropdown.style.minWidth = dropdownWidth + 'px';
+    dropdown.classList.toggle('gt-compact-controls', dropdownWidth <= 240);
 
     var ddHeight = dropdown.offsetHeight || 0;
-    var ddWidth = Math.min(dropdown.offsetWidth || rect.width, maxWidth);
-    var top = rect.bottom + scrollY + margin;
-    if (rect.bottom + ddHeight + margin > vh - margin && rect.top - ddHeight - margin > 0) {
-      top = rect.top + scrollY - ddHeight - margin;
+    var ddWidth = Math.min(dropdown.offsetWidth || dropdownWidth, preferredMaxWidth);
+    var top = rect.bottom + scrollY - overlap;
+    var flipped = false;
+    if (rect.bottom + ddHeight - overlap > vh - edge && rect.top - ddHeight + overlap > edge) {
+      top = rect.top + scrollY - ddHeight + overlap;
+      flipped = true;
     }
+    /* Signal the tongue direction so CSS squares the adjoining corners and
+       anchors the unfurl animation at the attached edge. This runs before
+       `.open` is added, so the opening transition uses the right origin. */
+    dropdown.classList.toggle('gt-flip-above', flipped);
+    wrap.classList.toggle('gt-flip-above', flipped);
 
     var docEl = document.documentElement;
     var dirEl = wrap.closest ? wrap.closest('[dir]') : null;
     var isRtl = (dirEl || docEl).getAttribute('dir') === 'rtl';
-    var left = isRtl ? rect.left : rect.right - ddWidth;
-    left = Math.max(margin, Math.min(left, vw - ddWidth - margin));
+    /* Follow the document's reading direction: grow toward the trailing edge,
+       then clamp only when the viewport does not have enough room. */
+    var left = isRtl ? rect.right - ddWidth : rect.left;
+    left = Math.max(edge, Math.min(left, vw - ddWidth - edge));
 
     dropdown.style.top = top + 'px';
     dropdown.style.left = (left + scrollX) + 'px';
@@ -306,16 +625,66 @@
 
   /** Move a teleported dropdown back to its wrap */
   function teleportClose(wrap, dropdown) {
+    /* A direct move cancels any pending delayed move (e.g. destroy runs
+       close() and then moves immediately; it must not leave a timer or
+       listener behind). */
+    cancelPendingTeleportClose(dropdown);
     if (dropdown.parentNode !== document.body) return;
     MS_VARS.forEach(function (v) { dropdown.style.removeProperty(v); });
     dropdown.style.removeProperty('position');
     dropdown.style.removeProperty('top');
     dropdown.style.removeProperty('right');
     dropdown.style.removeProperty('left');
+    dropdown.style.removeProperty('width');
     dropdown.style.removeProperty('max-width');
     dropdown.style.removeProperty('min-width');
+    dropdown.classList.remove('gt-compact-controls');
     TELEPORT_CLASSES.forEach(function (cls) { dropdown.classList.remove(cls); });
     wrap.appendChild(dropdown);
+  }
+
+  /* Keep a closing panel teleported until its retract transition finishes.
+     Moving it back to the wrap in the same turn as removing `.open` collapses
+     it instantly: the browser treats the re-inserted node as new, so the
+     transform transition never runs and the advertised retract/fade is
+     invisible. The panel therefore stays under <body>, positioned, while it
+     retracts, and only returns to the wrap on the transform transitionend
+     (with a timeout fallback if that event never fires). Close runs on the
+     base rule (transform 180ms), so the fallback sits comfortably above it. */
+  var CLOSE_TELEPORT_FALLBACK_MS = 250;
+
+  function cancelPendingTeleportClose(dropdown) {
+    if (dropdown._gtCloseTimer) {
+      clearTimeout(dropdown._gtCloseTimer);
+      dropdown._gtCloseTimer = null;
+    }
+    if (dropdown._gtCloseHandler) {
+      dropdown.removeEventListener('transitionend', dropdown._gtCloseHandler);
+      dropdown._gtCloseHandler = null;
+    }
+  }
+
+  function scheduleTeleportClose(wrap, dropdown) {
+    if (dropdown.parentNode !== document.body) {
+      teleportClose(wrap, dropdown);
+      return;
+    }
+    cancelPendingTeleportClose(dropdown);
+    var done = false;
+    function finish() {
+      if (done) return;
+      done = true;
+      cancelPendingTeleportClose(dropdown);
+      teleportClose(wrap, dropdown);
+    }
+    /* Only the panel's own transform end counts: opacity finishes first
+       (120ms) and must not cut the 180ms retract short, and transitionend
+       bubbles, so a descendant's transform end must not teleport early. */
+    dropdown._gtCloseHandler = function (e) {
+      if (e.target === dropdown && e.propertyName === 'transform') finish();
+    };
+    dropdown.addEventListener('transitionend', dropdown._gtCloseHandler);
+    dropdown._gtCloseTimer = setTimeout(finish, CLOSE_TELEPORT_FALLBACK_MS);
   }
 
   function closeDropdownWrap(w) {
@@ -345,12 +714,6 @@
       if (w === except) return;
       closeDropdownWrap(w);
     });
-  }
-
-  function closeDropdownById(inputId, type) {
-    if (!inputId) return;
-    var selector = type === 'multi' ? '.gt-ms-wrap' : '.gt-gs-wrap';
-    closeDropdownWrap(document.querySelector(selector + attrEquals('data-input-id', inputId)));
   }
 
   /** Release all listeners, observers, timers, and animations owned by a tab bar. */
@@ -551,7 +914,10 @@
       var h = r.h * s;
       var x = r.x + (r.w - w) / 2;
       var y = r.y + (r.h - h) / 2;
-      var br = parseFloat(getComputedStyle(el).borderRadius) || 12;
+      /* borderRadius can be a percentage ("50%") or a multi-value shorthand;
+         only honor plain pixel values, otherwise fall back to the halo default. */
+      var brRaw = (getComputedStyle(el).borderRadius || "").trim();
+      var br = /^\d+(\.\d+)?px$/.test(brRaw) ? parseFloat(brRaw) : 12;
 
       /* indicator = "underline": slim bar flush with the tab's bottom edge.
          In vertical orientation it becomes a side bar on the edge adjacent
@@ -715,7 +1081,10 @@
         link.classList.toggle('active', selected);
         link.setAttribute('aria-selected', selected ? 'true' : 'false');
         var value = link.getAttribute('data-value');
-        setPaneActive(document.getElementById(ns + '-pane-' + value), selected);
+        var pane = document.getElementById(ns + '-pane-' + value);
+        setPaneActive(pane, selected);
+        /* A pane that becomes active must not keep a stale exit offset. */
+        if (pane && selected) pane.classList.remove('gt-pane-exit');
       });
 
       active = target;
@@ -775,6 +1144,24 @@
       toEl.setAttribute('aria-selected', 'true');
       toEl.setAttribute('tabindex', '0');
       syncMenu();
+
+      /* Directional slide: record travel direction for the stylesheet so the
+         incoming pane enters from the side being moved toward. The outgoing
+         pane keeps a marker so it exits outward instead of sliding back. */
+      if (fromEl && fromEl !== toEl) {
+        var order = availableLinks();
+        var dir = order.indexOf(toEl) > order.indexOf(fromEl)
+          ? 'gt-slide-fwd' : 'gt-slide-back';
+        container.classList.remove('gt-slide-fwd', 'gt-slide-back');
+        container.classList.add(dir);
+        Array.from(container.querySelectorAll('.gt-tab-pane.gt-pane-exit'))
+          .forEach(function (p) { p.classList.remove('gt-pane-exit'); });
+        var fromPane = document.getElementById(
+          ns + '-pane-' + fromEl.getAttribute('data-value')
+        );
+        if (fromPane) fromPane.classList.add('gt-pane-exit');
+      }
+
       ensureTabVisible(toEl, true);
       if (moveFocus) toEl.focus();
 
@@ -1021,8 +1408,13 @@
 
     var inputId = wrap.getAttribute('data-input-id');
     var placeholder = wrap.getAttribute('data-placeholder') || 'Select an option';
+    var noMatchesText = wrap.hasAttribute('data-no-matches-text')
+      ? wrap.getAttribute('data-no-matches-text')
+      : 'No matches';
     var serverMode = parseBoolAttr(wrap, 'data-server');
     var serverMinChars = parseIntAttr(wrap, 'data-server-min-chars', 0);
+    var searchMode = wrap.getAttribute('data-searchable') || 'always';
+    var searchThreshold = parseIntAttr(wrap, 'data-search-threshold', 15);
 
     /* DOM refs */
     var trigger = wrap.querySelector('.gt-gs-trigger');
@@ -1030,6 +1422,7 @@
     var labelEl = wrap.querySelector('[id$="-label"]');
     var clearBtn = wrap.querySelector('.gt-gs-clear');
     var searchIn = wrap.querySelector('input[type="text"]');
+    var searchWrap = wrap.querySelector('.gt-gs-search');
     var optionsBox = wrap.querySelector('[id$="-options"]') || wrap;
 
     var STYLES = ['check-only', 'checkbox', 'filled'];
@@ -1041,6 +1434,17 @@
     if (!trigger || !dropdown || !labelEl) return;
 
     wrap._gtDropdown = dropdown;
+    var overflowTip = createOverflowTooltip(
+      trigger,
+      labelEl,
+      inputId + '-overflow-tooltip',
+      wrap.getAttribute('data-overflow-tooltip') || 'auto'
+    );
+    var optionOverflowTip = createOptionOverflowTooltip(
+      dropdown,
+      inputId + '-option-overflow-tooltip',
+      wrap.getAttribute('data-overflow-tooltip') || 'auto'
+    );
 
     /* Capture check SVG template before any rebuilds */
     var checkTemplate = wrap.querySelector('.gt-gs-check');
@@ -1059,9 +1463,22 @@
       choices: [],     // [{label, value, hidden, _labelLower}]
       selected: null,  // string | null
       selectedLabel: null,
+      total: parseIntAttr(wrap, 'data-server-total', null),
       loading: false,
       query: ''
     };
+
+    /* Value -> choice index for patchVisibility(): without it, every search
+       keystroke scans all choices for every visible row (O(n^2)). Rebuilt
+       whenever state.choices is replaced; first occurrence wins, matching
+       the old linear findChoice() on duplicate values. */
+    var choiceByValue = new Map();
+    function rebuildChoiceIndex() {
+      choiceByValue = new Map();
+      state.choices.forEach(function (ch) {
+        if (!choiceByValue.has(ch.value)) choiceByValue.set(ch.value, ch);
+      });
+    }
 
     /* Read initial state from R-generated DOM */
     Array.from(wrap.querySelectorAll('.gt-gs-option')).forEach(function (el) {
@@ -1074,7 +1491,8 @@
         hidden: false,
         disabled: el.classList.contains('disabled'),
         group: el.getAttribute('data-group') || '',
-        _labelLower: label.toLowerCase()
+        _labelLower: label.toLowerCase(),
+        _valueLower: value.toLowerCase()
       });
       if (el.classList.contains('selected')) {
         state.selected = value;
@@ -1082,13 +1500,94 @@
       }
       bindOption(el);
     });
+    rebuildChoiceIndex();
 
     var optionNav = createOptionNavigator(
       dropdown,
       '.gt-gs-option',
-      function () { return searchIn || trigger; },
+      function () { return searchIn && !searchIn.disabled ? searchIn : trigger; },
       inputId + '-option'
     );
+
+    function moveOptionAndReveal(where) {
+      var option = optionNav.move(where);
+      optionOverflowTip.enter(option);
+      return option;
+    }
+
+    /* Chrome-row keyboard navigation. The clear button is a real button, but
+       it is not a Tab stop: Tab closes the dropdown and exits, per the
+       combobox pattern, so arrow keys carry chrome navigation instead.
+       Options (DOM order, skipping hidden/disabled) and chrome rows (DOM
+       order, skipping hidden) form one cycle in both directions, matching
+       the option navigator's existing wrap behavior. chromeIndex is -1
+       while navigation sits on options. The focus/blur listeners on the
+       button keep chromeIndex in step when it is reached by mouse/touch. */
+    var chromeIndex = -1;
+
+    function chromeItems() {
+      var items = [];
+      if (clearBtn && clearBtn.offsetParent !== null) items.push(clearBtn);
+      return items;
+    }
+
+    function focusOwnerElement() {
+      return (searchIn && !searchIn.disabled) ? searchIn : trigger;
+    }
+
+    function enterChrome(index) {
+      var items = chromeItems();
+      if (!items.length) return;
+      index = ((index % items.length) + items.length) % items.length;
+      optionNav.clear();
+      optionOverflowTip.hide();
+      chromeIndex = index;
+      items[index].focus();
+    }
+
+    function exitChrome(where) {
+      chromeIndex = -1;
+      var owner = focusOwnerElement();
+      if (owner) owner.focus();
+      moveOptionAndReveal(where);
+    }
+
+    function handleChromeAwareNav(key) {
+      var items = chromeItems();
+      if (chromeIndex >= 0 && !items.length) chromeIndex = -1;
+      if (chromeIndex >= 0) {
+        if (key === 'Home') { enterChrome(0); return; }
+        if (key === 'End') { enterChrome(items.length - 1); return; }
+        if (key === 'ArrowDown') {
+          if (chromeIndex < items.length - 1) enterChrome(chromeIndex + 1);
+          else exitChrome('first');
+          return;
+        }
+        if (chromeIndex > 0) enterChrome(chromeIndex - 1);
+        else exitChrome('last');
+        return;
+      }
+      if (!items.length) {
+        if (key === 'Home') moveOptionAndReveal('first');
+        else if (key === 'End') moveOptionAndReveal('last');
+        else moveOptionAndReveal(key === 'ArrowDown' ? 1 : -1);
+        return;
+      }
+      var before = optionNav.current();
+      var opts = optionNav.options();
+      if (key === 'Home') { moveOptionAndReveal('first'); return; }
+      if (key === 'End') { moveOptionAndReveal('last'); return; }
+      if (key === 'ArrowDown' && before && opts.length &&
+          before === opts[opts.length - 1]) {
+        enterChrome(0);
+        return;
+      }
+      if (key === 'ArrowUp' && before && opts.length && before === opts[0]) {
+        enterChrome(items.length - 1);
+        return;
+      }
+      moveOptionAndReveal(key === 'ArrowDown' ? 1 : -1);
+    }
 
     /* State readers */
     function getValue() {
@@ -1111,6 +1610,27 @@
       return n;
     }
 
+    function searchEnabled() {
+      var total = state.total === null ? state.choices.length : state.total;
+      return searchMode === 'always' || (searchMode === 'auto' && total >= searchThreshold);
+    }
+
+    function syncSearchVisibility() {
+      var enabled = searchEnabled();
+      if (searchWrap) searchWrap.classList.toggle('hidden', !enabled);
+      if (searchIn) {
+        searchIn.disabled = !enabled;
+        searchIn.setAttribute('aria-hidden', enabled ? 'false' : 'true');
+      }
+      if (!enabled && state.query) {
+        state.query = '';
+        if (searchIn) searchIn.value = '';
+        state.choices.forEach(function (ch) { ch.hidden = false; });
+        patchVisibility();
+        optionNav.prepare();
+      }
+    }
+
     function setStatus(text, active, loading) {
       statusRow.textContent = text || '';
       statusRow.classList.toggle('hidden', !active);
@@ -1124,7 +1644,7 @@
       if (state.loading) {
         setStatus('Searching...', true, true);
       } else if (visibleChoiceCount() === 0) {
-        setStatus('No matches', true, false);
+        setStatus(noMatchesText, true, false);
       } else {
         setStatus('', false, false);
       }
@@ -1143,7 +1663,7 @@
     function patchVisibility() {
       Array.from(dropdown.querySelectorAll('.gt-gs-option')).forEach(function (el) {
         var v = el.getAttribute('data-value');
-        var ch = findChoice(v);
+        var ch = choiceByValue.get(v) || null;
         el.classList.toggle('hidden', ch ? ch.hidden : false);
       });
       syncOptgroupHeaders(optionsBox);
@@ -1153,6 +1673,7 @@
     function syncUI() {
       var ch = findChoice(state.selected);
       labelEl.textContent = ch ? ch.label : (state.selectedLabel || placeholder);
+      overflowTip.refresh(labelEl.textContent);
       patchOptionClasses();
       updateStatus();
     }
@@ -1169,7 +1690,7 @@
     function setValue(value, opts) {
       opts = opts || {};
       var doNotify = opts.notify !== false;
-      var valueStr = (value === null || typeof value === 'undefined' || value === '') ? null : String(value);
+      var valueStr = (value === null || typeof value === 'undefined') ? null : String(value);
 
       if (valueStr !== null && !findChoice(valueStr)) {
         if (opts.preserveMissingSelection) {
@@ -1196,7 +1717,11 @@
       opt._gtBound = true;
 
       opt.addEventListener('mouseenter', function () {
+        optionOverflowTip.enter(opt);
         if (!opt.classList.contains('disabled')) optionNav.set(opt);
+      });
+      opt.addEventListener('mouseleave', function () {
+        optionOverflowTip.leave(opt);
       });
       opt.addEventListener('click', function () {
         if (opt.classList.contains('disabled')) return;
@@ -1233,11 +1758,36 @@
       var preserveSel = opts.preserveSelection !== false;
       var preserveMissingSel = opts.preserveMissingSelection === true;
       var doNotify = opts.notify !== false;
+      var total = typeof opts.total === 'number' ? opts.total : null;
 
       var oldSelected = preserveSel ? state.selected : null;
       var oldSelectedLabel = preserveSel ? state.selectedLabel : null;
+      var oldDisabled = new Set(state.choices.filter(function (ch) {
+        return ch.disabled;
+      }).map(function (ch) {
+        return ch.value;
+      }));
       choices = asChoiceArray(choices);
       state.loading = false;
+      /* The guard timer belongs to the request that armed it. Only the
+         response to that request, or a non-server update carrying no
+         sequence, may disarm it; a stale response must leave the latest
+         request's guard armed. */
+      if (state.searchTimeoutId &&
+          (opts.seq === undefined || opts.seq === state.searchTimerSeq)) {
+        clearTimeout(state.searchTimeoutId);
+        state.searchTimeoutId = null;
+        state.searchTimerSeq = null;
+      }
+
+      /* The synthetic "All" row is a client-side prepend, not part of any
+         update payload: without this it vanishes on the first choices
+         update. Restore it only when this widget actually has one
+         (include_all on, and the row is in the current choices); an update
+         that already carries the All value needs no duplicate. */
+      var allValue = wrap.getAttribute('data-all-choice-value');
+      var hadAll = wrap.getAttribute('data-include-all') === 'true' &&
+        state.choices.some(function (ch) { return ch.value === allValue; });
 
       /* Update state */
       state.choices = choices.map(function (ch) {
@@ -1245,11 +1795,30 @@
           label: String(ch.label),
           value: String(ch.value),
           hidden: false,
-          disabled: !!ch.disabled,
+          disabled: typeof ch.disabled === 'boolean' ? ch.disabled : oldDisabled.has(String(ch.value)),
           group: ch.group ? String(ch.group) : '',
-          _labelLower: String(ch.label).toLowerCase()
+          _labelLower: String(ch.label).toLowerCase(),
+          _valueLower: String(ch.value).toLowerCase()
         };
       });
+      if (hadAll && !state.choices.some(function (ch) { return ch.value === allValue; })) {
+        state.choices.unshift({
+          label: wrap.getAttribute('data-all-choice-label') || 'All',
+          value: allValue,
+          hidden: false,
+          disabled: oldDisabled.has(allValue),
+          group: '',
+          _labelLower: (wrap.getAttribute('data-all-choice-label') || 'All').toLowerCase(),
+          _valueLower: String(allValue).toLowerCase()
+        });
+      }
+      /* state.total excludes the All row (it is a UI affordance, not a data
+         row): subtract it whenever the All row is present -- restored just
+         now or already carried by the update -- so the auto search
+         threshold keeps counting real choices. */
+      state.total = total === null ?
+        (hadAll ? state.choices.length - 1 : state.choices.length) : total;
+      rebuildChoiceIndex();
 
       /* Intersect selection */
       if (oldSelected !== null && findChoice(oldSelected)) {
@@ -1277,6 +1846,7 @@
       optionsBox.appendChild(frag);
       optionsBox.appendChild(statusRow);
       optionNav.prepare();
+      syncSearchVisibility();
 
       /* Re-apply search if active */
       if (!serverMode && state.query) {
@@ -1295,7 +1865,7 @@
       state.query = qq;
 
       state.choices.forEach(function (ch) {
-        ch.hidden = qq !== '' && ch._labelLower.indexOf(qq) === -1;
+        ch.hidden = qq !== '' && ch._labelLower.indexOf(qq) === -1 && ch._valueLower.indexOf(qq) === -1;
       });
 
       patchVisibility();
@@ -1310,10 +1880,26 @@
       if (query.length < serverMinChars) query = '';
       state.loading = true;
       updateStatus();
+      if (state.searchTimeoutId) clearTimeout(state.searchTimeoutId);
+      /* A response normally lands in milliseconds. If none arrives, the
+         "Searching..." status must not stick forever (e.g. the session
+         stopped responding). Clearing here is benign: the latest
+         response still applies through setChoices(), and a stale one is
+         dropped by the message handler. */
+      state.searchTimeoutId = setTimeout(function () {
+        state.searchTimeoutId = null;
+        state.searchTimerSeq = null;
+        if (state.loading) {
+          state.loading = false;
+          updateStatus();
+        }
+      }, 10000);
       Shiny.setInputValue(inputId + '_search', {
         query: query,
-        nonce: Date.now()
+        seq: ++serverSearchSeq
       }, { priority: 'event' });
+      wrap._gtServerSeqIssued = serverSearchSeq;
+      state.searchTimerSeq = serverSearchSeq;
     }
 
     var debouncedSearch = debounce(function () {
@@ -1335,6 +1921,11 @@
 
     /* Open / Close */
     function open() {
+      hideAllOverflowTooltips();
+      /* A pending close teleport (panel still retracting under <body>) must
+         not yank the panel back mid-reopen. */
+      cancelPendingTeleportClose(dropdown);
+      overflowTip.hide();
       closeAllDropdowns(wrap);
       wrap.classList.add('gt-layer-active');
       teleportOpen(wrap, dropdown);
@@ -1355,7 +1946,7 @@
         focusTimer = null;
         if (!wrap.classList.contains('gt-layer-active')) return;
         optionNav.move('current');
-        if (searchIn) searchIn.focus();
+        if (searchIn && !searchIn.disabled) searchIn.focus();
       }, 100);
     }
 
@@ -1369,12 +1960,17 @@
         focusTimer = null;
       }
       wrap.classList.remove('gt-layer-active');
+      optionOverflowTip.hide();
       dropdown.classList.remove('open');
       trigger.classList.remove('open');
       trigger.setAttribute('aria-expanded', 'false');
-      teleportClose(wrap, dropdown);
+      /* Keep the panel teleported while it retracts; teleportClose() runs
+         on the transform transitionend (or a fallback timeout), not here.
+         Moving it now would collapse it instantly with no visible retract. */
+      scheduleTeleportClose(wrap, dropdown);
       setDropdownOpenState(wrap, inputId, false);
       optionNav.clear();
+      chromeIndex = -1;
     }
 
     function closeAndReturnFocus() {
@@ -1407,9 +2003,7 @@
         e.preventDefault();
         if (!dropdown.classList.contains('open')) open();
         setTimeout(function () {
-          if (e.key === 'Home') optionNav.move('first');
-          else if (e.key === 'End') optionNav.move('last');
-          else optionNav.move(e.key === 'ArrowDown' ? 1 : -1);
+          handleChromeAwareNav(e.key);
         }, 110);
       } else if (e.key === 'Escape' || e.key === 'Tab') {
         closeAndReturnFocus();
@@ -1420,9 +2014,7 @@
       if (e.key === 'ArrowDown' || e.key === 'ArrowUp' ||
           e.key === 'Home' || e.key === 'End') {
         e.preventDefault();
-        if (e.key === 'Home') optionNav.move('first');
-        else if (e.key === 'End') optionNav.move('last');
-        else optionNav.move(e.key === 'ArrowDown' ? 1 : -1);
+        handleChromeAwareNav(e.key);
       } else if (e.key === 'Enter') {
         var option = optionNav.current();
         if (option) {
@@ -1436,11 +2028,20 @@
       }
     });
 
-    /* Reposition on scroll/resize while open */
+    /* Reposition on scroll/resize while open. Resize follows the trigger
+       instead of closing: mobile URL-bar show/hide and the on-screen
+       keyboard both fire resize, and closing there strands the user mid-task.
+       Only close when the trigger is detached or has no layout box. */
     wrap._gtScrollHandler = function (e) {
       if (!dropdown.classList.contains('open')) return;
-      if (e && e.type === 'resize') close();
-      else positionDropdown();
+      if (e && e.type === 'resize') {
+        var r = trigger.getBoundingClientRect();
+        if (!document.contains(trigger) || (r.width === 0 && r.height === 0)) {
+          close();
+          return;
+        }
+      }
+      positionDropdown();
     };
     window.addEventListener('scroll', wrap._gtScrollHandler, true);
     window.addEventListener('resize', wrap._gtScrollHandler);
@@ -1449,6 +2050,42 @@
       clearBtn.addEventListener('click', function (e) {
         e.stopPropagation();
         setValue(null, { notify: true });
+      });
+      /* The clear button lives in the trigger, not the dropdown, so its keys
+         never reach the dropdown handler and would bubble to the trigger
+         handler, whose Enter/Space branch would open or close the panel
+         instead of clearing. Shield it here: Enter/Space keep their native
+         button activation in every state (only propagation is stopped, the
+         default is not); arrows and Escape/Tab act only while the panel is
+         open, since there is nothing to navigate or close otherwise.
+         Focus/blur keep chromeIndex in step when the button is reached by
+         mouse/touch. */
+      clearBtn.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.stopPropagation();
+          return;
+        }
+        if (!dropdown.classList.contains('open')) return;
+        if (e.key === 'ArrowDown' || e.key === 'ArrowUp' ||
+            e.key === 'Home' || e.key === 'End') {
+          e.preventDefault();
+          e.stopPropagation();
+          handleChromeAwareNav(e.key);
+        } else if (e.key === 'Escape' || e.key === 'Tab') {
+          e.stopPropagation();
+          closeAndReturnFocus();
+        }
+      });
+      clearBtn.addEventListener('focus', function () {
+        var idx = chromeItems().indexOf(clearBtn);
+        if (idx >= 0) {
+          optionNav.clear();
+          optionOverflowTip.hide();
+          chromeIndex = idx;
+        }
+      });
+      clearBtn.addEventListener('blur', function () {
+        chromeIndex = -1;
       });
     }
 
@@ -1464,6 +2101,8 @@
         wrap._gtScrollHandler = null;
       }
       close();
+      overflowTip.destroy();
+      optionOverflowTip.destroy();
       teleportClose(wrap, dropdown);
       wrap._gtDropdown = null;
       wrap._gt = null;
@@ -1471,6 +2110,7 @@
     }
 
     /* Initial UI sync */
+    syncSearchVisibility();
     syncUI();
 
     /* Emit initial value to Shiny */
@@ -1495,10 +2135,13 @@
       },
       setStyle: function (s, opts) {
         if (STYLES.indexOf(s) === -1) return;
+        /* opts is accepted for controller-interface symmetry. A single select
+           has no separate _style input, so style changes remain visual-only. */
         STYLES.forEach(function (st) { wrap.classList.remove('style-' + st); dropdown.classList.remove('style-' + st); });
         wrap.classList.add('style-' + s);
         dropdown.classList.add('style-' + s);
         currentStyle = s;
+        syncUI();
       },
       setShape: function (sh) {
         var square = (sh === 'square');
@@ -1516,6 +2159,7 @@
           if (off) el.setAttribute('aria-disabled', 'true');
           else el.removeAttribute('aria-disabled');
         });
+        syncUI();
       },
       setDisabled: function (d) {
         var off = !!d;
@@ -1526,6 +2170,12 @@
           if (off) trigger.setAttribute('aria-disabled', 'true');
           else trigger.removeAttribute('aria-disabled');
         }
+      },
+      setSearch: function (mode, threshold) {
+        if (mode) searchMode = mode;
+        if (typeof threshold === 'number') searchThreshold = threshold;
+        syncSearchVisibility();
+        syncUI();
       },
       clear: function (opts) {
         setValue(null, opts);
@@ -1544,8 +2194,15 @@
     var inputId = wrap.getAttribute('data-input-id');
     var placeholder = wrap.getAttribute('data-placeholder') || 'Filter by Category';
     var allLabel = wrap.getAttribute('data-all-label') || 'All categories';
+    var noMatchesText = wrap.hasAttribute('data-no-matches-text')
+      ? wrap.getAttribute('data-no-matches-text')
+      : 'No matches';
     var serverMode = parseBoolAttr(wrap, 'data-server');
     var serverMinChars = parseIntAttr(wrap, 'data-server-min-chars', 0);
+    var searchMode = wrap.getAttribute('data-searchable') || 'always';
+    var searchThreshold = parseIntAttr(wrap, 'data-search-threshold', 15);
+    var selectionDisplay = wrap.getAttribute('data-selection-display') || 'auto';
+    var selectionMaxItems = parseIntAttr(wrap, 'data-selection-max-items', 2);
 
     /* DOM refs */
     var trigger = wrap.querySelector('.gt-ms-trigger');
@@ -1556,10 +2213,16 @@
     var countEl = wrap.querySelector('.gt-ms-count');
     var clearBtn = wrap.querySelector('.gt-ms-clear');
     var searchIn = wrap.querySelector('input[type="text"]');
+    var searchWrap = wrap.querySelector('.gt-ms-search');
     var styleBtns = Array.from(wrap.querySelectorAll('.gt-style-btn'));
     var optionsBox = wrap.querySelector('[id$="-options"]') || wrap;
 
     wrap._gtDropdown = dropdown;
+    var optionOverflowTip = createOptionOverflowTooltip(
+      dropdown,
+      inputId + '-option-overflow-tooltip',
+      wrap.getAttribute('data-overflow-tooltip') || 'auto'
+    );
 
     var STYLES = ['check-only', 'checkbox', 'filled'];
     var currentStyle = 'checkbox';
@@ -1588,6 +2251,18 @@
       query: ''
     };
 
+    /* Value -> choice index for patchVisibility(): without it, every search
+       keystroke scans all choices for every visible row (O(n^2)). Rebuilt
+       whenever state.choices is replaced; first occurrence wins, matching
+       the old linear scan on duplicate values. */
+    var choiceByValue = new Map();
+    function rebuildChoiceIndex() {
+      choiceByValue = new Map();
+      state.choices.forEach(function (ch) {
+        if (!choiceByValue.has(ch.value)) choiceByValue.set(ch.value, ch);
+      });
+    }
+
     /* Read initial state from R-generated DOM */
     Array.from(wrap.querySelectorAll('.gt-ms-option')).forEach(function (el) {
       var value = el.getAttribute('data-value');
@@ -1602,7 +2277,8 @@
         disabled: el.classList.contains('disabled'),
         group: el.getAttribute('data-group') || '',
         hue: parseInt(hue, 10) || 210,
-        _labelLower: label.toLowerCase()
+        _labelLower: label.toLowerCase(),
+        _valueLower: value.toLowerCase()
       });
 
       if (el.classList.contains('checked')) {
@@ -1611,6 +2287,7 @@
 
       bindOption(el);
     });
+    rebuildChoiceIndex();
 
     parseJsonArrayAttr(wrap, 'data-selected-values').forEach(function (v) {
       state.selected.add(v);
@@ -1619,9 +2296,94 @@
     var optionNav = createOptionNavigator(
       dropdown,
       '.gt-ms-option',
-      function () { return searchIn || trigger; },
+      function () { return searchEnabled() && searchIn ? searchIn : trigger; },
       inputId + '-option'
     );
+
+    function moveOptionAndReveal(where) {
+      var option = optionNav.move(where);
+      optionOverflowTip.enter(option);
+      return option;
+    }
+
+    /* Chrome-row keyboard navigation. The chrome rows are real buttons, but
+       they are not Tab stops: Tab closes the dropdown and exits, per the
+       combobox pattern, so arrow keys carry chrome navigation instead.
+       Options (DOM order, skipping hidden/disabled) and chrome rows (DOM
+       order: style switcher, select-all, clear; skipping hidden) form one
+       cycle in both directions, matching the option navigator's existing
+       wrap behavior. chromeIndex is -1 while navigation sits on options.
+       The focus/blur listeners on the chrome buttons keep chromeIndex in
+       step when a row is reached by mouse/touch. */
+    var chromeIndex = -1;
+
+    function chromeItems() {
+      var items = [];
+      styleBtns.forEach(function (btn) {
+        if (btn.offsetParent !== null) items.push(btn);
+      });
+      if (allRow && allRow.offsetParent !== null) items.push(allRow);
+      if (clearBtn && clearBtn.offsetParent !== null) items.push(clearBtn);
+      return items;
+    }
+
+    function focusOwnerElement() {
+      return (searchEnabled() && searchIn) ? searchIn : trigger;
+    }
+
+    function enterChrome(index) {
+      var items = chromeItems();
+      if (!items.length) return;
+      index = ((index % items.length) + items.length) % items.length;
+      optionNav.clear();
+      optionOverflowTip.hide();
+      chromeIndex = index;
+      items[index].focus();
+    }
+
+    function exitChrome(where) {
+      chromeIndex = -1;
+      var owner = focusOwnerElement();
+      if (owner) owner.focus();
+      moveOptionAndReveal(where);
+    }
+
+    function handleChromeAwareNav(key) {
+      var items = chromeItems();
+      if (chromeIndex >= 0 && !items.length) chromeIndex = -1;
+      if (chromeIndex >= 0) {
+        if (key === 'Home') { enterChrome(0); return; }
+        if (key === 'End') { enterChrome(items.length - 1); return; }
+        if (key === 'ArrowDown') {
+          if (chromeIndex < items.length - 1) enterChrome(chromeIndex + 1);
+          else exitChrome('first');
+          return;
+        }
+        if (chromeIndex > 0) enterChrome(chromeIndex - 1);
+        else exitChrome('last');
+        return;
+      }
+      if (!items.length) {
+        if (key === 'Home') moveOptionAndReveal('first');
+        else if (key === 'End') moveOptionAndReveal('last');
+        else moveOptionAndReveal(key === 'ArrowDown' ? 1 : -1);
+        return;
+      }
+      var before = optionNav.current();
+      var opts = optionNav.options();
+      if (key === 'Home') { moveOptionAndReveal('first'); return; }
+      if (key === 'End') { moveOptionAndReveal('last'); return; }
+      if (key === 'ArrowDown' && before && opts.length &&
+          before === opts[opts.length - 1]) {
+        enterChrome(0);
+        return;
+      }
+      if (key === 'ArrowUp' && before && opts.length && before === opts[0]) {
+        enterChrome(items.length - 1);
+        return;
+      }
+      moveOptionAndReveal(key === 'ArrowDown' ? 1 : -1);
+    }
 
     /* State readers */
     function getValue() {
@@ -1644,12 +2406,73 @@
       return state.choices.filter(function (ch) { return !ch.hidden; });
     }
 
-    function visibleSelectedCount() {
-      var n = 0;
-      state.choices.forEach(function (ch) {
-        if (!ch.hidden && state.selected.has(ch.value)) n++;
+    /* The select-all toggle scope: enabled AND visible. syncUI(),
+       applySearchNow(), and the select-all click handler must all use this
+       one scope, or the indicator disagrees with the click: a disabled
+       choice counted in the indicator but skipped by the click makes the
+       indicator read "partial" while the click clears everything. */
+    function selectableVisibleChoices() {
+      return state.choices.filter(function (ch) {
+        return !ch.hidden && !ch.disabled;
       });
-      return n;
+    }
+
+    function searchEnabled() {
+      var total = state.total === null ? state.choices.length : state.total;
+      return searchMode === 'always' || (searchMode === 'auto' && total >= searchThreshold);
+    }
+
+    function syncSearchVisibility() {
+      var enabled = searchEnabled();
+      if (searchWrap) searchWrap.classList.toggle('hidden', !enabled);
+      if (searchIn) {
+        searchIn.disabled = !enabled;
+        searchIn.setAttribute('aria-hidden', enabled ? 'false' : 'true');
+      }
+      if (!enabled && state.query) {
+        state.query = '';
+        if (searchIn) searchIn.value = '';
+        state.choices.forEach(function (ch) { ch.hidden = false; });
+        patchVisibility();
+        optionNav.prepare();
+      }
+    }
+
+    function selectedLabels() {
+      var out = [];
+      state.choices.forEach(function (ch) {
+        if (state.selected.has(ch.value)) out.push(ch.label);
+      });
+      return out;
+    }
+
+    function selectionLabel(total) {
+      var n = state.selected.size;
+      if (n === 0) return placeholder;
+      if (total > 0 && n === total) return allLabel;
+      if (selectionDisplay === 'count') return n + ' selected';
+
+      var labels = selectedLabels();
+      if (selectionDisplay === 'labels') {
+        return labels.length === n ? labels.join(', ') : n + ' selected';
+      }
+      if (selectionDisplay === 'summary') {
+        var shown = labels.slice(0, selectionMaxItems);
+        var extra = n - shown.length;
+        if (!shown.length) return n + ' selected';
+        return shown.join(', ') + (extra > 0 ? ' +' + extra : '');
+      }
+      if (n === 1) return labels.length ? labels[0] : '1 selected';
+      return 'Multiple selection';
+    }
+
+    function overflowLabel(total) {
+      var visible = selectionLabel(total);
+      var n = state.selected.size;
+      if (n === 0 || (total > 0 && n === total)) return visible;
+      if (selectionDisplay !== 'summary' && selectionDisplay !== 'labels') return visible;
+      var labels = selectedLabels();
+      return labels.length === n && labels.length ? labels.join(', ') : visible;
     }
 
     function setStatus(text, active, loading) {
@@ -1665,7 +2488,7 @@
       if (state.loading) {
         setStatus('Searching...', true, true);
       } else if (visibleChoices().length === 0) {
-        setStatus('No matches', true, false);
+        setStatus(noMatchesText, true, false);
       } else {
         setStatus('', false, false);
       }
@@ -1684,12 +2507,8 @@
     function patchVisibility() {
       Array.from(dropdown.querySelectorAll('.gt-ms-option')).forEach(function (el) {
         var v = el.getAttribute('data-value');
-        for (var i = 0; i < state.choices.length; i++) {
-          if (state.choices[i].value === v) {
-            el.classList.toggle('hidden', state.choices[i].hidden);
-            break;
-          }
-        }
+        var ch = choiceByValue.get(v);
+        if (ch) el.classList.toggle('hidden', ch.hidden);
       });
       syncOptgroupHeaders(optionsBox);
     }
@@ -1698,8 +2517,11 @@
     function syncUI() {
       var total = state.total === null ? state.choices.length : state.total;
       var selCount = state.selected.size;
-      var vis = visibleChoices().length;
-      var visSel = visibleSelectedCount();
+      var visChoices = selectableVisibleChoices();
+      var vis = visChoices.length;
+      var visSel = visChoices.filter(function (ch) {
+        return state.selected.has(ch.value);
+      }).length;
 
       /* All row */
       if (allRow) {
@@ -1709,7 +2531,7 @@
         } else if (visSel > 0) {
           allRow.classList.add('indeterminate');
         }
-        allRow.setAttribute('aria-selected', vis > 0 && visSel === vis ? 'true' : 'false');
+        allRow.setAttribute('aria-checked', vis > 0 && visSel === vis ? 'true' : (visSel > 0 ? 'mixed' : 'false'));
       }
 
       /* Badge */
@@ -1723,27 +2545,14 @@
         countEl.textContent = selCount + ' / ' + total + ' selected';
       }
 
-      /* Label */
       if (labelEl) {
-        if (selCount === 0) {
-          labelEl.textContent = placeholder;
-        } else if (total > 0 && selCount === total) {
-          labelEl.textContent = allLabel;
-        } else if (selCount === 1) {
-          var first = null;
-          for (var i = 0; i < state.choices.length; i++) {
-            if (state.selected.has(state.choices[i].value)) {
-              first = state.choices[i];
-              break;
-            }
-          }
-          labelEl.textContent = first ? first.label : '1 selected';
-        } else {
-          labelEl.textContent = 'Multiple selection';
-        }
+        labelEl.textContent = selectionLabel(total);
+        trigger.setAttribute('aria-label', overflowLabel(total));
       }
+      optionOverflowTip.hide();
 
       patchOptionClasses();
+      syncSearchVisibility();
       updateStatus();
       renderTags();
     }
@@ -1824,7 +2633,11 @@
       opt._gtBound = true;
 
       opt.addEventListener('mouseenter', function () {
+        optionOverflowTip.enter(opt);
         if (!opt.classList.contains('disabled')) optionNav.set(opt);
+      });
+      opt.addEventListener('mouseleave', function () {
+        optionOverflowTip.leave(opt);
       });
       opt.addEventListener('click', function () {
         if (opt.classList.contains('disabled')) return;
@@ -1874,8 +2687,23 @@
       var total = typeof opts.total === 'number' ? opts.total : null;
 
       var oldSelected = preserveSel ? new Set(state.selected) : new Set();
+      var oldDisabled = new Set(state.choices.filter(function (ch) {
+        return ch.disabled;
+      }).map(function (ch) {
+        return ch.value;
+      }));
       choices = asChoiceArray(choices);
       state.loading = false;
+      /* The guard timer belongs to the request that armed it. Only the
+         response to that request, or a non-server update carrying no
+         sequence, may disarm it; a stale response must leave the latest
+         request's guard armed. */
+      if (state.searchTimeoutId &&
+          (opts.seq === undefined || opts.seq === state.searchTimerSeq)) {
+        clearTimeout(state.searchTimeoutId);
+        state.searchTimeoutId = null;
+        state.searchTimerSeq = null;
+      }
 
       /* Update state */
       var n = choices.length;
@@ -1884,13 +2712,15 @@
           label: String(ch.label),
           value: String(ch.value),
           hidden: false,
-          disabled: !!ch.disabled,
+          disabled: typeof ch.disabled === 'boolean' ? ch.disabled : oldDisabled.has(String(ch.value)),
           group: ch.group ? String(ch.group) : '',
           hue: ch.hue || Math.round((200 + 360 * i / Math.max(1, n)) % 360),
-          _labelLower: String(ch.label).toLowerCase()
+          _labelLower: String(ch.label).toLowerCase(),
+          _valueLower: String(ch.value).toLowerCase()
         };
       });
       state.total = total === null ? state.choices.length : total;
+      rebuildChoiceIndex();
 
       /* Intersect selection */
       var newValues = new Set(state.choices.map(function (ch) { return ch.value; }));
@@ -1913,6 +2743,7 @@
       optionsBox.appendChild(frag);
       optionsBox.appendChild(statusRow);
       optionNav.prepare();
+      syncSearchVisibility();
 
       /* Re-apply search if active */
       if (!serverMode && state.query) {
@@ -1931,14 +2762,17 @@
       state.query = qq;
 
       state.choices.forEach(function (ch) {
-        ch.hidden = qq !== '' && ch._labelLower.indexOf(qq) === -1;
+        ch.hidden = qq !== '' && ch._labelLower.indexOf(qq) === -1 && ch._valueLower.indexOf(qq) === -1;
       });
 
       patchVisibility();
       optionNav.prepare();
       /* Update allRow and counts without notifying Shiny */
-      var vis = visibleChoices().length;
-      var visSel = visibleSelectedCount();
+      var visChoices = selectableVisibleChoices();
+      var vis = visChoices.length;
+      var visSel = visChoices.filter(function (ch) {
+        return state.selected.has(ch.value);
+      }).length;
 
       if (allRow) {
         allRow.classList.remove('checked', 'indeterminate');
@@ -1947,7 +2781,7 @@
         } else if (visSel > 0) {
           allRow.classList.add('indeterminate');
         }
-        allRow.setAttribute('aria-selected', vis > 0 && visSel === vis ? 'true' : 'false');
+        allRow.setAttribute('aria-checked', vis > 0 && visSel === vis ? 'true' : (visSel > 0 ? 'mixed' : 'false'));
       }
       updateStatus();
     }
@@ -1959,10 +2793,26 @@
       if (query.length < serverMinChars) query = '';
       state.loading = true;
       updateStatus();
+      if (state.searchTimeoutId) clearTimeout(state.searchTimeoutId);
+      /* A response normally lands in milliseconds. If none arrives, the
+         "Searching..." status must not stick forever (e.g. the session
+         stopped responding). Clearing here is benign: the latest
+         response still applies through setChoices(), and a stale one is
+         dropped by the message handler. */
+      state.searchTimeoutId = setTimeout(function () {
+        state.searchTimeoutId = null;
+        state.searchTimerSeq = null;
+        if (state.loading) {
+          state.loading = false;
+          updateStatus();
+        }
+      }, 10000);
       Shiny.setInputValue(inputId + '_search', {
         query: query,
-        nonce: Date.now()
+        seq: ++serverSearchSeq
       }, { priority: 'event' });
+      wrap._gtServerSeqIssued = serverSearchSeq;
+      state.searchTimerSeq = serverSearchSeq;
     }
 
     var debouncedSearch = debounce(function () {
@@ -1983,6 +2833,11 @@
 
     /* Open / Close */
     function open() {
+      hideAllOverflowTooltips();
+      /* A pending close teleport (panel still retracting under <body>) must
+         not yank the panel back mid-reopen. */
+      cancelPendingTeleportClose(dropdown);
+      optionOverflowTip.hide();
       closeAllDropdowns(wrap);
       wrap.classList.add('gt-layer-active');
       teleportOpen(wrap, dropdown);
@@ -2001,7 +2856,7 @@
         focusTimer = null;
         if (!wrap.classList.contains('gt-layer-active')) return;
         optionNav.move('current');
-        if (searchIn) searchIn.focus();
+        if (searchEnabled() && searchIn) searchIn.focus();
       }, 100);
     }
 
@@ -2015,12 +2870,17 @@
         focusTimer = null;
       }
       wrap.classList.remove('gt-layer-active');
+      optionOverflowTip.hide();
       dropdown.classList.remove('open');
       trigger.classList.remove('open');
       trigger.setAttribute('aria-expanded', 'false');
-      teleportClose(wrap, dropdown);
+      /* Keep the panel teleported while it retracts; teleportClose() runs
+         on the transform transitionend (or a fallback timeout), not here.
+         Moving it now would collapse it instantly with no visible retract. */
+      scheduleTeleportClose(wrap, dropdown);
       setDropdownOpenState(wrap, inputId, false);
       optionNav.clear();
+      chromeIndex = -1;
     }
 
     function closeAndReturnFocus() {
@@ -2053,9 +2913,7 @@
         e.preventDefault();
         if (!dropdown.classList.contains('open')) open();
         setTimeout(function () {
-          if (e.key === 'Home') optionNav.move('first');
-          else if (e.key === 'End') optionNav.move('last');
-          else optionNav.move(e.key === 'ArrowDown' ? 1 : -1);
+          handleChromeAwareNav(e.key);
         }, 110);
       } else if (e.key === 'Escape' || e.key === 'Tab') {
         closeAndReturnFocus();
@@ -2066,9 +2924,7 @@
       if (e.key === 'ArrowDown' || e.key === 'ArrowUp' ||
           e.key === 'Home' || e.key === 'End') {
         e.preventDefault();
-        if (e.key === 'Home') optionNav.move('first');
-        else if (e.key === 'End') optionNav.move('last');
-        else optionNav.move(e.key === 'ArrowDown' ? 1 : -1);
+        handleChromeAwareNav(e.key);
       } else if (e.key === 'Enter' || e.key === ' ') {
         var option = optionNav.current();
         if (option) {
@@ -2080,11 +2936,20 @@
       }
     });
 
-    /* Reposition on scroll/resize while open */
+    /* Reposition on scroll/resize while open. Resize follows the trigger
+       instead of closing: mobile URL-bar show/hide and the on-screen
+       keyboard both fire resize, and closing there strands the user mid-task.
+       Only close when the trigger is detached or has no layout box. */
     wrap._gtScrollHandler = function (e) {
       if (!dropdown.classList.contains('open')) return;
-      if (e && e.type === 'resize') close();
-      else positionDropdown();
+      if (e && e.type === 'resize') {
+        var r = trigger.getBoundingClientRect();
+        if (!document.contains(trigger) || (r.width === 0 && r.height === 0)) {
+          close();
+          return;
+        }
+      }
+      positionDropdown();
     };
     window.addEventListener('scroll', wrap._gtScrollHandler, true);
     window.addEventListener('resize', wrap._gtScrollHandler);
@@ -2096,6 +2961,9 @@
 
         styleBtns.forEach(function (b) { b.classList.remove('active'); });
         btn.classList.add('active');
+        styleBtns.forEach(function (b) {
+          b.setAttribute('aria-pressed', b === btn ? 'true' : 'false');
+        });
 
         STYLES.forEach(function (st) { wrap.classList.remove('style-' + st); dropdown.classList.remove('style-' + st); });
         wrap.classList.add('style-' + s);
@@ -2109,8 +2977,9 @@
 
     if (allRow) {
       allRow.addEventListener('click', function () {
-        /* Select-all only ever acts on enabled, visible options */
-        var vis = visibleChoices().filter(function (ch) { return !ch.disabled; });
+        /* Select-all only ever acts on enabled, visible options: the
+           shared selectableVisibleChoices() scope, same as the indicator. */
+        var vis = selectableVisibleChoices();
         var anyUnchecked = vis.some(function (ch) { return !state.selected.has(ch.value); });
 
         vis.forEach(function (ch) {
@@ -2134,6 +3003,28 @@
       });
     }
 
+    /* Keep chrome navigation state in step with DOM focus: a mouse or touch
+       tap on a chrome row puts focus there without going through arrow
+       navigation, and leaving it must drop chrome mode. The dropdown
+       handler covers arrows/Escape/Tab for these buttons (they live inside
+       the dropdown), so only focus/blur sync is needed here. */
+    var allChromeButtons = styleBtns.slice();
+    if (allRow) allChromeButtons.push(allRow);
+    if (clearBtn) allChromeButtons.push(clearBtn);
+    allChromeButtons.forEach(function (btn) {
+      btn.addEventListener('focus', function () {
+        var idx = chromeItems().indexOf(btn);
+        if (idx >= 0) {
+          optionNav.clear();
+          optionOverflowTip.hide();
+          chromeIndex = idx;
+        }
+      });
+      btn.addEventListener('blur', function () {
+        chromeIndex = -1;
+      });
+    });
+
     if (searchIn) {
       searchIn.addEventListener('input', debouncedSearch);
     }
@@ -2146,6 +3037,7 @@
         wrap._gtScrollHandler = null;
       }
       close();
+      optionOverflowTip.destroy();
       teleportClose(wrap, dropdown);
       wrap._gtDropdown = null;
       wrap._gt = null;
@@ -2153,6 +3045,7 @@
     }
 
     /* Initial sync */
+    syncSearchVisibility();
     syncUI();
 
     /* Emit initial value to Shiny */
@@ -2182,6 +3075,7 @@
 
         styleBtns.forEach(function (b) {
           b.classList.toggle('active', b.getAttribute('data-style') === s);
+          b.setAttribute('aria-pressed', b.getAttribute('data-style') === s ? 'true' : 'false');
         });
 
         STYLES.forEach(function (st) { wrap.classList.remove('style-' + st); dropdown.classList.remove('style-' + st); });
@@ -2220,6 +3114,23 @@
           else trigger.removeAttribute('aria-disabled');
         }
       },
+      setSearch: function (mode, threshold) {
+        if (mode) searchMode = mode;
+        if (typeof threshold === 'number') searchThreshold = threshold;
+        syncSearchVisibility();
+        syncUI();
+      },
+      setSelectionDisplay: function (mode, maxItems) {
+        if (mode) selectionDisplay = mode;
+        if (typeof maxItems === 'number') selectionMaxItems = maxItems;
+        syncUI();
+      },
+      setDropdownMaxHeight: function (value) {
+        if (!value) return;
+        var field = wrap.closest ? wrap.closest('.gt-ms-field') : null;
+        (field || wrap).style.setProperty('--ms-dropdown-max-height', value);
+        dropdown.style.setProperty('--ms-dropdown-max-height', value);
+      },
       clear: function (opts) {
         setValue([], opts);
       },
@@ -2228,6 +3139,101 @@
       /* Expose for binding - stable reference, not the closure var */
       commitSelection: commitSelection
     };
+  }
+
+  function multiSelectSignature(ctrl) {
+    return JSON.stringify({ value: ctrl.getValue(), style: ctrl.getStyle() });
+  }
+
+  function applySingleSelectData(ctrl, data, el) {
+    var shouldCommit = false;
+
+    if (hasOwn(data, 'choices')) {
+      ctrl.setChoices(data.choices || [], { notify: false });
+      shouldCommit = true;
+    }
+    if (hasOwn(data, 'selected')) {
+      var sel = data.selected;
+      if (Array.isArray(sel)) sel = sel.length ? sel[0] : null;
+      /* "" is an ordinary choice value, not "cleared": the cleared state
+         is null (or an empty array from the R updater's character(0)). */
+      ctrl.setValue(sel, { notify: false });
+      shouldCommit = true;
+    }
+    if (hasOwn(data, 'style')) {
+      ctrl.setStyle(data.style, { notify: false });
+      shouldCommit = true;
+    }
+    if (hasOwn(data, 'shape') && typeof ctrl.setShape === 'function') {
+      ctrl.setShape(data.shape);
+    }
+    if (hasOwn(data, 'disabled') && typeof ctrl.setDisabled === 'function') {
+      ctrl.setDisabled(data.disabled);
+    }
+    if (hasOwn(data, 'disabled_choices') && typeof ctrl.setDisabledChoices === 'function') {
+      ctrl.setDisabledChoices(data.disabled_choices);
+    }
+    if ((hasOwn(data, 'searchable') || hasOwn(data, 'search_threshold')) &&
+        typeof ctrl.setSearch === 'function') {
+      ctrl.setSearch(data.searchable, data.search_threshold);
+    }
+    if (hasOwn(data, 'close') && data.close && typeof ctrl.close === 'function') {
+      ctrl.close();
+    }
+
+    if (shouldCommit && ctrl.commitSelection) ctrl.commitSelection();
+    if (shouldCommit && el) triggerShinyChange(el);
+  }
+
+  function applyMultiSelectData(ctrl, data) {
+    var before = multiSelectSignature(ctrl);
+    var affectsValue = false;
+
+    if (hasOwn(data, 'choices')) {
+      ctrl.setChoices(data.choices || [], {
+        notify: false,
+        preserveSelection: data.preserve_selection !== false,
+        preserveMissingSelection: data.drop_invalid === false
+      });
+      affectsValue = true;
+    }
+    if (hasOwn(data, 'selected')) {
+      ctrl.setValue(asValueArray(data.selected), { notify: false });
+      affectsValue = true;
+    }
+    if (hasOwn(data, 'style')) {
+      ctrl.setStyle(data.style, { notify: false });
+      affectsValue = true;
+    }
+    if (hasOwn(data, 'shape') && typeof ctrl.setShape === 'function') {
+      ctrl.setShape(data.shape);
+    }
+    if (hasOwn(data, 'disabled') && typeof ctrl.setDisabled === 'function') {
+      ctrl.setDisabled(data.disabled);
+    }
+    if (hasOwn(data, 'disabled_choices') && typeof ctrl.setDisabledChoices === 'function') {
+      ctrl.setDisabledChoices(data.disabled_choices);
+    }
+    if ((hasOwn(data, 'searchable') || hasOwn(data, 'search_threshold')) &&
+        typeof ctrl.setSearch === 'function') {
+      ctrl.setSearch(data.searchable, data.search_threshold);
+    }
+    if ((hasOwn(data, 'selection_display') || hasOwn(data, 'selection_max_items')) &&
+        typeof ctrl.setSelectionDisplay === 'function') {
+      ctrl.setSelectionDisplay(data.selection_display, data.selection_max_items);
+    }
+    if (hasOwn(data, 'dropdown_max_height') && typeof ctrl.setDropdownMaxHeight === 'function') {
+      ctrl.setDropdownMaxHeight(data.dropdown_max_height);
+    }
+    if (hasOwn(data, 'close') && data.close && typeof ctrl.close === 'function') {
+      ctrl.close();
+    }
+
+    var notify = data.notify || 'always';
+    var changed = before !== multiSelectSignature(ctrl);
+    if (affectsValue && notify !== 'never' && (notify === 'always' || changed)) {
+      ctrl.commitSelection();
+    }
   }
 
   /* SHINY INPUT BINDINGS */
@@ -2292,45 +3298,7 @@
       receiveMessage: function (el, data) {
         var ctrl = ensureInit(el);
         if (!ctrl) return;
-        var shouldCommit = false;
-
-        if (hasOwn(data, 'choices')) {
-          ctrl.setChoices(data.choices || [], { notify: false });
-          shouldCommit = true;
-        }
-
-        if (hasOwn(data, 'selected')) {
-          var sel = data.selected;
-          if (Array.isArray(sel)) sel = sel.length ? sel[0] : null;
-          if (sel === '') sel = null;
-          ctrl.setValue(sel, { notify: false });
-          shouldCommit = true;
-        }
-
-        if (hasOwn(data, 'style')) {
-          ctrl.setStyle(data.style, { notify: false });
-          shouldCommit = true;
-        }
-
-        if (hasOwn(data, 'shape') && typeof ctrl.setShape === 'function') {
-          ctrl.setShape(data.shape);
-        }
-
-        if (hasOwn(data, 'disabled') && typeof ctrl.setDisabled === 'function') {
-          ctrl.setDisabled(data.disabled);
-        }
-
-        if (hasOwn(data, 'disabled_choices') && typeof ctrl.setDisabledChoices === 'function') {
-          ctrl.setDisabledChoices(data.disabled_choices);
-        }
-
-        if (hasOwn(data, 'close') && data.close && typeof ctrl.close === 'function') {
-          ctrl.close();
-        }
-
-        /* Single commit after all fields are set */
-        if (shouldCommit && ctrl.commitSelection) ctrl.commitSelection();
-        if (shouldCommit) triggerShinyChange(el);
+        applySingleSelectData(ctrl, data || {}, el);
       }
     });
     Shiny.inputBindings.register(glassSelectBinding, 'glasstabs.glassSelect');
@@ -2363,42 +3331,7 @@
       receiveMessage: function (el, data) {
         var ctrl = ensureInit(el);
         if (!ctrl) return;
-        var shouldCommit = false;
-
-        if (hasOwn(data, 'choices')) {
-          ctrl.setChoices(data.choices || [], { notify: false });
-          shouldCommit = true;
-        }
-
-        if (hasOwn(data, 'selected')) {
-          ctrl.setValue(asValueArray(data.selected), { notify: false });
-          shouldCommit = true;
-        }
-
-        if (hasOwn(data, 'style')) {
-          ctrl.setStyle(data.style, { notify: false });
-          shouldCommit = true;
-        }
-
-        if (hasOwn(data, 'shape') && typeof ctrl.setShape === 'function') {
-          ctrl.setShape(data.shape);
-        }
-
-        if (hasOwn(data, 'disabled') && typeof ctrl.setDisabled === 'function') {
-          ctrl.setDisabled(data.disabled);
-        }
-
-        if (hasOwn(data, 'disabled_choices') && typeof ctrl.setDisabledChoices === 'function') {
-          ctrl.setDisabledChoices(data.disabled_choices);
-        }
-
-        if (hasOwn(data, 'close') && data.close && typeof ctrl.close === 'function') {
-          ctrl.close();
-        }
-
-        /* Single commit after all fields are set */
-        if (shouldCommit && ctrl.commitSelection) ctrl.commitSelection();
-        if (shouldCommit) triggerShinyChange(el);
+        applyMultiSelectData(ctrl, data || {});
       }
     });
     Shiny.inputBindings.register(glassMultiSelectBinding, 'glasstabs.glassMultiSelect');
@@ -2477,9 +3410,8 @@
       });
     }, true);
 
-    window.addEventListener('resize', function () {
-      closeAllDropdowns();
-    });
+    /* Resize is handled per widget: open dropdowns reposition to follow
+       their trigger (see wrap._gtScrollHandler) instead of closing. */
 
     var bootstrapCloseEvents = [
       'hide.bs.tab',
@@ -2511,13 +3443,123 @@
       }
     });
 
-    document.addEventListener('shiny:value', function () {
-      closeAllDropdowns();
+    /* A Shiny output updating should only disturb dropdowns anchored inside
+       the updated output (e.g. a renderUI replacing the widget itself).
+       Closing every dropdown on any output update made dropdowns unusable
+       next to live outputs such as timers or previews. */
+    document.addEventListener('shiny:value', function (e) {
+      var el = e.target || (e.binding && e.binding.el);
+      if (!el || !el.contains) return;
+      document.querySelectorAll('.gt-gs-wrap.gt-layer-active, .gt-ms-wrap.gt-layer-active').forEach(function (w) {
+        var dd = w._gtDropdown || w.querySelector('.gt-gs-dropdown, .gt-ms-dropdown');
+        var anchorInside = el === w || el.contains(w);
+        var panelInside = !!dd && (el === dd || el.contains(dd));
+        if (anchorInside || panelInside) closeDropdownWrap(w);
+      });
     });
 
     document.addEventListener('shiny:disconnected', function () {
       closeAllDropdowns();
     });
+
+    /* Dismiss open dropdowns when a full-screen overlay appears (loading
+       screens, waiter veils, custom overlays). The dropdown would otherwise
+       float above the veil or linger beneath it. Only elements that actually
+       cover the open dropdown trigger a close. */
+    function overlayZ(el) {
+      var z = parseInt(window.getComputedStyle(el).zIndex, 10);
+      return isNaN(z) ? null : z;
+    }
+    function looksLikeScreenOverlay(el) {
+      if (!el || el.nodeType !== 1 || !el.getBoundingClientRect) return false;
+      if (el.closest && el.closest('.gt-gs-wrap, .gt-ms-wrap')) return false;
+      var cs = window.getComputedStyle(el);
+      if (cs.display === 'none' || cs.visibility === 'hidden') return false;
+      var op = parseFloat(cs.opacity);
+      if (!isNaN(op) && op === 0) return false;
+      if (cs.position !== 'fixed' && cs.position !== 'absolute') return false;
+      var r = el.getBoundingClientRect();
+      var vw = window.innerWidth, vh = window.innerHeight;
+      if (!vw || !vh) return false;
+      if (r.width < vw * 0.85 || r.height < vh * 0.85) return false;
+      if (r.left > vw * 0.1 || r.top > vh * 0.1) return false;
+      return true;
+    }
+    function overlayCoversDropdown(overlay) {
+      /* Teleported panels live on document.body; non-teleported ones sit in
+         the wrap. Either way compare against the visible panel. */
+      var dd = document.querySelector('.gt-gs-dropdown.open, .gt-ms-dropdown.open');
+      if (!dd) {
+        dd = document.querySelector(
+          '.gt-gs-wrap.gt-layer-active, .gt-ms-wrap.gt-layer-active'
+        );
+      }
+      if (!dd) return true;
+      var oz = overlayZ(overlay), dz = overlayZ(dd);
+      if (oz === null || dz === null) return true;
+      return oz >= dz;
+    }
+    /* Find a screen-overlay candidate at or below `root`. `root` itself is
+       checked first; descendants get a cheap inline-style/class prefilter
+       before the expensive computed-style check in looksLikeScreenOverlay,
+       so inserting a large subtree stays fast. */
+    function findOverlayCandidate(root) {
+      if (!root || root.nodeType !== 1) return null;
+      if (root.closest && root.closest('.gt-gs-wrap, .gt-ms-wrap')) return null;
+      if (looksLikeScreenOverlay(root)) return root;
+      var all = root.querySelectorAll ? root.querySelectorAll('*') : [];
+      for (var i = 0; i < all.length; i++) {
+        var el = all[i];
+        if (el.closest && el.closest('.gt-gs-wrap, .gt-ms-wrap')) continue;
+        var pos = el.style ? el.style.position : '';
+        var cls = el.className && typeof el.className === 'string' ? el.className : '';
+        /* Prefilter: inline fixed/absolute positioning or an overlay-ish
+           class name. Anything subtler is still caught when it mutates its
+           own class/style attributes (see below). */
+        if (pos !== 'fixed' && pos !== 'absolute' &&
+            !/overlay|veil|modal|backdrop|loading|waiter|spinner/i.test(cls)) continue;
+        if (looksLikeScreenOverlay(el)) return el;
+      }
+      return null;
+    }
+    function maybeCloseForOverlay(el) {
+      var cand = findOverlayCandidate(el);
+      if (cand && overlayCoversDropdown(cand)) {
+        closeAllDropdowns();
+        return true;
+      }
+      return false;
+    }
+    if (typeof MutationObserver !== 'undefined' && document.body) {
+      var overlayObserver = new MutationObserver(function (mutations) {
+        var open = document.querySelector(
+          '.gt-gs-wrap.gt-layer-active, .gt-ms-wrap.gt-layer-active'
+        );
+        if (!open) return;
+        for (var i = 0; i < mutations.length; i++) {
+          var m = mutations[i];
+          if (m.type === 'childList') {
+            for (var j = 0; j < m.addedNodes.length; j++) {
+              /* addedNodes covers the node itself; findOverlayCandidate
+                 also scans its descendants, so an overlay nested inside a
+                 newly inserted wrapper is caught. */
+              if (maybeCloseForOverlay(m.addedNodes[j])) return;
+            }
+          } else if (m.type === 'attributes') {
+            /* With subtree observation this fires for class/style changes
+               anywhere, e.g. a hidden overlay made visible by toggling a
+               class on itself or on an ancestor wrapper. */
+            if (maybeCloseForOverlay(m.target)) return;
+          }
+        }
+      });
+      overlayObserver.observe(document.body, {
+        childList: true,
+        attributes: true,
+        attributeFilter: ['style', 'class'],
+        subtree: true
+      });
+    }
   }
 
   document.addEventListener('click', function (e) {
@@ -2598,6 +3640,23 @@
   function registerCustomMessageHandlers() {
     if (typeof Shiny === 'undefined' || registerCustomMessageHandlers._done) return;
 
+    function applySingleSelectUpdate(msg, attempt) {
+      attempt = attempt || 0;
+      var wrap = msg && msg.inputId
+        ? document.querySelector('.gt-gs-wrap' + attrEquals('data-input-id', msg.inputId))
+        : null;
+      var ctrl = wrap ? ensureInit(wrap) : null;
+
+      if (!ctrl) {
+        if (attempt < 20) {
+          setTimeout(function () { applySingleSelectUpdate(msg, attempt + 1); }, 25);
+        }
+        return;
+      }
+
+      applySingleSelectData(ctrl, msg.data || {}, wrap);
+    }
+
     function applyMultiSelectUpdate(msg, attempt) {
       attempt = attempt || 0;
       var wrap = msg && msg.inputId
@@ -2612,43 +3671,19 @@
         return;
       }
 
-      var data = msg.data || {};
-      var shouldCommit = false;
-      if (hasOwn(data, 'choices')) {
-        ctrl.setChoices(data.choices || [], { notify: false });
-        shouldCommit = true;
-      }
-      if (hasOwn(data, 'selected')) {
-        ctrl.setValue(asValueArray(data.selected), { notify: false });
-        shouldCommit = true;
-      }
-      if (hasOwn(data, 'style')) {
-        ctrl.setStyle(data.style, { notify: false });
-        shouldCommit = true;
-      }
-      if (hasOwn(data, 'shape') && typeof ctrl.setShape === 'function') {
-        ctrl.setShape(data.shape);
-      }
-      if (hasOwn(data, 'disabled') && typeof ctrl.setDisabled === 'function') {
-        ctrl.setDisabled(data.disabled);
-      }
-      if (hasOwn(data, 'disabled_choices') && typeof ctrl.setDisabledChoices === 'function') {
-        ctrl.setDisabledChoices(data.disabled_choices);
-      }
-      if (shouldCommit && ctrl.commitSelection) ctrl.commitSelection();
+      applyMultiSelectData(ctrl, msg.data || {});
     }
 
     Shiny.addCustomMessageHandler('glasstabs_reinit', function (msg) {
       bootAll();
     });
 
-    Shiny.addCustomMessageHandler('glasstabs_update_multiselect', function (msg) {
-      setTimeout(function () { applyMultiSelectUpdate(msg, 0); }, 50);
+    Shiny.addCustomMessageHandler('glasstabs_update_select', function (msg) {
+      setTimeout(function () { applySingleSelectUpdate(msg, 0); }, 50);
     });
 
-    Shiny.addCustomMessageHandler('glasstabs_close_select', function (msg) {
-      if (!msg || !msg.inputId) return;
-      closeDropdownById(msg.inputId, msg.type);
+    Shiny.addCustomMessageHandler('glasstabs_update_multiselect', function (msg) {
+      setTimeout(function () { applyMultiSelectUpdate(msg, 0); }, 50);
     });
 
     Shiny.addCustomMessageHandler('glasstabs_close_selects', function (msg) {
@@ -2659,13 +3694,24 @@
       if (!msg || !msg.inputId) return;
       var selector = msg.type === 'multi' ? '.gt-ms-wrap' : '.gt-gs-wrap';
       var wrap = document.querySelector(selector + attrEquals('data-input-id', msg.inputId));
+      /* Responses carry the sequence of the search they answer. Only the
+         response to the latest issued search for this widget applies: an
+         older response arriving after a newer search was sent is dropped,
+         so it can neither replace current results nor disarm the latest
+         search's loading guard. Messages without a sequence (older
+         servers) always apply. */
+      if (wrap && typeof msg.seq === 'number') {
+        if (wrap._gtServerSeqIssued !== undefined && msg.seq !== wrap._gtServerSeqIssued) return;
+        wrap._gtServerSeq = msg.seq;
+      }
       var ctrl = wrap ? ensureInit(wrap) : null;
       if (!ctrl || !ctrl.setChoices) return;
 
       ctrl.setChoices(msg.choices || [], {
         notify: false,
         preserveMissingSelection: true,
-        total: typeof msg.total === 'number' ? msg.total : undefined
+        total: typeof msg.total === 'number' ? msg.total : undefined,
+        seq: msg.seq
       });
     });
 

@@ -78,6 +78,20 @@ knitr::opts_chunk$set(eval = FALSE)
 # glassSelect("region_d", fruits, disabled = TRUE)
 # glassSelect("region_dc", fruits, disabled_choices = "banana")
 
+## ----long-labels--------------------------------------------------------------
+# long_industries <- c(
+#   "Renewable energy generation, storage, and grid-scale distribution networks" = "energy",
+#   Healthcare = "healthcare"
+# )
+# 
+# glassSelect(
+#   "industry",
+#   long_industries,
+#   selected = "energy",
+#   width = "240px",
+#   overflow_tooltip = "auto"
+# )
+
 ## ----lifecycle----------------------------------------------------------------
 # observeEvent(input$change_layout, {
 #   closeGlassSelect(session, "pick")
@@ -94,6 +108,34 @@ knitr::opts_chunk$set(eval = FALSE)
 #   fruits,
 #   searchable = TRUE,
 #   clearable = TRUE
+# )
+
+## ----automatic-search---------------------------------------------------------
+# glassSelect(
+#   "category",
+#   c(Alpha = "alpha", Beta = "beta", Gamma = "gamma", Delta = "delta", Epsilon = "epsilon"),
+#   searchable = "auto",
+#   search_threshold = 6
+# )
+
+## ----update-automatic-search--------------------------------------------------
+# updateGlassSelect(
+#   session,
+#   "category",
+#   searchable = "auto",
+#   search_threshold = 5
+# )
+
+## ----presentation-options-----------------------------------------------------
+# glassSelect(
+#   "f",
+#   fruits,
+#   theme = "auto",
+#   dark_selector = "body.app-dark",
+#   tongue = FALSE,
+#   label_bold = TRUE,
+#   label_size = "14px",
+#   search_focus_ring = FALSE
 # )
 
 ## ----no-search----------------------------------------------------------------

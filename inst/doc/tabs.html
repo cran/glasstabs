@@ -548,7 +548,8 @@ filter:</p>
 <div id="custom-theme-with-glass_tab_theme" class="section level3">
 <h3>Custom theme with <code>glass_tab_theme()</code></h3>
 <p>Supply only the values you want to change — everything else falls
-back to the dark preset:</p>
+back to the selected mode’s preset (dark by default, or light with
+<code>mode = &quot;light&quot;</code>):</p>
 <div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="co"># Change only the halo colour</span></span>
 <span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a><span class="fu">glassTabsUI</span>(<span class="st">&quot;nav&quot;</span>,</span>
 <span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a>  <span class="at">theme =</span> <span class="fu">glass_tab_theme</span>(</span>
@@ -558,7 +559,7 @@ back to the dark preset:</p>
 <span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a>  ),</span>
 <span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a>  <span class="fu">glassTabPanel</span>(<span class="st">&quot;a&quot;</span>, <span class="st">&quot;Tab&quot;</span>, <span class="at">selected =</span> <span class="cn">TRUE</span>, <span class="fu">p</span>(<span class="st">&quot;Content&quot;</span>))</span>
 <span id="cb12-9"><a href="#cb12-9" tabindex="-1"></a>)</span></code></pre></div>
-<p>All nine handles available in <code>glass_tab_theme()</code>:</p>
+<p>All ten handles available in <code>glass_tab_theme()</code>:</p>
 <table>
 <thead>
 <tr class="header">
@@ -602,6 +603,11 @@ back to the dark preset:</p>
 <tr class="odd">
 <td><code>card_text</code></td>
 <td>Inner card text colour</td>
+</tr>
+<tr class="even">
+<td><code>mode</code></td>
+<td>Theme mode metadata (<code>&quot;dark&quot;</code> or
+<code>&quot;light&quot;</code>)</td>
 </tr>
 </tbody>
 </table>

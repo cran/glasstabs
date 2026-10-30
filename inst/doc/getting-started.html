@@ -356,7 +356,13 @@ styles</li>
 input with optional search and clear support</li>
 </ul>
 <p>All widgets work in plain <code>fluidPage()</code> and in bs4Dash.
-They can be used together or independently. —</p>
+They can be used together or independently.</p>
+<p><strong>Start here, by task.</strong> Only need tabs? Read the tabs
+article. Only need a dropdown? Read the single-select or multi-select
+guide. Building reusable filters? Read the modules and linked-filters
+recipes. Something broken? Read troubleshooting first — most entries are
+configuration choices, not bugs. The example gallery lists a runnable
+demo for each question above. —</p>
 </div>
 <div id="installation" class="section level2">
 <h2>Installation</h2>
@@ -364,7 +370,7 @@ They can be used together or independently. —</p>
 <span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="st">&quot;glasstabs&quot;</span>)</span>
 <span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a></span>
 <span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a><span class="co"># From GitHub</span></span>
-<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a>pak<span class="sc">::</span><span class="fu">pak</span>(<span class="st">&quot;YOUR_GITHUB_USERNAME/glasstabs&quot;</span>)</span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a>pak<span class="sc">::</span><span class="fu">pak</span>(<span class="st">&quot;PrigasG/glasstabs&quot;</span>)</span>
 <span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a></span>
 <span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a><span class="co"># From source</span></span>
 <span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a>devtools<span class="sc">::</span><span class="fu">install_local</span>(<span class="st">&quot;path/to/glasstabs&quot;</span>)</span></code></pre></div>
@@ -454,6 +460,16 @@ click:</p>
 <p><code>input$category</code> is always a plain character vector of the
 checked values — use it like any other Shiny input to filter data, drive
 outputs, or trigger reactives.</p>
+<p>For the complete selection model, summaries, linked-filter pattern,
+server search, transactional updates, and migration notes, continue with
+the <a href="multiselect.html">multi-select guide</a>.</p>
+<p>For long filter names, give the field more room with
+<code>width = &quot;240px&quot;</code> or <code>width = &quot;100%&quot;</code>. With
+<code>overflow_tooltip = &quot;auto&quot;</code>, hovering a truncated option
+inside the open dropdown reveals that option alone. The trigger retains
+the complete accessible selection label without showing one combined
+tooltip for multiple values. These controls affect appearance only, not
+the value returned to Shiny.</p>
 </div>
 <div id="optional-reactive-helper" class="section level3">
 <h3>Optional reactive helper</h3>
@@ -486,6 +502,7 @@ updates:</p>
 </div>
 <div id="single-select-dropdown" class="section level2">
 <h2>Single-select dropdown</h2>
+<p>For the full single-value API and examples, see the <a href="glassSelect.html">single-select guide</a>.</p>
 <div id="step-1-add-a-single-select-input" class="section level3">
 <h3>Step 1: add a single-select input</h3>
 <div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a>choices <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
@@ -510,6 +527,18 @@ updates:</p>
 <span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">interactive</span>()) <span class="fu">shinyApp</span>(ui, server)</span></code></pre></div>
 <p><code>input$region</code> is a single character value, or
 <code>NULL</code> when nothing is selected.</p>
+<p>The single- and multi-select widgets share <code>tongue</code>,
+<code>label_bold</code>, <code>label_size</code>,
+<code>search_focus_ring</code>, and <code>overflow_tooltip</code>. This
+makes it possible to keep the glass animation, use the quieter detached
+transition, or match native Shiny labels without changing server code.
+Multi-selects add <code>fill_colors = &quot;single&quot;</code> (default) or
+<code>&quot;multi&quot;</code> for filled markers.</p>
+<p>They also share automatic search. With
+<code>searchable = &quot;auto&quot;</code>, the search field is hidden until the
+number of choices reaches <code>search_threshold</code>; this keeps a
+five-category field simple while still supporting a list that grows
+later.</p>
 </div>
 <div id="updating-from-the-server-1" class="section level3">
 <h3>Updating from the server</h3>
@@ -556,21 +585,24 @@ filters as removable tag pills.</p>
 <span id="cb13-23"><a href="#cb13-23" tabindex="-1"></a></span>
 <span id="cb13-24"><a href="#cb13-24" tabindex="-1"></a>server <span class="ot">&lt;-</span> <span class="cf">function</span>(input, output, session) {</span>
 <span id="cb13-25"><a href="#cb13-25" tabindex="-1"></a></span>
-<span id="cb13-26"><a href="#cb13-26" tabindex="-1"></a>  selected_regions <span class="ot">&lt;-</span> <span class="fu">reactive</span>({</span>
-<span id="cb13-27"><a href="#cb13-27" tabindex="-1"></a>    input<span class="sc">$</span>region <span class="sc">%||%</span> <span class="fu">unique</span>(<span class="fu">unname</span>(choices))</span>
-<span id="cb13-28"><a href="#cb13-28" tabindex="-1"></a>  })</span>
-<span id="cb13-29"><a href="#cb13-29" tabindex="-1"></a></span>
-<span id="cb13-30"><a href="#cb13-30" tabindex="-1"></a>  output<span class="sc">$</span>summary_text <span class="ot">&lt;-</span> <span class="fu">renderUI</span>({</span>
-<span id="cb13-31"><a href="#cb13-31" tabindex="-1"></a>    shiny<span class="sc">::</span><span class="fu">p</span>(<span class="st">&quot;Showing data for: &quot;</span>,</span>
-<span id="cb13-32"><a href="#cb13-32" tabindex="-1"></a>             shiny<span class="sc">::</span><span class="fu">strong</span>(<span class="fu">paste</span>(<span class="fu">selected_regions</span>(), <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>)))</span>
-<span id="cb13-33"><a href="#cb13-33" tabindex="-1"></a>  })</span>
-<span id="cb13-34"><a href="#cb13-34" tabindex="-1"></a></span>
-<span id="cb13-35"><a href="#cb13-35" tabindex="-1"></a>  output<span class="sc">$</span>detail_table <span class="ot">&lt;-</span> <span class="fu">renderTable</span>({</span>
-<span id="cb13-36"><a href="#cb13-36" tabindex="-1"></a>    <span class="fu">data.frame</span>(<span class="at">Region =</span> <span class="fu">selected_regions</span>())</span>
-<span id="cb13-37"><a href="#cb13-37" tabindex="-1"></a>  })</span>
-<span id="cb13-38"><a href="#cb13-38" tabindex="-1"></a>}</span>
-<span id="cb13-39"><a href="#cb13-39" tabindex="-1"></a></span>
-<span id="cb13-40"><a href="#cb13-40" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">interactive</span>()) <span class="fu">shinyApp</span>(ui, server)</span></code></pre></div>
+<span id="cb13-26"><a href="#cb13-26" tabindex="-1"></a>  <span class="co"># Fall back when an input is NULL or empty (no selection yet).</span></span>
+<span id="cb13-27"><a href="#cb13-27" tabindex="-1"></a>  fallback <span class="ot">&lt;-</span> <span class="cf">function</span>(x, default) <span class="cf">if</span> (<span class="fu">is.null</span>(x) <span class="sc">||</span> <span class="fu">length</span>(x) <span class="sc">==</span> <span class="dv">0</span>) default <span class="cf">else</span> x</span>
+<span id="cb13-28"><a href="#cb13-28" tabindex="-1"></a></span>
+<span id="cb13-29"><a href="#cb13-29" tabindex="-1"></a>  selected_regions <span class="ot">&lt;-</span> <span class="fu">reactive</span>({</span>
+<span id="cb13-30"><a href="#cb13-30" tabindex="-1"></a>    <span class="fu">fallback</span>(input<span class="sc">$</span>region, <span class="fu">unique</span>(<span class="fu">unname</span>(choices)))</span>
+<span id="cb13-31"><a href="#cb13-31" tabindex="-1"></a>  })</span>
+<span id="cb13-32"><a href="#cb13-32" tabindex="-1"></a></span>
+<span id="cb13-33"><a href="#cb13-33" tabindex="-1"></a>  output<span class="sc">$</span>summary_text <span class="ot">&lt;-</span> <span class="fu">renderUI</span>({</span>
+<span id="cb13-34"><a href="#cb13-34" tabindex="-1"></a>    shiny<span class="sc">::</span><span class="fu">p</span>(<span class="st">&quot;Showing data for: &quot;</span>,</span>
+<span id="cb13-35"><a href="#cb13-35" tabindex="-1"></a>             shiny<span class="sc">::</span><span class="fu">strong</span>(<span class="fu">paste</span>(<span class="fu">selected_regions</span>(), <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>)))</span>
+<span id="cb13-36"><a href="#cb13-36" tabindex="-1"></a>  })</span>
+<span id="cb13-37"><a href="#cb13-37" tabindex="-1"></a></span>
+<span id="cb13-38"><a href="#cb13-38" tabindex="-1"></a>  output<span class="sc">$</span>detail_table <span class="ot">&lt;-</span> <span class="fu">renderTable</span>({</span>
+<span id="cb13-39"><a href="#cb13-39" tabindex="-1"></a>    <span class="fu">data.frame</span>(<span class="at">Region =</span> <span class="fu">selected_regions</span>())</span>
+<span id="cb13-40"><a href="#cb13-40" tabindex="-1"></a>  })</span>
+<span id="cb13-41"><a href="#cb13-41" tabindex="-1"></a>}</span>
+<span id="cb13-42"><a href="#cb13-42" tabindex="-1"></a></span>
+<span id="cb13-43"><a href="#cb13-43" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">interactive</span>()) <span class="fu">shinyApp</span>(ui, server)</span></code></pre></div>
 <hr />
 </div>
 <div id="choosing-a-theme" class="section level2">
@@ -663,6 +695,12 @@ adapt:</p>
 <span id="cb16-22"><a href="#cb16-22" tabindex="-1"></a>    <span class="fu">message</span>(<span class="st">&quot;Tab: &quot;</span>, <span class="fu">active_tab</span>(), <span class="st">&quot;; region: &quot;</span>, region)</span>
 <span id="cb16-23"><a href="#cb16-23" tabindex="-1"></a>  })</span>
 <span id="cb16-24"><a href="#cb16-24" tabindex="-1"></a>}</span></code></pre></div>
+<p>Note that mapping an empty single-select to <code>&quot;all&quot;</code> here
+is an explicit app choice, not the widget’s behavior: a cleared
+single-select returns <code>NULL</code>, and this app deliberately reads
+<code>NULL</code> as “all”. The multi-select guide’s “Understanding
+selection behavior” section works through the same decision for
+multi-selects, where the trap is Clear all restoring every record.</p>
 <p>From here, add only the options the app actually needs. Every widget
 keeps the usual Shiny model: place it in the UI, read its value from
 <code>input</code>, and use an update helper when the server needs to

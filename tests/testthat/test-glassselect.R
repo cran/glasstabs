@@ -7,6 +7,90 @@ test_that("glassSelect() returns an htmltools object", {
   expect_true(inherits(ui, c("shiny.tag", "shiny.tag.list")))
 })
 
+test_that("glassSelect() can disable the tongue treatment", {
+  default <- as.character(glassSelect("f", choices))
+  detached <- as.character(glassSelect("f", choices, tongue = FALSE))
+
+  expect_false(grepl("gt-no-tongue", default, fixed = TRUE))
+  expect_match(detached, "gt-gs-wrap[^\"]*gt-no-tongue")
+  expect_error(
+    glassSelect("f", choices, tongue = "no"),
+    class = "glasstabs_error_bad_argument"
+  )
+})
+
+test_that("glassSelect() uses bold labels by default and can opt out", {
+  default <- as.character(glassSelect("f", choices, label = "Fruit"))
+  regular <- as.character(glassSelect(
+    "f", choices, label = "Fruit", label_bold = FALSE
+  ))
+
+  expect_match(default, 'class="gt-input-label"')
+  expect_false(grepl("gt-label-regular", default, fixed = TRUE))
+  expect_match(regular, 'class="gt-input-label gt-label-regular"')
+  expect_error(
+    glassSelect("f", choices, label_bold = 1),
+    class = "glasstabs_error_bad_argument"
+  )
+})
+
+test_that("glassSelect() supports label size and an optional search ring", {
+  default <- as.character(glassSelect("f", choices, label = "Fruit"))
+  customized <- as.character(glassSelect(
+    "f", choices, label = "Fruit", label_size = "16px",
+    search_focus_ring = TRUE
+  ))
+
+  expect_match(default, "--gt-label-size:14px", fixed = TRUE)
+  expect_false(grepl("gt-search-ring", default, fixed = TRUE))
+  expect_match(customized, "--gt-label-size:16px", fixed = TRUE)
+  expect_match(customized, "gt-gs-wrap[^\"]*gt-search-ring")
+  expect_error(
+    glassSelect("f", choices, label_size = "large-ish"),
+    class = "glasstabs_error_bad_argument"
+  )
+  expect_error(
+    glassSelect("f", choices, search_focus_ring = "yes"),
+    class = "glasstabs_error_bad_argument"
+  )
+})
+
+test_that("glassSelect() supports a custom dark selector across theme modes", {
+  automatic <- as.character(glassSelect(
+    "f",
+    choices,
+    theme = "auto",
+    dark_selector = "body.dark-mode"
+  ))
+  light <- as.character(glassSelect(
+    "f",
+    choices,
+    theme = "light",
+    dark_selector = "body.dark-mode"
+  ))
+
+  expect_match(automatic, "body.dark-mode #f-field", fixed = TRUE)
+  expect_match(light, "body.dark-mode #f-field", fixed = TRUE)
+  expect_error(
+    glassSelect("f", choices, theme = "auto", dark_selector = ""),
+    class = "glasstabs_error_bad_argument"
+  )
+})
+
+test_that("glassSelect() enables truncation tooltips by default", {
+  default <- as.character(glassSelect("f", choices))
+  disabled <- as.character(glassSelect(
+    "f", choices, overflow_tooltip = "never"
+  ))
+
+  expect_match(default, 'data-overflow-tooltip="auto"', fixed = TRUE)
+  expect_match(disabled, 'data-overflow-tooltip="never"', fixed = TRUE)
+  expect_error(
+    glassSelect("f", choices, overflow_tooltip = "always"),
+    class = "glasstabs_error_bad_argument"
+  )
+})
+
 
 test_that("glassSelect() accepts unnamed choices", {
   expect_no_error(glassSelect("f", c("x", "y", "z")))
@@ -28,6 +112,13 @@ test_that("glassSelect() renders labels in HTML", {
 
 test_that("glassSelect() errors when choices is NULL", {
   expect_error(glassSelect("f", NULL), class = "glasstabs_error_bad_choice")
+})
+
+test_that("glassSelect() rejects missing choice values", {
+  expect_error(
+    glassSelect("f", c(Apple = "apple", Missing = NA_character_)),
+    class = "glasstabs_error_bad_choice"
+  )
 })
 
 
@@ -81,8 +172,47 @@ test_that("glassSelect() searchable = TRUE renders search input", {
 
 test_that("glassSelect() searchable = FALSE omits search input", {
   html <- as.character(glassSelect("f", choices, searchable = FALSE))
-  expect_false(grepl('type="text"', html, fixed = TRUE))
-  expect_false(grepl("Search options...", html, fixed = TRUE))
+  expect_match(html, 'data-searchable="never"', fixed = TRUE)
+  expect_match(html, 'class="gt-gs-search hidden"', fixed = TRUE)
+})
+
+test_that("glassSelect() automatic search follows the choice threshold", {
+  five <- stats::setNames(letters[1:5], LETTERS[1:5])
+  hidden <- as.character(glassSelect(
+    "f", five, searchable = "auto", search_threshold = 6
+  ))
+  shown <- as.character(glassSelect(
+    "f", five, searchable = "auto", search_threshold = 5
+  ))
+
+  expect_match(hidden, 'data-searchable="auto"', fixed = TRUE)
+  expect_match(hidden, 'data-search-threshold="6"', fixed = TRUE)
+  expect_match(hidden, 'class="gt-gs-search hidden"', fixed = TRUE)
+  expect_match(shown, 'class="gt-gs-search"', fixed = TRUE)
+})
+
+test_that("glassSelect() automatic search ignores the synthetic all choice", {
+  fourteen <- stats::setNames(seq_len(14), paste("Category", seq_len(14)))
+  html <- as.character(glassSelect(
+    "f", fourteen,
+    include_all = TRUE,
+    searchable = "auto",
+    search_threshold = 15
+  ))
+
+  expect_match(html, 'data-server-total="14"', fixed = TRUE)
+  expect_match(html, 'class="gt-gs-search hidden"', fixed = TRUE)
+})
+
+test_that("glassSelect() validates search settings", {
+  expect_error(
+    glassSelect("f", choices, searchable = "sometimes"),
+    class = "glasstabs_error_bad_argument"
+  )
+  expect_error(
+    glassSelect("f", choices, search_threshold = 0),
+    class = "glasstabs_error_bad_argument"
+  )
 })
 
 test_that("glassSelect() clearable = TRUE renders clear control", {
@@ -181,8 +311,27 @@ test_that("glassSelect() sets data-input-id attribute", {
 
 test_that("glassSelect() sets data-searchable and data-clearable attributes", {
   html <- as.character(glassSelect("my_select", choices, searchable = FALSE, clearable = TRUE))
-  expect_true(grepl('data-searchable="false"', html, fixed = TRUE))
+  expect_true(grepl('data-searchable="never"', html, fixed = TRUE))
   expect_true(grepl('data-clearable="true"', html, fixed = TRUE))
+})
+
+test_that("glassSelect() rejects invalid logical arguments", {
+  for (argument in c("clearable", "include_all", "disabled", "server")) {
+    args <- list(inputId = "f", choices = choices)
+    args[[argument]] <- "yes"
+    expect_error(
+      do.call(glassSelect, args),
+      class = "glasstabs_error_bad_argument",
+      info = argument
+    )
+  }
+})
+
+test_that("glassSelect() rejects missing selected values", {
+  expect_error(
+    glassSelect("f", choices, selected = NA_character_),
+    class = "glasstabs_error_bad_choice"
+  )
 })
 
 
@@ -215,6 +364,18 @@ test_that("updateGlassSelect() sends normalized choices", {
   expect_true(is.list(args[[2]]$choices))
   expect_equal(args[[2]]$choices[[1]]$label, "Apple")
   expect_equal(args[[2]]$choices[[1]]$value, "apple")
+  expect_false("disabled" %in% names(args[[2]]$choices[[1]]))
+})
+
+test_that("updateGlassSelect() sends disabled choice state only when requested", {
+  send_mock <- mockery::mock()
+  fake_session <- list(sendInputMessage = send_mock)
+
+  updateGlassSelect(fake_session, "pick", choices = choices, disabled_choices = "banana")
+
+  rows <- mockery::mock_args(send_mock)[[1]][[2]]$choices
+  expect_false(rows[[1]]$disabled)
+  expect_true(rows[[2]]$disabled)
 })
 
 test_that("updateGlassSelect() sends selected value unchanged", {
@@ -281,6 +442,53 @@ test_that("updateGlassSelect() sends empty message when no updates supplied", {
   args <- mockery::mock_args(send_mock)[[1]]
   expect_equal(args[[1]], "pick")
   expect_equal(args[[2]], list())
+})
+
+test_that("updateGlassSelect() sends automatic search settings", {
+  send_mock <- mockery::mock()
+  fake_session <- list(sendInputMessage = send_mock)
+
+  updateGlassSelect(
+    fake_session,
+    "pick",
+    searchable = "auto",
+    search_threshold = 5
+  )
+
+  data <- mockery::mock_args(send_mock)[[1]][[2]]
+  expect_equal(data$searchable, "auto")
+  expect_equal(data$search_threshold, 5L)
+})
+
+test_that("updateGlassSelect() uses the namespaced custom-message path for Shiny sessions", {
+  send_mock <- mockery::mock()
+  fake_session <- list(
+    sendCustomMessage = send_mock,
+    ns = function(id) paste0("module-", id)
+  )
+
+  updateGlassSelect(fake_session, "pick", search_threshold = 5)
+
+  args <- mockery::mock_args(send_mock)[[1]]
+  expect_equal(args[[1]], "glasstabs_update_select")
+  expect_equal(args[[2]]$inputId, "module-pick")
+  expect_equal(args[[2]]$data$search_threshold, 5L)
+})
+
+test_that("updateGlassSelect() validates session, disabled, and selection", {
+  expect_error(
+    updateGlassSelect(list(), "pick", selected = "apple"),
+    class = "glasstabs_error_no_session"
+  )
+  fake_session <- list(sendInputMessage = function(...) NULL)
+  expect_error(
+    updateGlassSelect(fake_session, "pick", disabled = "yes"),
+    class = "glasstabs_error_bad_argument"
+  )
+  expect_error(
+    updateGlassSelect(fake_session, "pick", selected = NA_character_),
+    class = "glasstabs_error_bad_choice"
+  )
 })
 
 
@@ -358,4 +566,67 @@ test_that("glassSelect(shape = 'rounded') is the explicit default", {
 
 test_that("glassSelect() rejects an invalid shape", {
   expect_error(glassSelect("f", choices, shape = "circle"), class = "glasstabs_error_bad_argument")
+})
+
+
+test_that("glassSelect() rejects duplicate choice values", {
+  expect_error(
+    glassSelect("f", c(a = "x", b = "x")),
+    class = "glasstabs_error_bad_choice"
+  )
+})
+
+test_that("glassMultiSelect() rejects duplicate choice values", {
+  expect_error(
+    glassMultiSelect("f", c(a = "x", b = "x")),
+    class = "glasstabs_error_bad_choice"
+  )
+})
+
+test_that("glassSelect() renders a configurable no-matches text", {
+  html <- as.character(
+    glassSelect("s", c(a = "x", b = "y"), no_matches_text = "Nothing here")
+  )
+  expect_true(grepl('data-no-matches-text="Nothing here"', html, fixed = TRUE))
+})
+
+test_that("glassSelect() defaults no-matches text to 'No matches'", {
+  html <- as.character(glassSelect("s", c(a = "x", b = "y")))
+  expect_true(grepl('data-no-matches-text="No matches"', html, fixed = TRUE))
+})
+
+test_that("glassSelect() rejects a non-string no_matches_text", {
+  expect_error(
+    glassSelect("s", c(a = "x"), no_matches_text = 42),
+    class = "glasstabs_error_bad_argument"
+  )
+  expect_error(
+    glassSelect("s", c(a = "x"), no_matches_text = NA_character_),
+    class = "glasstabs_error_bad_argument"
+  )
+})
+
+test_that("glassSelect() treats an empty-string value as a real choice", {
+  html <- as.character(glassSelect(
+    "status",
+    c("All statuses" = "", "Active" = "active"),
+    selected = ""
+  ))
+  expect_true(grepl('data-value=""', html, fixed = TRUE))
+  option_tag <- regmatches(html, regexpr('<[^>]*data-value=""[^>]*>', html))
+  expect_true(grepl('aria-selected="true"', option_tag, fixed = TRUE))
+  expect_true(grepl("All statuses", html, fixed = TRUE))
+})
+
+test_that("updateGlassSelect() sends an empty-string selection through", {
+  send_mock <- mockery::mock()
+  fake_session <- list(
+    sendCustomMessage = send_mock,
+    ns = function(id) paste0("module-", id)
+  )
+
+  updateGlassSelect(fake_session, "pick", selected = "")
+
+  args <- mockery::mock_args(send_mock)[[1]]
+  expect_equal(args[[2]]$data$selected, "")
 })

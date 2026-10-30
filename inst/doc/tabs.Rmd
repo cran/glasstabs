@@ -244,7 +244,7 @@ glassTabsUI("nav", theme = "auto", ...)
 ### Custom theme with `glass_tab_theme()`
 
 Supply only the values you want to change — everything else falls back to the
-dark preset:
+selected mode's preset (dark by default, or light with `mode = "light"`):
 
 ```{r theme-custom}
 # Change only the halo colour
@@ -258,7 +258,7 @@ glassTabsUI("nav",
 )
 ```
 
-All nine handles available in `glass_tab_theme()`:
+All ten handles available in `glass_tab_theme()`:
 
 | Argument | What it controls |
 |---|---|
@@ -271,6 +271,7 @@ All nine handles available in `glass_tab_theme()`:
 | `content_border` | Tab content panel border |
 | `card_bg` | Inner card background |
 | `card_text` | Inner card text colour |
+| `mode` | Theme mode metadata (`"dark"` or `"light"`) |
 
 ## bs4Dash integration
 

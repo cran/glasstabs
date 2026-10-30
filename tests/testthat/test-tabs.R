@@ -18,6 +18,22 @@ test_that("glassTabPanel() selected = TRUE is stored", {
   expect_true(glassTabPanel("a", "A", selected = TRUE)$selected)
 })
 
+test_that("tab logical arguments reject silent coercion", {
+  expect_error(
+    glassTabPanel("a", "A", selected = "yes"),
+    class = "glasstabs_error_bad_argument"
+  )
+  for (argument in c("wrap", "compact", "swipe")) {
+    args <- list(id = "nav", glassTabPanel("a", "A"))
+    args[[argument]] <- "yes"
+    expect_error(
+      do.call(glassTabsUI, args),
+      class = "glasstabs_error_bad_argument",
+      info = argument
+    )
+  }
+})
+
 test_that("glassTabPanel() stores content elements", {
   p <- glassTabPanel("a", "A", shiny::p("Hello"), shiny::p("World"))
   expect_length(p$content, 2)
@@ -105,11 +121,12 @@ test_that("glassTabsUI() scoped CSS block contains the widget id", {
   expect_true(grepl("mynav-wrap", html))
 })
 
-test_that("glassTabsUI() injects all eight CSS variables", {
+test_that("glassTabsUI() injects all theme CSS variables", {
   html <- as.character(glassTabsUI("nav",
                                    glassTabPanel("a", "A", selected = TRUE)))
   for (v in c("--gt-tab-text:", "--gt-tab-active-text:", "--gt-halo-bg:",
-              "--gt-halo-border:", "--gt-content-bg:", "--gt-content-border:",
+              "--gt-halo-border:", "--gt-focus-ring:", "--gt-content-bg:",
+              "--gt-content-border:",
               "--gt-card-bg:", "--gt-card-text:")) {
     expect_true(grepl(v, html, fixed = TRUE), info = v)
   }
@@ -131,7 +148,7 @@ test_that("glassTabsUI() dark_selector uses dark content colors", {
   ))
 
   expect_true(grepl("body.dark-mode #nav-wrap", html, fixed = TRUE))
-  expect_true(grepl("--gt-content-bg:transparent", html, fixed = TRUE))
+  expect_true(grepl("--gt-content-bg:rgba(255,255,255,0.03)", html, fixed = TRUE))
   expect_true(grepl("--gt-card-bg:transparent", html, fixed = TRUE))
   expect_true(grepl("--gt-card-text:#cfe6ff", html, fixed = TRUE))
 })
@@ -232,7 +249,7 @@ test_that("glassTabsUI() explains invalid responsive arguments", {
   )
   expect_error(
     glassTabsUI("tabs", panel, swipe = "yes"),
-    "TRUE or FALSE",
+    "TRUE.*FALSE",
     class = "glasstabs_error_bad_argument"
   )
 })
@@ -499,4 +516,134 @@ test_that("removeGlassTab() namespaces via session$ns", {
   )
   removeGlassTab(fake_session, "tabs", "old")
   expect_equal(msgs[[1]]$message$ns, "mod-tabs")
+})
+
+
+test_that("glassTabPanel() rejects non-string value", {
+  expect_error(
+    glassTabPanel(123, "Label"),
+    class = "glasstabs_error_bad_argument"
+  )
+  expect_error(
+    glassTabPanel(c("a", "b"), "Label"),
+    class = "glasstabs_error_bad_argument"
+  )
+})
+
+test_that("glassTabPanel() rejects non-string label", {
+  expect_error(
+    glassTabPanel("a", 123),
+    class = "glasstabs_error_bad_argument"
+  )
+})
+
+test_that("glassTabPanel() allows empty label for icon-only tabs", {
+  p <- glassTabPanel("a", "")
+  expect_equal(p$label, "")
+})
+
+test_that("glassTabsUI() sets content min-height from content_min_height", {
+  ui <- glassTabsUI(
+    "nav",
+    glassTabPanel("a", "A"),
+    content_min_height = "300px"
+  )
+
+  expect_true(
+    grepl("--gt-content-min-height:300px;", as.character(ui), fixed = TRUE)
+  )
+})
+
+test_that("glassTabsUI() omits the min-height inline style by default", {
+  ui <- glassTabsUI("nav", glassTabPanel("a", "A"))
+
+  expect_false(
+    grepl("--gt-content-min-height", as.character(ui), fixed = TRUE)
+  )
+})
+
+test_that("glassTabsUI() still emits an explicit content_min_height", {
+  ui <- glassTabsUI(
+    "nav",
+    glassTabPanel("a", "A"),
+    content_min_height = "300px"
+  )
+
+  expect_true(
+    grepl("--gt-content-min-height:300px;", as.character(ui), fixed = TRUE)
+  )
+})
+
+test_that("glassTabsUI() rejects an invalid content_min_height", {
+  expect_error(
+    glassTabsUI("nav", glassTabPanel("a", "A"), content_min_height = "huge"),
+    class = "glasstabs_error_bad_argument"
+  )
+})
+
+test_that("stylesheet wires the active-tab dock cue and content halo spill", {
+  css <- paste(
+    readLines(system.file("www", "glass.css", package = "glasstabs"), warn = FALSE),
+    collapse = "\n"
+  )
+
+  # Active tab presses toward its pane with an inner halo-colored edge light
+  expect_true(grepl("inset 0 -2px 0 0 color-mix", css, fixed = TRUE))
+  # Vertical rail docks toward the side content (RTL-aware)
+  expect_true(grepl("inset -2px 0 0 0 color-mix", css, fixed = TRUE))
+  expect_true(grepl("inset 2px 0 0 0 color-mix", css, fixed = TRUE))
+  # Content box top edge picks up the halo color to bridge the gap
+  expect_true(grepl("border-top-color:color-mix", css, fixed = TRUE))
+  # The underline indicator keeps its own connection cue
+  expect_true(grepl(".indicator-underline .gt-tab-link.active", css, fixed = TRUE))
+})
+
+test_that("glassTabsUI() supports style and transition options", {
+  ui <- glassTabsUI(
+    "nav",
+    glassTabPanel("a", "A"),
+    style = "attached",
+    transition = "slide"
+  )
+  html <- as.character(ui)
+
+  expect_true(grepl("style-attached", html, fixed = TRUE))
+  expect_true(grepl("transition-slide", html, fixed = TRUE))
+})
+
+test_that("glassTabsUI() defaults to floating style and fade transition", {
+  html <- as.character(glassTabsUI("nav", glassTabPanel("a", "A")))
+
+  expect_false(grepl("style-attached", html, fixed = TRUE))
+  expect_false(grepl("transition-slide", html, fixed = TRUE))
+})
+
+test_that("glassTabsUI() rejects invalid style and transition values", {
+  expect_error(
+    glassTabsUI("nav", glassTabPanel("a", "A"), style = "glued"),
+    class = "glasstabs_error_bad_argument"
+  )
+  expect_error(
+    glassTabsUI("nav", glassTabPanel("a", "A"), transition = "zoom"),
+    class = "glasstabs_error_bad_argument"
+  )
+})
+
+test_that("stylesheet and JS wire attached style and directional slide", {
+  css <- paste(
+    readLines(system.file("www", "glass.css", package = "glasstabs"), warn = FALSE),
+    collapse = "\n"
+  )
+  js <- paste(
+    readLines(system.file("www", "glass.js", package = "glasstabs"), warn = FALSE),
+    collapse = "\n"
+  )
+
+  expect_true(grepl(".style-attached .gt-topbar", css, fixed = TRUE))
+  expect_true(grepl(".style-attached .gt-tab-wrap", css, fixed = TRUE))
+  expect_true(grepl(".transition-slide.gt-slide-fwd", css, fixed = TRUE))
+  expect_true(grepl(".gt-pane-exit", css, fixed = TRUE))
+  # JS records travel direction and marks the outgoing pane
+  expect_true(grepl("gt-slide-fwd", js, fixed = TRUE))
+  expect_true(grepl("gt-pane-exit", js, fixed = TRUE))
 })

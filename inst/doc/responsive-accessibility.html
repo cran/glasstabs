@@ -380,6 +380,25 @@ keyboard, and under system accessibility settings.</p>
 Keyboard focus follows the selected tab, and a server update brings its
 destination back into view.</p>
 </div>
+<div id="long-select-labels-on-narrow-screens" class="section level2">
+<h2>Long select labels on narrow screens</h2>
+<p>Select dropdowns match their trigger width and remain capped by the
+containing layout. Start with the compact default and opt into a wider
+field only where the content needs it:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="fu">glassSelect</span>(</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>  <span class="st">&quot;industry&quot;</span>,</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>  long_industry_choices,</span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>  <span class="at">width =</span> <span class="st">&quot;280px&quot;</span>,</span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>  <span class="at">overflow_tooltip =</span> <span class="st">&quot;auto&quot;</span></span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a>)</span></code></pre></div>
+<p>For <code>glassSelect()</code>, an automatic overflow tooltip appears
+only when selected trigger text is ellipsized. Inside either open
+dropdown, a truncated option reveals a capped preview when hovered or
+reached with keyboard navigation. The multi-select avoids a single
+combined tooltip for several selections. A tap keeps its normal
+job—opening the dropdown—where option text wraps inside the
+viewport.</p>
+</div>
 <div id="choosing-the-overflow-style" class="section level2">
 <h2>Choosing the overflow style</h2>
 <p><code>&quot;scroll&quot;</code> is a natural fit for most tab bars.
@@ -387,36 +406,146 @@ destination back into view.</p>
 once. In a horizontal layout, <code>&quot;menu&quot;</code> keeps the header
 compact and uses a native select control. Vertical tabs already have a
 dedicated rail, so compact menu mode is not available there.</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="fu">glassTabsUI</span>(</span>
-<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>  <span class="st">&quot;wrapped&quot;</span>,</span>
-<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>  <span class="fu">glassTabPanel</span>(<span class="st">&quot;one&quot;</span>, <span class="st">&quot;First report&quot;</span>, <span class="at">selected =</span> <span class="cn">TRUE</span>, <span class="fu">p</span>(<span class="st">&quot;First&quot;</span>)),</span>
-<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>  <span class="fu">glassTabPanel</span>(<span class="st">&quot;two&quot;</span>, <span class="st">&quot;Second report&quot;</span>, <span class="fu">p</span>(<span class="st">&quot;Second&quot;</span>)),</span>
-<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>  <span class="fu">glassTabPanel</span>(<span class="st">&quot;three&quot;</span>, <span class="st">&quot;Third report&quot;</span>, <span class="fu">p</span>(<span class="st">&quot;Third&quot;</span>)),</span>
-<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a>  <span class="at">overflow =</span> <span class="st">&quot;multiline&quot;</span></span>
-<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a>)</span>
-<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a></span>
-<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a><span class="fu">glassTabsUI</span>(</span>
-<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a>  <span class="st">&quot;menu&quot;</span>,</span>
-<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a>  <span class="fu">glassTabPanel</span>(<span class="st">&quot;one&quot;</span>, <span class="st">&quot;First report&quot;</span>, <span class="at">selected =</span> <span class="cn">TRUE</span>, <span class="fu">p</span>(<span class="st">&quot;First&quot;</span>)),</span>
-<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a>  <span class="fu">glassTabPanel</span>(<span class="st">&quot;two&quot;</span>, <span class="st">&quot;Second report&quot;</span>, <span class="fu">p</span>(<span class="st">&quot;Second&quot;</span>)),</span>
-<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a>  <span class="at">overflow =</span> <span class="st">&quot;menu&quot;</span></span>
-<span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="fu">glassTabsUI</span>(</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>  <span class="st">&quot;wrapped&quot;</span>,</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>  <span class="fu">glassTabPanel</span>(<span class="st">&quot;one&quot;</span>, <span class="st">&quot;First report&quot;</span>, <span class="at">selected =</span> <span class="cn">TRUE</span>, <span class="fu">p</span>(<span class="st">&quot;First&quot;</span>)),</span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>  <span class="fu">glassTabPanel</span>(<span class="st">&quot;two&quot;</span>, <span class="st">&quot;Second report&quot;</span>, <span class="fu">p</span>(<span class="st">&quot;Second&quot;</span>)),</span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>  <span class="fu">glassTabPanel</span>(<span class="st">&quot;three&quot;</span>, <span class="st">&quot;Third report&quot;</span>, <span class="fu">p</span>(<span class="st">&quot;Third&quot;</span>)),</span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a>  <span class="at">overflow =</span> <span class="st">&quot;multiline&quot;</span></span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>)</span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a></span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a><span class="fu">glassTabsUI</span>(</span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a>  <span class="st">&quot;menu&quot;</span>,</span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a>  <span class="fu">glassTabPanel</span>(<span class="st">&quot;one&quot;</span>, <span class="st">&quot;First report&quot;</span>, <span class="at">selected =</span> <span class="cn">TRUE</span>, <span class="fu">p</span>(<span class="st">&quot;First&quot;</span>)),</span>
+<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a>  <span class="fu">glassTabPanel</span>(<span class="st">&quot;two&quot;</span>, <span class="st">&quot;Second report&quot;</span>, <span class="fu">p</span>(<span class="st">&quot;Second&quot;</span>)),</span>
+<span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a>  <span class="at">overflow =</span> <span class="st">&quot;menu&quot;</span></span>
+<span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a>)</span></code></pre></div>
+</div>
+<div id="select-keyboard-and-screen-reader-behavior" class="section level2">
+<h2>Select keyboard and screen-reader behavior</h2>
+<p>Tabs have their own keyboard story; selects have a different one, and
+it is worth stating plainly because the two widgets differ.</p>
+<p><strong>Keyboard.</strong> Tab reaches the trigger. Enter or Space
+opens the dropdown; arrows then move through options and chrome rows —
+the Select-all row, the Clear row, the style switcher — as one wrapping
+cycle that skips hidden and disabled rows. Home and End jump to the
+first and last rows. Enter or Space activates the focused row (selecting
+and closing for a single-select, toggling for a multi-select). Escape
+closes and returns focus to the trigger. Tab while open closes the
+dropdown and exits: it never steps through options one by one. The
+single-select clear button answers keys only while its dropdown is open.
+Focus is always visible: chrome controls carry visible focus rings, and
+<code>search_focus_ring = TRUE</code> strengthens the search field’s
+ring when the quiet default is not enough.</p>
+<p><strong>Screen reader.</strong> The trigger is a
+<code>combobox</code> labeled by its field label, with
+<code>aria-expanded</code> tracking the open state and
+<code>aria-haspopup=&quot;listbox&quot;</code>. The dropdown is a
+<code>listbox</code> (multi-selects add
+<code>aria-multiselectable=&quot;true&quot;</code>); options are
+<code>option</code> rows with <code>aria-selected</code>, and the active
+row is exposed through <code>aria-activedescendant</code> so
+announcements follow arrow-key movement without moving DOM focus. The
+Select-all row is a <code>checkbox</code> with tri-state
+<code>aria-checked</code> (<code>true</code>, <code>false</code>, or
+<code>mixed</code> for a partial selection); style switcher buttons
+carry <code>aria-pressed</code>; search inputs carry an
+<code>aria-label</code>. The status row (<code>role=&quot;status&quot;</code>,
+<code>aria-live=&quot;polite&quot;</code>) announces “Searching…” and no-match
+states. Disabled rows carry <code>aria-disabled=&quot;true&quot;</code>, are
+skipped by keyboard navigation, and ignore clicks.</p>
+<p><strong>What this does not claim.</strong> The matrix below separates
+what automated tests cover from what nobody has verified yet. In
+particular, no screen-reader pass (NVDA or VoiceOver) has been run:
+until one is, the screen-reader rows stay “not yet verified” no matter
+how complete the ARIA markup looks.</p>
+<table>
+<colgroup>
+<col width="50%" />
+<col width="27%" />
+<col width="22%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Environment</th>
+<th>Status</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Chrome on Linux, macOS, Windows</td>
+<td>Tested</td>
+<td>Automated browser tests on CI: keyboard, pointer, positioning</td>
+</tr>
+<tr class="even">
+<td>Edge on Windows</td>
+<td>Not yet verified</td>
+<td>Chromium-based, but no CI run</td>
+</tr>
+<tr class="odd">
+<td>Firefox</td>
+<td>Not yet verified</td>
+<td>Styling and keyboard behavior unconfirmed</td>
+</tr>
+<tr class="even">
+<td>Safari on macOS</td>
+<td>Not yet verified</td>
+<td>Focus and dropdown interaction unconfirmed</td>
+</tr>
+<tr class="odd">
+<td>Android browsers</td>
+<td>Not yet verified</td>
+<td>Touch, scrolling, and viewport changes unconfirmed</td>
+</tr>
+<tr class="even">
+<td>iOS Safari</td>
+<td>Not yet verified</td>
+<td>Virtual keyboard and touch interactions unconfirmed</td>
+</tr>
+<tr class="odd">
+<td>NVDA</td>
+<td>Not yet verified</td>
+<td>Manual screen-reader pass outstanding</td>
+</tr>
+<tr class="even">
+<td>VoiceOver</td>
+<td>Not yet verified</td>
+<td>Manual screen-reader pass outstanding</td>
+</tr>
+<tr class="odd">
+<td>Reduced motion</td>
+<td>Partially tested</td>
+<td>Stylesheet rule plus automated tests for the dropdown close path;
+full manual pass pending</td>
+</tr>
+<tr class="even">
+<td>High contrast / forced colors</td>
+<td>Partially tested</td>
+<td>Stylesheet uses system colors and visible focus outlines; manual
+verification pending</td>
+</tr>
+</tbody>
+</table>
+<p>Supported dependency versions are exactly what
+<code>DESCRIPTION</code> states; anything beyond that table is
+theoretically compatible, not tested.</p>
 </div>
 <div id="touch-swipes-without-surprises" class="section level2">
 <h2>Touch swipes without surprises</h2>
 <p><code>swipe = TRUE</code> adds left and right gestures to ordinary
 panel content. Inputs, links, buttons, Shiny outputs, HTML widgets, and
 horizontal scrollers keep their own touch behavior.</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="fu">glassTabsUI</span>(</span>
-<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>  <span class="st">&quot;story&quot;</span>,</span>
-<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>  <span class="fu">glassTabPanel</span>(<span class="st">&quot;opening&quot;</span>, <span class="st">&quot;Opening&quot;</span>, <span class="at">selected =</span> <span class="cn">TRUE</span>, <span class="fu">p</span>(<span class="st">&quot;The first part.&quot;</span>)),</span>
-<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>  <span class="fu">glassTabPanel</span>(<span class="st">&quot;middle&quot;</span>, <span class="st">&quot;Middle&quot;</span>, <span class="fu">p</span>(<span class="st">&quot;The middle part.&quot;</span>)),</span>
-<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>  <span class="fu">glassTabPanel</span>(<span class="st">&quot;ending&quot;</span>, <span class="st">&quot;Ending&quot;</span>, <span class="fu">p</span>(<span class="st">&quot;The final part.&quot;</span>)),</span>
-<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a>  <span class="at">swipe =</span> <span class="cn">TRUE</span></span>
-<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="fu">glassTabsUI</span>(</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>  <span class="st">&quot;story&quot;</span>,</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>  <span class="fu">glassTabPanel</span>(<span class="st">&quot;opening&quot;</span>, <span class="st">&quot;Opening&quot;</span>, <span class="at">selected =</span> <span class="cn">TRUE</span>, <span class="fu">p</span>(<span class="st">&quot;The first part.&quot;</span>)),</span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>  <span class="fu">glassTabPanel</span>(<span class="st">&quot;middle&quot;</span>, <span class="st">&quot;Middle&quot;</span>, <span class="fu">p</span>(<span class="st">&quot;The middle part.&quot;</span>)),</span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a>  <span class="fu">glassTabPanel</span>(<span class="st">&quot;ending&quot;</span>, <span class="st">&quot;Ending&quot;</span>, <span class="fu">p</span>(<span class="st">&quot;The final part.&quot;</span>)),</span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>  <span class="at">swipe =</span> <span class="cn">TRUE</span></span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a>)</span></code></pre></div>
 <p>Add <code>data-gt-no-swipe</code> to any custom region that should
 always keep its own gesture:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>tags<span class="sc">$</span><span class="fu">div</span>(<span class="st">`</span><span class="at">data-gt-no-swipe</span><span class="st">`</span> <span class="ot">=</span> <span class="st">&quot;&quot;</span>, custom_touch_component)</span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>tags<span class="sc">$</span><span class="fu">div</span>(<span class="st">`</span><span class="at">data-gt-no-swipe</span><span class="st">`</span> <span class="ot">=</span> <span class="st">&quot;&quot;</span>, custom_touch_component)</span></code></pre></div>
 </div>
 <div id="motion-and-contrast" class="section level2">
 <h2>Motion and contrast</h2>
@@ -430,21 +559,25 @@ surfaces instead of losing contrast. Custom themes can set
 <code>glass_select_theme()</code>; the colour follows select dropdowns
 when they move to the document body, so search focus remains
 visible.</p>
+<p>The dropdown search field uses a quiet border/background focus
+treatment by default. Set <code>search_focus_ring = TRUE</code> when the
+stronger accent ring is useful. All tongue and detached-panel
+transitions honor reduced-motion preferences.</p>
 </div>
 <div id="experimental-fillable-page" class="section level2">
 <h2>Experimental fillable page</h2>
 <p><code>glassPage()</code> keeps a small full-page app pleasantly
 short:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>ui <span class="ot">&lt;-</span> <span class="fu">glassPage</span>(</span>
-<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>  <span class="at">title =</span> <span class="st">&quot;Operations&quot;</span>,</span>
-<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>  <span class="fu">glassTabsUI</span>(</span>
-<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>    <span class="st">&quot;main&quot;</span>,</span>
-<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>    <span class="fu">glassTabPanel</span>(<span class="st">&quot;overview&quot;</span>, <span class="st">&quot;Overview&quot;</span>, <span class="at">selected =</span> <span class="cn">TRUE</span>, overview_ui),</span>
-<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>    <span class="fu">glassTabPanel</span>(<span class="st">&quot;alerts&quot;</span>, <span class="st">&quot;Alerts&quot;</span>, alerts_ui),</span>
-<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>    <span class="at">overflow =</span> <span class="st">&quot;scroll&quot;</span>,</span>
-<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a>    <span class="at">theme =</span> <span class="st">&quot;auto&quot;</span></span>
-<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a>  )</span>
-<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>ui <span class="ot">&lt;-</span> <span class="fu">glassPage</span>(</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>  <span class="at">title =</span> <span class="st">&quot;Operations&quot;</span>,</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>  <span class="fu">glassTabsUI</span>(</span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>    <span class="st">&quot;main&quot;</span>,</span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>    <span class="fu">glassTabPanel</span>(<span class="st">&quot;overview&quot;</span>, <span class="st">&quot;Overview&quot;</span>, <span class="at">selected =</span> <span class="cn">TRUE</span>, overview_ui),</span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a>    <span class="fu">glassTabPanel</span>(<span class="st">&quot;alerts&quot;</span>, <span class="st">&quot;Alerts&quot;</span>, alerts_ui),</span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a>    <span class="at">overflow =</span> <span class="st">&quot;scroll&quot;</span>,</span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a>    <span class="at">theme =</span> <span class="st">&quot;auto&quot;</span></span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a>  )</span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a>)</span></code></pre></div>
 <p>It is an experimental wrapper around
 <code>bslib::page_fillable()</code>. Plain <code>fluidPage()</code>,
 <code>page_fillable()</code>, and dashboard layouts remain first-class

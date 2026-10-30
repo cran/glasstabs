@@ -33,6 +33,14 @@ knitr::opts_chunk$set(eval = FALSE)
 # 
 # shinyApp(ui, server)
 
+## ----responsive-select--------------------------------------------------------
+# glassSelect(
+#   "industry",
+#   long_industry_choices,
+#   width = "280px",
+#   overflow_tooltip = "auto"
+# )
+
 ## ----overflow-choices---------------------------------------------------------
 # glassTabsUI(
 #   "wrapped",

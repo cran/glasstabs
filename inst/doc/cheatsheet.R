@@ -104,6 +104,7 @@ knitr::opts_chunk$set(eval = FALSE)
 #   selected = "a",
 #   wrap = TRUE,
 #   compact = FALSE,      # set TRUE inside dashboard cards for tighter layout
+#   content_min_height = NULL,  # default: 120px (60px when compact = TRUE); "0" for no minimum
 #   extra_ui = tags$div("Right side UI"),
 #   theme = "light"
 # )
@@ -117,6 +118,15 @@ knitr::opts_chunk$set(eval = FALSE)
 #     glassTabPanel("b", "B", p("More content")),
 #     compact = TRUE      # reduced spacing for card context
 #   )
+# )
+
+## -----------------------------------------------------------------------------
+# glassTabsUI(
+#   "main",
+#   glassTabPanel("a", "A", selected = TRUE, p("A")),
+#   glassTabPanel("b", "B", p("B")),
+#   style = "attached",      # tab bar shares one border with the content box
+#   transition = "slide"     # panes slide in the direction of travel
 # )
 
 ## -----------------------------------------------------------------------------
@@ -137,7 +147,8 @@ knitr::opts_chunk$set(eval = FALSE)
 #   session,
 #   "metric",
 #   selected = c("revenue", "orders"),
-#   check_style = "filled"
+#   check_style = "filled",
+#   notify = "changed"
 # )
 # 
 # # Clear selection
@@ -155,8 +166,31 @@ knitr::opts_chunk$set(eval = FALSE)
 #   show_style_switcher = TRUE,
 #   show_select_all = TRUE,
 #   show_clear_all = TRUE,
-#   theme = "dark"
+#   searchable = "auto",
+#   search_threshold = 12,
+#   selection_display = "summary",
+#   selection_max_items = 2,
+#   dropdown_max_height = "18rem",
+#   width = "240px",
+#   tongue = TRUE,
+#   label_bold = TRUE,
+#   label_size = "14px",
+#   search_focus_ring = FALSE,
+#   overflow_tooltip = "auto",
+#   fill_colors = "single",
+#   theme = "dark",
+#   no_matches_text = "No matches"
 # )
+
+## -----------------------------------------------------------------------------
+# # Let an empty UI selection mean every choice in filtering code.
+# metric <- glassMultiSelectValue(
+#   input,
+#   "metric",
+#   choices = choices,
+#   empty_behavior = "all"
+# )
+# metric$resolved()
 
 ## -----------------------------------------------------------------------------
 # regions <- c("All Regions" = "all", North = "north", South = "south")
@@ -183,11 +217,19 @@ knitr::opts_chunk$set(eval = FALSE)
 #   selected = "all",
 #   label = "Region",
 #   placeholder = "Pick a region",
-#   searchable = TRUE,
+#   searchable = "auto",
+#   search_threshold = 6,
 #   clearable = TRUE,
 #   include_all = FALSE,
 #   check_style = "checkbox",
-#   theme = "light"
+#   width = "240px",
+#   tongue = TRUE,
+#   label_bold = TRUE,
+#   label_size = "14px",
+#   search_focus_ring = FALSE,
+#   overflow_tooltip = "auto",
+#   theme = "light",
+#   no_matches_text = "No matches"
 # )
 
 ## -----------------------------------------------------------------------------

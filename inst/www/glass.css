@@ -7,7 +7,7 @@
 .gt-wrap-shell{width:100%;position:relative;}
 
 /* Top bar */
-.gt-topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;gap:12px;flex-wrap:wrap;min-width:0;}
+.gt-topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:12px;flex-wrap:wrap;min-width:0;}
 .gt-tab-viewport{position:relative;flex:1 1 auto;min-width:0;max-width:100%;}
 .gt-navbar{display:flex;gap:12px;position:relative;z-index:6;align-items:center;}
 .gt-tab-menu-select{display:none;max-width:100%;min-width:180px;}
@@ -60,7 +60,18 @@
 .gt-align-center:not(.gt-vertical) .gt-navbar{justify-content:center;}
 .gt-align-right:not(.gt-vertical) .gt-navbar{justify-content:flex-end;}
 .gt-tab-link:hover{background:rgba(255,255,255,0.04);}
-.gt-tab-link.active{color:var(--gt-tab-active-text,#ffffff);}
+.gt-tab-link.active{
+  color:var(--gt-tab-active-text,#ffffff);
+  /* Docked cue: inner light on the content-facing edge, in the halo color,
+     so the active tab visibly "presses toward" its pane. Decorative only -
+     the sliding halo keeps doing the heavy lifting. */
+  box-shadow:inset 0 -2px 0 0 color-mix(in srgb,var(--gt-halo-border,rgba(126,195,247,0.38)) 80%,transparent);
+}
+/* The underline indicator already draws its own connection - don't double up. */
+.indicator-underline .gt-tab-link.active{box-shadow:none;}
+/* Vertical rail: content sits to the side, so the dock light moves with it. */
+.gt-vertical .gt-tab-link.active{box-shadow:inset -2px 0 0 0 color-mix(in srgb,var(--gt-halo-border,rgba(126,195,247,0.38)) 80%,transparent);}
+[dir="rtl"] .gt-vertical .gt-tab-link.active{box-shadow:inset 2px 0 0 0 color-mix(in srgb,var(--gt-halo-border,rgba(126,195,247,0.38)) 80%,transparent);}
 .gt-tab-link.gt-tab-hidden{display:none;}
 .gt-tab-link:focus-visible{
   outline:3px solid var(--gt-focus-ring,#1683ff);outline-offset:3px;
@@ -104,10 +115,14 @@
 
 /* Content area */
 .gt-tab-wrap{
-  position:relative;overflow:hidden;border-radius:14px;padding:22px;
+  position:relative;overflow:hidden;border-radius:14px;padding:0;
   background:var(--gt-content-bg,transparent);
   border:1px solid var(--gt-content-border,transparent);
-  box-shadow:var(--gt-content-shadow,none);min-height:200px;z-index:5;
+  /* Halo spill: the top edge picks up the active tab's halo color, bridging
+     the gap between the tab bar and the content with light. Degrades to the
+     plain content border where color-mix() is unsupported. */
+  border-top-color:color-mix(in srgb,var(--gt-halo-border,rgba(126,195,247,0.38)) 55%,var(--gt-content-border,transparent));
+  box-shadow:var(--gt-content-shadow,none);min-height:var(--gt-content-min-height,120px);z-index:5;
 }
 .gt-tab-pane{
   position:absolute;inset:0;padding:22px;opacity:0;
@@ -116,6 +131,21 @@
   pointer-events:none;
 }
 .gt-tab-pane.active{opacity:1;transform:translateY(0) scale(1);position:relative;pointer-events:auto;}
+
+/* Directional slide transition: panes travel horizontally following tab
+   order. JS sets .gt-slide-fwd/.gt-slide-back on the widget root and
+   .gt-pane-exit on the outgoing pane so it keeps traveling outward instead
+   of sliding back. */
+.transition-slide.gt-slide-fwd .gt-tab-pane:not(.active){transform:translateX(34px) scale(.995);}
+.transition-slide.gt-slide-back .gt-tab-pane:not(.active){transform:translateX(-34px) scale(.995);}
+.transition-slide .gt-tab-pane.active{transform:translateX(0) scale(1);}
+.transition-slide.gt-slide-fwd .gt-tab-pane.gt-pane-exit{transform:translateX(-34px) scale(.995);}
+.transition-slide.gt-slide-back .gt-tab-pane.gt-pane-exit{transform:translateX(34px) scale(.995);}
+/* RTL mirrors the travel direction. */
+[dir="rtl"] .transition-slide.gt-slide-fwd .gt-tab-pane:not(.active){transform:translateX(-34px) scale(.995);}
+[dir="rtl"] .transition-slide.gt-slide-back .gt-tab-pane:not(.active){transform:translateX(34px) scale(.995);}
+[dir="rtl"] .transition-slide.gt-slide-fwd .gt-tab-pane.gt-pane-exit{transform:translateX(34px) scale(.995);}
+[dir="rtl"] .transition-slide.gt-slide-back .gt-tab-pane.gt-pane-exit{transform:translateX(-34px) scale(.995);}
 
 /* Card */
 .gt-card{
@@ -145,6 +175,7 @@
 .gt-gs-wrap{
   position:relative;
   z-index:100;
+  width:160px;
   max-width:100%;
 }
 
@@ -175,6 +206,16 @@
   background:rgba(255,255,255,0.08);
   border-color:var(--ms-accent);
   box-shadow:0 0 0 3px var(--ms-ac-18),0 4px 14px rgba(0,0,0,0.2);
+  /* Tongue: the field opens its mouth — bottom corners square off to meet the panel. */
+  border-bottom-left-radius:0;
+  border-bottom-right-radius:0;
+}
+/* Flipped above: square the top corners instead. */
+.gt-ms-wrap.gt-flip-above:not(.shape-square) .gt-ms-trigger.open{
+  border-bottom-left-radius:12px;
+  border-bottom-right-radius:12px;
+  border-top-left-radius:0;
+  border-top-right-radius:0;
 }
 
 /* Light theme trigger needs darker base */
@@ -196,22 +237,44 @@
 
 /* Dropdown panel */
 .gt-ms-dropdown{
-  position:fixed;min-width:232px;
+  position:absolute;min-width:160px;box-sizing:border-box;
   border-radius:14px;
   background:var(--ms-bg);
   border:1px solid var(--ms-border);
   box-shadow:0 22px 64px rgba(0,0,0,0.45),inset 0 1px 0 rgba(255,255,255,0.06);
-  padding:8px;opacity:0;transform:translateY(-8px) scale(0.96);
+  padding:8px;opacity:0;transform:scaleY(0);
   pointer-events:none;
-  transition:opacity 180ms cubic-bezier(.2,.9,.25,1),transform 180ms cubic-bezier(.2,.9,.25,1);
-  transform-origin:top right;
+  transition:opacity 120ms ease-out,transform 180ms cubic-bezier(.2,.9,.25,1);
+  transform-origin:top center;
   backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
   z-index:9001;
 }
-.gt-ms-wrap.theme-light .gt-ms-dropdown{
-  box-shadow:0 12px 40px rgba(0,0,0,0.15),0 0 0 1px rgba(0,0,0,0.06);
+.gt-ms-dropdown.open{
+  opacity:1;transform:scaleY(1);pointer-events:auto;
+  /* Tongue: panel unfurls from the field, adjoining corners square off so the
+     two read as one continuous surface. The inset top highlight is dropped at
+     the seam. */
+  border-top-left-radius:0;border-top-right-radius:0;
+  box-shadow:0 22px 64px rgba(0,0,0,0.45);
+  transition:opacity 180ms ease-out,transform 240ms cubic-bezier(.16,1,.3,1);
 }
-.gt-ms-dropdown.open{opacity:1;transform:translateY(0) scale(1);pointer-events:auto;}
+/* Flipped above the field: the tongue retracts upward instead. */
+.gt-ms-dropdown.open.gt-flip-above:not(.shape-square){
+  border-top-left-radius:14px;border-top-right-radius:14px;
+  border-bottom-left-radius:0;border-bottom-right-radius:0;
+  box-shadow:0 -22px 64px rgba(0,0,0,0.45);
+}
+/* The bottom origin must hold while closing too: `.open` is removed at the
+   start of the close transition, so scoping the origin to `.open` would make
+   an above-field panel retract from the wrong edge. */
+.gt-ms-dropdown.gt-flip-above:not(.shape-square){
+  transform-origin:bottom center;
+}
+/* Teleported panels live under <body>, not under the wrap, so the light
+   shadow must target the theme class copied onto the dropdown itself. */
+.gt-ms-dropdown.theme-light.gt-flip-above:not(.shape-square){
+  box-shadow:0 -12px 40px rgba(0,0,0,0.15),0 0 0 1px rgba(0,0,0,0.06);
+}
 
 /* Search */
 .gt-ms-search{
@@ -221,7 +284,8 @@
 }
 .gt-ms-search input{
   background:none;border:none;outline:none;
-  color:var(--ms-text);font-size:12px;width:100%;font-family:inherit;
+  color:var(--ms-text);font-size:12px;width:0;min-width:0;
+  flex:1 1 0;font-family:inherit;
 }
 .gt-ms-search input::placeholder{
   color:var(--ms-tx-35);
@@ -236,10 +300,15 @@
 }
 .gt-style-btn{
   flex:1;display:flex;align-items:center;justify-content:center;gap:5px;
+  min-width:0;
   padding:5px 8px;border-radius:7px;cursor:pointer;user-select:none;
   color:var(--ms-tx-50);
   font-size:11px;font-weight:600;letter-spacing:.02em;
   transition:background 130ms,color 130ms;white-space:nowrap;
+  /* <button> reset: the previous div had no UA chrome, so neutralize the
+     button defaults (background, border, font) without changing visuals. */
+  background:transparent;border:0;margin:0;font-family:inherit;
+  appearance:none;-webkit-appearance:none;
 }
 .gt-style-btn:hover{
   background:var(--ms-tx-08);
@@ -252,6 +321,15 @@
 }
 .gt-sb-icon{width:13px;height:13px;flex-shrink:0;}
 
+/* Keep every style name visible when either the viewport or the field's
+   containing layout makes the teleported dropdown genuinely narrow. */
+.gt-ms-dropdown.gt-compact-controls .gt-style-btn{gap:0;padding-inline:3px;}
+.gt-ms-dropdown.gt-compact-controls .gt-style-btn .gt-sb-icon{display:none;}
+@media(max-width:240px){
+  .gt-style-btn{gap:0;padding-inline:3px;}
+  .gt-style-btn .gt-sb-icon{display:none;}
+}
+
 /* Select all row */
 .gt-ms-all{
   display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:8px;
@@ -259,6 +337,11 @@
   color:var(--ms-ac-tx-75);
   font-size:12px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;
   border-bottom:1px solid var(--ms-border);margin-bottom:4px;transition:background 120ms;
+  /* <button> reset: keep the separator border-bottom and the 4px bottom
+     margin, neutralize only the other UA button sides/defaults. */
+  background:transparent;border-top:0;border-right:0;border-left:0;
+  margin-top:0;margin-right:0;margin-left:0;font-family:inherit;
+  appearance:none;-webkit-appearance:none;
 }
 .gt-ms-all:hover{background:var(--ms-tx-05);}
 
@@ -270,6 +353,20 @@
 }
 .gt-ms-option:hover{background:var(--ms-tx-06);}
 .gt-ms-option.hidden{display:none;}
+
+.gt-ms-option > span:last-child,
+.gt-ms-all > span:last-child{
+  min-width:0;
+  overflow-wrap:anywhere;
+  word-break:break-word;
+}
+
+.gt-ms-option > span:last-child{
+  display:-webkit-box;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:3;
+  overflow:hidden;
+}
 
 /* Checkbox container (shared) */
 .gt-ms-check{
@@ -355,6 +452,9 @@
 .gt-ms-clear{
   font-size:12px;color:var(--ms-accent);cursor:pointer;font-weight:600;
   opacity:.7;transition:opacity 120ms;
+  /* <button> reset: the previous span had no UA chrome. */
+  background:transparent;border:0;padding:0;margin:0;font-family:inherit;
+  text-align:left;appearance:none;-webkit-appearance:none;
 }
 .gt-ms-clear:hover{opacity:1;}
 
@@ -386,11 +486,12 @@
 
 .gt-input-label{
   color:var(--ms-label, var(--ms-text, #cfe6ff));
-  font-size:12px;
+  font-size:var(--gt-label-size,14px);
   font-weight:600;
   letter-spacing:.01em;
   margin:0;
 }
+.gt-input-label.gt-label-regular{font-weight:400;}
 
 .gt-gs-wrap{
   position:relative;
@@ -423,10 +524,37 @@
 
 .gt-gs-trigger [id$="-label"],
 .gt-ms-trigger [id$="-label"]{
+  max-width:40ch;
   min-width:0;
   overflow:hidden;
   text-overflow:ellipsis;
 }
+
+.gt-overflow-tooltip{
+  position:fixed;
+  z-index:10050;
+  max-width:min(36rem,calc(100vw - 24px));
+  max-height:min(12rem,calc(100vh - 24px));
+  padding:8px 10px;
+  border:1px solid rgba(255,255,255,0.14);
+  border-radius:8px;
+  background:rgba(12,23,40,0.97);
+  color:#f3f8ff;
+  box-shadow:0 10px 30px rgba(0,0,0,0.28);
+  font-size:12px;
+  font-weight:500;
+  line-height:1.4;
+  overflow-wrap:anywhere;
+  word-break:break-word;
+  overflow-y:auto;
+  pointer-events:none;
+  opacity:0;
+  transform:translateY(-2px);
+  transition:opacity 100ms ease-out,transform 100ms ease-out;
+}
+.gt-overflow-tooltip.visible{opacity:1;transform:translateY(0);}
+.gt-overflow-tooltip.gt-tooltip-above{transform:translateY(2px);}
+.gt-overflow-tooltip.gt-tooltip-above.visible{transform:translateY(0);}
 
 .gt-gs-trigger:hover{
   background:rgba(255,255,255,0.08);
@@ -440,10 +568,31 @@
   box-shadow:
     0 0 0 3px var(--ms-ac-18),
     0 4px 14px rgba(0,0,0,0.2);
+  /* Tongue: the field opens its mouth — bottom corners square off to meet the panel. */
+  border-bottom-left-radius:0;
+  border-bottom-right-radius:0;
+}
+/* Flipped above: square the top corners instead. */
+.gt-gs-wrap.gt-flip-above:not(.shape-square) .gt-gs-trigger.open{
+  border-bottom-left-radius:12px;
+  border-bottom-right-radius:12px;
+  border-top-left-radius:0;
+  border-top-right-radius:0;
 }
 
 .gt-gs-trigger:focus-visible,
 .gt-ms-trigger:focus-visible{
+  outline:3px solid var(--ms-focus-ring,#7ec3f7);
+  outline-offset:3px;
+}
+
+/* Keyboard focus must be visible on the chrome buttons. They are reached
+   by arrow keys, not Tab, so :focus-visible is the right selector; mouse
+   clicks do not show the ring, matching the triggers above. */
+.gt-style-btn:focus-visible,
+.gt-ms-all:focus-visible,
+.gt-ms-clear:focus-visible,
+.gt-gs-clear:focus-visible{
   outline:3px solid var(--ms-focus-ring,#7ec3f7);
   outline-offset:3px;
 }
@@ -476,6 +625,9 @@
   font-weight:600;
   opacity:.7;
   transition:opacity 120ms;
+  /* <button> reset: the previous span had no UA chrome. */
+  background:transparent;border:0;padding:0;margin:0;font-family:inherit;
+  text-align:left;appearance:none;-webkit-appearance:none;
 }
 
 .gt-gs-clear:hover{
@@ -484,8 +636,9 @@
 
 /* Dropdown panel */
 .gt-gs-dropdown{
-  position:fixed;
-  min-width:232px;
+  position:absolute;
+  min-width:160px;
+  box-sizing:border-box;
   border-radius:14px;
   background:var(--ms-bg);
   border:1px solid var(--ms-border);
@@ -494,27 +647,80 @@
     inset 0 1px 0 rgba(255,255,255,0.06);
   padding:8px;
   opacity:0;
-  transform:translateY(-8px) scale(0.96);
+  transform:scaleY(0);
   pointer-events:none;
   transition:
-    opacity 180ms cubic-bezier(.2,.9,.25,1),
+    opacity 120ms ease-out,
     transform 180ms cubic-bezier(.2,.9,.25,1);
-  transform-origin:top right;
+  transform-origin:top center;
   backdrop-filter:blur(20px);
   -webkit-backdrop-filter:blur(20px);
   z-index:9001;
 }
 
-.gt-gs-wrap.theme-light .gt-gs-dropdown{
-  box-shadow:
-    0 12px 40px rgba(0,0,0,0.15),
-    0 0 0 1px rgba(0,0,0,0.06);
-}
-
 .gt-gs-dropdown.open{
   opacity:1;
-  transform:translateY(0) scale(1);
+  transform:scaleY(1);
   pointer-events:auto;
+  /* Tongue: panel unfurls from the field, adjoining corners square off so the
+     two read as one continuous surface. The inset top highlight is dropped at
+     the seam. */
+  border-top-left-radius:0;
+  border-top-right-radius:0;
+  box-shadow:0 22px 64px rgba(0,0,0,0.45);
+  transition:
+    opacity 180ms ease-out,
+    transform 240ms cubic-bezier(.16,1,.3,1);
+}
+/* Flipped above the field: the tongue retracts upward instead. */
+.gt-gs-dropdown.open.gt-flip-above:not(.shape-square){
+  border-top-left-radius:14px;
+  border-top-right-radius:14px;
+  border-bottom-left-radius:0;
+  border-bottom-right-radius:0;
+  box-shadow:0 -22px 64px rgba(0,0,0,0.45);
+}
+/* The bottom origin must hold while closing too: `.open` is removed at the
+   start of the close transition, so scoping the origin to `.open` would make
+   an above-field panel retract from the wrong edge. */
+.gt-gs-dropdown.gt-flip-above:not(.shape-square){
+  transform-origin:bottom center;
+}
+/* Teleported panels live under <body>, not under the wrap, so the light
+   shadow must target the theme class copied onto the dropdown itself. */
+.gt-gs-dropdown.theme-light.gt-flip-above:not(.shape-square){
+  box-shadow:0 -12px 40px rgba(0,0,0,0.15),0 0 0 1px rgba(0,0,0,0.06);
+}
+
+/* Optional detached mode (`tongue = FALSE`). Keep the glass treatment while
+   using a conventional, fully rounded panel with no unfold/retract motion. */
+.gt-ms-wrap.gt-no-tongue .gt-ms-trigger.open,
+.gt-gs-wrap.gt-no-tongue .gt-gs-trigger.open{
+  border-radius:12px;
+}
+.gt-ms-dropdown.gt-no-tongue,
+.gt-gs-dropdown.gt-no-tongue,
+.gt-ms-dropdown.gt-no-tongue.open,
+.gt-gs-dropdown.gt-no-tongue.open,
+.gt-ms-dropdown.gt-no-tongue.gt-flip-above,
+.gt-gs-dropdown.gt-no-tongue.gt-flip-above{
+  border-radius:14px;
+  transform-origin:center;
+}
+.gt-ms-dropdown.gt-no-tongue,
+.gt-gs-dropdown.gt-no-tongue{
+  opacity:0;
+  transform:translateY(-4px);
+  transition:opacity 100ms ease-out,transform 120ms ease-out;
+}
+.gt-ms-dropdown.gt-no-tongue.gt-flip-above,
+.gt-gs-dropdown.gt-no-tongue.gt-flip-above{
+  transform:translateY(4px);
+}
+.gt-ms-dropdown.gt-no-tongue.open,
+.gt-gs-dropdown.gt-no-tongue.open{
+  opacity:1;
+  transform:translateY(0);
 }
 
 /* Search */
@@ -535,7 +741,9 @@
   outline:none;
   color:var(--ms-text);
   font-size:12px;
-  width:100%;
+  width:0;
+  min-width:0;
+  flex:1 1 0;
   font-family:inherit;
 }
 
@@ -545,6 +753,12 @@
 
 .gt-gs-search:focus-within,
 .gt-ms-search:focus-within{
+  background:var(--ms-tx-08);
+  border-color:var(--ms-tx-35);
+}
+
+.gt-gs-dropdown.gt-search-ring .gt-gs-search:focus-within,
+.gt-ms-dropdown.gt-search-ring .gt-ms-search:focus-within{
   border-color:var(--ms-focus-ring,#7ec3f7);
   outline:2px solid var(--ms-focus-ring,#7ec3f7);
   outline-offset:2px;
@@ -571,6 +785,16 @@
 
 .gt-gs-option.hidden{
   display:none;
+}
+
+.gt-gs-option > span:last-child{
+  display:-webkit-box;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:3;
+  min-width:0;
+  overflow:hidden;
+  overflow-wrap:anywhere;
+  word-break:break-word;
 }
 
 /* Check container */
@@ -652,8 +876,7 @@
    Selectize-style crisp corners (3px) so glassSelect and
    glassMultiSelect sit flush next to native selectizeInput().
    The `shape-square` class lives on the .gt-*-wrap and is
-   also copied onto the teleported dropdown by glass.js, so
-   both the wrap-descendant and teleported selectors match.
+   copied onto the teleported dropdown by glass.js.
  */
 
 /* Trigger button */
@@ -662,28 +885,19 @@
   border-radius:3px;
 }
 
-/* Dropdown panel (matches before and after teleport) */
-.gt-gs-wrap.shape-square .gt-gs-dropdown,
-.gt-ms-wrap.shape-square .gt-ms-dropdown,
+/* Teleported dropdown panel */
 .gt-gs-dropdown.shape-square,
 .gt-ms-dropdown.shape-square{
   border-radius:4px;
 }
 
 /* Search box */
-.gt-gs-wrap.shape-square .gt-gs-search,
-.gt-ms-wrap.shape-square .gt-ms-search,
 .gt-gs-dropdown.shape-square .gt-gs-search,
 .gt-ms-dropdown.shape-square .gt-ms-search{
   border-radius:3px;
 }
 
 /* Option rows, select-all row, style switcher */
-.gt-gs-wrap.shape-square .gt-gs-option,
-.gt-ms-wrap.shape-square .gt-ms-option,
-.gt-ms-wrap.shape-square .gt-ms-all,
-.gt-ms-wrap.shape-square .gt-style-switcher,
-.gt-ms-wrap.shape-square .gt-style-btn,
 .gt-gs-dropdown.shape-square .gt-gs-option,
 .gt-ms-dropdown.shape-square .gt-ms-option,
 .gt-ms-dropdown.shape-square .gt-ms-all,
@@ -693,8 +907,6 @@
 }
 
 /* Check / box marker - keep a subtle 2px so it reads as square */
-.gt-gs-wrap.shape-square .gt-gs-check,
-.gt-ms-wrap.shape-square .gt-ms-check,
 .gt-gs-dropdown.shape-square .gt-gs-check,
 .gt-ms-dropdown.shape-square .gt-ms-check{
   border-radius:2px;
@@ -728,7 +940,7 @@
  */
 .gt-gs-options-scroll,
 .gt-ms-options-scroll{
-  max-height:260px;
+  max-height:var(--ms-dropdown-max-height,260px);
   overflow-y:auto;
   overflow-x:hidden;
   overscroll-behavior:contain;
@@ -785,34 +997,15 @@
 }
 
 /* Light theme scrollbar */
-.gt-gs-wrap.theme-light .gt-gs-options-scroll::-webkit-scrollbar-thumb,
-.gt-ms-wrap.theme-light .gt-ms-options-scroll::-webkit-scrollbar-thumb{
+.gt-gs-dropdown.theme-light .gt-gs-options-scroll::-webkit-scrollbar-thumb,
+.gt-ms-dropdown.theme-light .gt-ms-options-scroll::-webkit-scrollbar-thumb{
   background:rgba(0,0,0,0.10);
 }
-.gt-gs-wrap.theme-light .gt-gs-options-scroll::-webkit-scrollbar-thumb:hover,
-.gt-ms-wrap.theme-light .gt-ms-options-scroll::-webkit-scrollbar-thumb:hover{
+.gt-gs-dropdown.theme-light .gt-gs-options-scroll::-webkit-scrollbar-thumb:hover,
+.gt-ms-dropdown.theme-light .gt-ms-options-scroll::-webkit-scrollbar-thumb:hover{
   background:rgba(0,0,0,0.20);
 }
 
-
-/*
-   LOADING / DISABLED STATE -
-   Apply .gt-loading to .gt-gs-wrap or .gt-ms-wrap
-   during choice swaps or async updates
- */
-.gt-gs-wrap.gt-loading,
-.gt-ms-wrap.gt-loading{
-  pointer-events:none;
-}
-.gt-gs-wrap.gt-loading .gt-gs-trigger,
-.gt-ms-wrap.gt-loading .gt-ms-trigger{
-  opacity:0.55;
-}
-.gt-gs-wrap.gt-loading .gt-gs-options-scroll,
-.gt-ms-wrap.gt-loading .gt-ms-options-scroll{
-  opacity:0.35;
-  transition:opacity 150ms ease;
-}
 
 .gt-gs-wrap.gt-disabled,
 .gt-ms-wrap.gt-disabled{
@@ -849,7 +1042,10 @@
   cursor:default;
   user-select:none;
   pointer-events:none;
+  overflow-wrap:anywhere;
+  word-break:break-word;
 }
+.gt-ms-search.hidden{display:none;}
 .gt-gs-optgroup.hidden,
 .gt-ms-optgroup.hidden{
   display:none;
@@ -879,6 +1075,9 @@
 @media(max-width:760px){
   .gt-vertical{flex-direction:column;}
   .gt-vertical > .gt-topbar{min-width:0;width:100%;}
+  /* Rail stacks above the content again, so the dock light moves back down. */
+  .gt-vertical .gt-tab-link.active,
+  [dir="rtl"] .gt-vertical .gt-tab-link.active{box-shadow:inset 0 -2px 0 0 color-mix(in srgb,var(--gt-halo-border,rgba(126,195,247,0.38)) 80%,transparent);}
 }
 
 /*
@@ -1051,14 +1250,87 @@
 .gt-compact .gt-topbar{margin-bottom:6px;}
 .gt-compact .gt-navbar{gap:6px;}
 .gt-compact .gt-tab-link{padding:10px 16px;font-size:15px;border-radius:10px;}
-.gt-compact .gt-tab-wrap{padding:12px;min-height:60px;}
+.gt-compact .gt-tab-wrap{padding:12px;min-height:var(--gt-content-min-height,60px);}
 .gt-compact .gt-tab-pane{padding:12px;}
 .gt-compact .gt-card{padding:10px;}
 .gt-compact .gt-halo{border-radius:10px;}
 
-/* Dropdowns use position:fixed so they escape overflow:hidden parents
-   (e.g. bs4Dash card bodies). z-index is set directly on the dropdown
-   element in its base rule above. */
+/* Attached style: the tab bar docks directly onto the content box and they
+   share one border, reading as a single unified card instead of two floating
+   pieces. The topbar becomes the tab tray; the content box loses its top
+   border and top corners. */
+.style-attached .gt-topbar{
+  margin-bottom:0;
+  background:var(--gt-content-bg,transparent);
+  border:1px solid var(--gt-content-border,transparent);
+  border-bottom:none;
+  border-radius:14px 14px 0 0;
+  padding:10px 14px 0;
+}
+.style-attached .gt-tab-wrap{
+  border-top:none;
+  border-radius:0 0 14px 14px;
+}
+/* Vertical rail: the tray docks onto the content's side instead. */
+.style-attached.gt-vertical{gap:0;}
+.style-attached.gt-vertical > .gt-topbar{
+  background:var(--gt-content-bg,transparent);
+  border:1px solid var(--gt-content-border,transparent);
+  border-right:none;
+  border-radius:14px 0 0 14px;
+  padding:14px 0 14px 14px;
+}
+.style-attached.gt-vertical > .gt-tab-wrap{
+  border-left:none;
+  border-radius:0 14px 14px 0;
+}
+[dir="rtl"] .style-attached.gt-vertical > .gt-topbar{
+  border-right:1px solid var(--gt-content-border,transparent);
+  border-left:none;
+  border-radius:0 14px 14px 0;
+  padding:14px 14px 14px 0;
+}
+[dir="rtl"] .style-attached.gt-vertical > .gt-tab-wrap{
+  border-left:1px solid var(--gt-content-border,transparent);
+  border-right:none;
+  border-radius:14px 0 0 14px;
+}
+@media(max-width:760px){
+  /* Narrow screens stack the rail above the content again. */
+  .style-attached.gt-vertical > .gt-topbar{
+    border:1px solid var(--gt-content-border,transparent);
+    border-bottom:none;
+    border-radius:14px 14px 0 0;
+    padding:10px 14px 0;
+  }
+  .style-attached.gt-vertical > .gt-tab-wrap{
+    border:1px solid var(--gt-content-border,transparent);
+    border-top:none;
+    border-radius:0 0 14px 14px;
+  }
+  /* RTL needs the same reset: the base [dir="rtl"] rules are more specific
+     than the LTR rules above, so without these the side borders and corner
+     radii from the vertical-rail layout would survive the stacking. */
+  [dir="rtl"] .style-attached.gt-vertical > .gt-topbar{
+    border:1px solid var(--gt-content-border,transparent);
+    border-bottom:none;
+    border-radius:14px 14px 0 0;
+    padding:10px 14px 0;
+  }
+  [dir="rtl"] .style-attached.gt-vertical > .gt-tab-wrap{
+    border:1px solid var(--gt-content-border,transparent);
+    border-top:none;
+    border-radius:0 0 14px 14px;
+  }
+}
+
+/* Teleported dropdowns use position:absolute (set by glass.js in
+   teleportOpen()) so they escape overflow:hidden parents such as bs4Dash
+   card bodies. Absolute - not fixed - positioning is deliberate: fixed
+   positioning breaks inside AdminLTE's scroll contexts, and the JS
+   positionTeleportedDropdown() helper computes document-space coordinates
+   to match. z-index is set directly on the dropdown element in its base
+   rule above. */
 
 /*
    TELEPORTED DROPDOWN STYLES
@@ -1113,6 +1385,17 @@
 }
 .gt-ms-dropdown.style-filled .gt-ms-option.checked{
   background:hsla(var(--opt-hue,210),72%,52%,0.12);
+}
+
+/* The simplified filled mode uses one theme accent for every selected item.
+   `fill_colors = "multi"` omits .fill-single and keeps the hue rules above. */
+.gt-ms-wrap.fill-single.style-filled .gt-ms-option.checked .gt-ms-check,
+.gt-ms-dropdown.fill-single.style-filled .gt-ms-option.checked .gt-ms-check{
+  background:var(--ms-accent)!important;
+}
+.gt-ms-wrap.fill-single.style-filled .gt-ms-option.checked,
+.gt-ms-dropdown.fill-single.style-filled .gt-ms-option.checked{
+  background:var(--ms-ac-12);
 }
 
 /* Single-select: check-only style */
@@ -1221,12 +1504,14 @@
    same media query before starting transfer or swipe animations. */
 @media (prefers-reduced-motion: reduce){
   .gt-halo,.gt-tab-pane,.gt-transfer,.gt-tab-link,
-  .gt-gs-trigger,.gt-ms-trigger,.gt-gs-dropdown,.gt-ms-dropdown{
+  .gt-gs-trigger,.gt-ms-trigger,.gt-gs-dropdown,.gt-ms-dropdown,
+  .gt-overflow-tooltip{
     transition-duration:0.01ms !important;
     animation-duration:0.01ms !important;
     animation-iteration-count:1 !important;
   }
   .gt-transfer{display:none !important;}
   .gt-tab-pane{transform:none;}
+  .transition-slide .gt-tab-pane{transform:none !important;}
   .gt-arrival-pulse,.gt-tab-badge.gt-badge-updated{animation:none !important;}
 }

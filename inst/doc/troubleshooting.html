@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Troubleshooting</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Troubleshooting</h1>
+
+
+
+<p>Each entry states the expected behavior first. Several of these are
+intentional design decisions, not bugs — the fix is usually a
+configuration choice, and the entry says so.</p>
+<div id="dropdown-does-not-look-styled" class="section level2">
+<h2>Dropdown does not look styled</h2>
+<p><strong>Expected:</strong> glass surfaces, rounded panels, animated
+markers. <strong>You see:</strong> a plain browser select, or unstyled
+lists and buttons.</p>
+<p><strong>Likely cause:</strong> the package’s CSS and JavaScript never
+loaded. Every app needs exactly one <code>useGlassTabs()</code> call at
+the UI root — except apps built with <code>glassPage()</code>, which
+loads the dependency automatically.</p>
+<p><strong>Fix:</strong> add <code>useGlassTabs()</code> to the
+top-level UI (not inside <code>renderUI()</code>, not inside a module
+UI). On Posit Connect, if the app looks styled locally but plain after
+publishing, check the manifest and the deployed assets: the dependency
+must publish with the app.</p>
+</div>
+<div id="server-backed-search-never-returns-results" class="section level2">
+<h2>Server-backed search never returns results</h2>
+<p><strong>Expected:</strong> typing queries the server and shows
+matches. <strong>You see:</strong> “Searching…” that never resolves, or
+an empty list for queries that should match.</p>
+<p><strong>Likely causes, in order:</strong> (1) the matching helper was
+never registered — <code>glassMultiSelectServer()</code> for a
+multi-select, <code>glassSelectServer()</code> for a single-select, with
+the same <code>inputId</code>; (2) the helper is registered for a
+different ID than the widget; (3) in a module, the helper got a
+namespaced ID instead of the bare ID with the module session (see the
+modules article).</p>
+<p><strong>Fix:</strong> register the helper in the server function,
+once per input ID, with the session the widget belongs to. A minimal
+reproduction is one widget, one helper, one search: if that works, the
+difference between it and the broken app is the cause.</p>
+</div>
+<div id="multi-select-starts-with-everything-checked" class="section level2">
+<h2>Multi-select starts with everything checked</h2>
+<p><strong>Expected:</strong> this is the default, not a bug.
+<code>selected = NULL</code> selects every enabled choice initially.</p>
+<p><strong>Fix:</strong> pass <code>selected = character(0)</code> for
+an empty start. See the multi-select guide’s “Understanding selection
+behavior” section for the All/Some/None decision that follows from this
+choice.</p>
+</div>
+<div id="clearing-a-selection-shows-all-records" class="section level2">
+<h2>Clearing a selection shows all records</h2>
+<p><strong>Expected:</strong> after Clear all, the widget returns
+<code>character(0)</code>.</p>
+<p><strong>Likely cause:</strong> the app treats empty as “no filter.”
+That is a valid app policy, but it must be chosen deliberately —
+otherwise clearing a filter restores every record while the dropdown
+looks empty.</p>
+<p><strong>Fix:</strong> decide what empty means and write it in the
+filter (see the selection section), or use
+<code>glassMultiSelectValue(..., empty_behavior = &quot;all&quot;)</code> /
+<code>&quot;none&quot;</code> to resolve empty consistently. The helper changes
+how the app resolves empty, not what the widget returns.</p>
+</div>
+<div id="selection-disappears-after-a-choices-update" class="section level2">
+<h2>Selection disappears after a choices update</h2>
+<p><strong>Expected:</strong> updating <code>choices</code> without
+<code>selected</code> keeps the current value when it still exists.</p>
+<p><strong>Likely cause:</strong> the value is absent from the new
+choice set. For the multi-select, <code>drop_invalid = TRUE</code> (the
+default) drops it; <code>FALSE</code> keeps it for when it reappears.
+For the single-select there are no knobs: a vanished selection clears to
+<code>NULL</code>.</p>
+<p><strong>Fix:</strong> choose the policy explicitly
+(<code>preserve_selection</code> / <code>drop_invalid</code> for
+multi-select; see the linked-filters article for the full scenario
+table). If the UI must show that an item vanished, remember the old
+value before updating — neither widget marks invalid selections.</p>
+</div>
+<div id="dropdown-is-too-narrow" class="section level2">
+<h2>Dropdown is too narrow</h2>
+<p><strong>Expected:</strong> the panel matches the trigger width, long
+labels wrap, and the panel stays inside the viewport.</p>
+<p><strong>Likely cause:</strong> the trigger itself is narrow. The
+panel matching the trigger is the design, not a bug: widening the panel
+past the field was tried and rejected (long text wraps inside the panel
+instead).</p>
+<p><strong>Fix:</strong> set <code>width</code> on the widget (for
+example <code>width = &quot;100%&quot;</code> inside a wide container, or an
+explicit pixel width), and check the parent container — a narrow column
+or a fixed-width card caps the trigger before glasstabs ever sees it. If
+a panel still escapes the viewport, that is a bug: report it with the
+container layout.</p>
+</div>
+<div id="theme-differs-from-the-surrounding-dashboard" class="section level2">
+<h2>Theme differs from the surrounding dashboard</h2>
+<p><strong>Expected:</strong> the widget follows the app’s theme.</p>
+<p><strong>Likely cause:</strong> <code>theme</code> disagrees with the
+page. <code>theme = &quot;dark&quot;</code> and <code>&quot;light&quot;</code> are fixed;
+<code>&quot;auto&quot;</code> follows the page’s own signal. Dashboards with their
+own dark-mode toggle (bs4Dash, bslib) need <code>dark_selector</code>
+pointed at that toggle’s marker, so the widget flips when the dashboard
+does.</p>
+<p><strong>Fix:</strong> set <code>theme = &quot;auto&quot;</code> for plain
+pages, or <code>theme = &quot;auto&quot;</code> plus the dashboard’s
+<code>dark_selector</code> for themed dashboards. Compare all three
+modes in the theme-switcher example before shipping.</p>
+</div>
+<div id="server-update-does-not-reach-a-module-control" class="section level2">
+<h2>Server update does not reach a module control</h2>
+<p><strong>Expected:</strong> an update inside a module changes that
+module’s widget.</p>
+<p><strong>Likely cause:</strong> a namespaced ID reached an update
+function or a server helper. Module UI takes <code>ns(&quot;region&quot;)</code>;
+module server code takes the module session and the bare
+<code>&quot;region&quot;</code>. Passing <code>ns(&quot;region&quot;)</code> to an updater
+addresses a nonexistent <code>&quot;filters-filters-region&quot;</code> input,
+silently.</p>
+<p><strong>Fix:</strong> audit every update and helper call in the
+module server for bare IDs (see the modules article). If the update
+reaches the wrong module instance, a hardcoded full ID somewhere in the
+UI is the cause.</p>
+</div>
+<div id="dropdown-closes-when-a-modal-opens" class="section level2">
+<h2>Dropdown closes when a modal opens</h2>
+<p><strong>Expected:</strong> this is the lifecycle working as designed.
+When a full-screen overlay or modal opens, open dropdowns close rather
+than stranding above the modal.</p>
+<p><strong>Fix:</strong> none needed for the close itself. If the app
+opens modals programmatically and the close looks abrupt, close
+dropdowns deliberately first with <code>closeAllGlassSelects()</code>
+(or <code>closeGlassSelect()</code> /
+<code>closeGlassMultiSelect()</code> for one widget), so the transition
+is intentional. There is no “reopen” helper: the user reopens with a
+click, like any other dropdown.</p>
+</div>
+<div id="widget-appears-unstyled-or-unbound-after-renderui" class="section level2">
+<h2>Widget appears unstyled or unbound after renderUI()</h2>
+<p><strong>Expected:</strong> a widget created by
+<code>renderUI()</code> binds fresh with the arguments it was created
+with.</p>
+<p><strong>Likely causes:</strong> (1) <code>useGlassTabs()</code> was
+placed inside the rendered UI instead of at the root — dependencies must
+load once at the top level; (2) a server-backed widget’s helper was
+registered inside the render instead of once in the server function, so
+the new control has no search backend; (3) the app expected the previous
+control’s selection to survive — a rebuilt widget starts from its UI
+arguments, so re-apply the intended selection after the render.</p>
+<p><strong>Fix:</strong> keep <code>useGlassTabs()</code> at the root
+and server registration in the server function, and treat a
+<code>renderUI()</code> rebuild as a fresh widget (see the
+linked-filters article’s renderUI section).</p>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

@@ -1,3 +1,11 @@
+test_that("server choice registration does not resend the rendered initial page", {
+  source <- paste(
+    deparse(body(glasstabs:::.gt_register_server_choices)),
+    collapse = "\n"
+  )
+  expect_match(source, "ignoreInit = TRUE", fixed = TRUE)
+})
+
 test_that("runGlassExample() lists the server-select example", {
   expect_true("server-select" %in% runGlassExample())
 })
@@ -10,12 +18,37 @@ test_that("all built-in examples have app files and README coverage", {
 
   expect_true(all(file.exists(app_files)))
   expect_no_error(lapply(app_files, parse))
-  expect_true(all(examples %in% c("basic", "bs4dash", "bslib", "connect-workflow", "dashboard", "indicators", "server-select", "smoke-test", "square-corners")))
+  app_sources <- vapply(
+    app_files,
+    function(path) paste(readLines(path, warn = FALSE), collapse = "\n"),
+    character(1)
+  )
+  expect_true(all(grepl("shinyApp(ui, server)", app_sources, fixed = TRUE)))
+  expect_false(any(grepl(
+    "if (interactive()) shinyApp(ui, server)",
+    app_sources,
+    fixed = TRUE
+  )))
+  expect_true(all(examples %in% c("basic", "bs4dash", "bslib", "connect-workflow", "dashboard", "indicators", "native-comparison", "server-select", "smoke-test", "square-corners", "stress-test", "light-mode", "theme-switcher")))
 
   readme_path <- test_path("..", "..", "README.md")
   if (file.exists(readme_path)) {
     readme <- paste(readLines(readme_path, warn = FALSE), collapse = "\n")
     expect_true(all(vapply(examples, grepl, logical(1), x = readme, fixed = TRUE)))
+  }
+})
+
+test_that("formerly dark-only examples expose live light and dark themes", {
+  themed_examples <- c("basic", "dashboard", "server-select", "smoke-test", "stress-test")
+  example_root <- system.file("examples", package = "glasstabs")
+  app_files <- file.path(example_root, themed_examples, "app.R")
+
+  for (app_file in app_files) {
+    source <- paste(readLines(app_file, warn = FALSE), collapse = "\n")
+    expect_true(grepl('"example_theme"', source, fixed = TRUE), info = app_file)
+    expect_true(grepl("data-bs-theme", source, fixed = TRUE), info = app_file)
+    expect_true(grepl('"auto"', source, fixed = TRUE), info = app_file)
+    expect_true(grepl('"Light" = "light"', source, fixed = TRUE), info = app_file)
   }
 })
 
@@ -28,6 +61,17 @@ test_that("bslib example app exists, parses, and demonstrates square selects", {
   expect_match(app_src, "bslib::bs_theme", fixed = TRUE)
   expect_match(app_src, "bslib::navset_card_tab", fixed = TRUE)
   expect_gte(lengths(regmatches(app_src, gregexpr('shape = "square"', app_src, fixed = TRUE))), 2L)
+})
+
+test_that("light-mode example app exists, parses, and covers wide labels", {
+  app <- system.file("examples", "light-mode", "app.R", package = "glasstabs")
+  expect_true(nzchar(app) && file.exists(app))
+  expect_no_error(parse(app))
+
+  app_src <- paste(readLines(app, warn = FALSE), collapse = "\n")
+  expect_match(app_src, 'theme = "light"', fixed = TRUE)
+  expect_match(app_src, "Customer success and implementation", fixed = TRUE)
+  expect_match(app_src, "show_style_switcher = TRUE", fixed = TRUE)
 })
 
 test_that("connect workflow example exists, parses, and demonstrates workflow features", {
@@ -134,4 +178,13 @@ test_that("server selects keep a bounded renderUI-friendly contract", {
   expect_equal(multi_rows, 10L)
   expect_true(grepl('data-selected-values="[&quot;value-001&quot;', multi_html, fixed = TRUE))
   expect_true(grepl('&quot;value-100&quot;]"', multi_html, fixed = TRUE))
+})
+
+test_that("server choice registration echoes the client search sequence", {
+  source <- paste(
+    deparse(body(glasstabs:::.gt_register_server_choices)),
+    collapse = "\n"
+  )
+  expect_match(source, "search$seq", fixed = TRUE)
+  expect_match(source, "seq = seq", fixed = TRUE)
 })

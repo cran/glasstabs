@@ -24,13 +24,28 @@ glassMultiSelect(
   dark_selector = NULL,
   server = FALSE,
   server_limit = 50L,
-  server_min_chars = 0L
+  server_min_chars = 0L,
+  searchable = TRUE,
+  search_threshold = 15L,
+  selection_display = c("auto", "count", "summary", "labels"),
+  selection_max_items = 2L,
+  dropdown_max_height = "260px",
+  no_matches_text = "No matches",
+  tongue = TRUE,
+  label_bold = TRUE,
+  fill_colors = c("single", "multi"),
+  label_size = "14px",
+  search_focus_ring = FALSE,
+  overflow_tooltip = c("auto", "never")
 )
 }
 \arguments{
 \item{inputId}{Shiny input id.}
 
-\item{choices}{Named or unnamed character vector of choices.}
+\item{choices}{Named or unnamed character vector of choices, or a named
+list for grouped choices (selectInput()-style). A one-element named list
+such as \code{list(Group = "x")} is treated as a flat, ungrouped choice,
+mirroring \code{\link[shiny:selectInput]{shiny::selectInput()}}.}
 
 \item{selected}{Initially selected values. Defaults to all choices when
 \code{NULL}.}
@@ -63,7 +78,8 @@ neatly alongside native Shiny \code{selectizeInput()} controls.}
 
 \item{width}{Optional widget width passed to
 \code{shiny::validateCssUnit()}, e.g. \code{100\%} or \code{240px}. When
-\code{NULL} (default) the trigger keeps its intrinsic width.}
+\code{NULL} (default) the trigger uses a stable compact width of
+\code{160px}. Explicit widths continue to be capped by the container.}
 
 \item{disabled}{Logical. When \code{TRUE} the whole widget is greyed out and
 non-interactive. Default \code{FALSE}.}
@@ -72,7 +88,8 @@ non-interactive. Default \code{FALSE}.}
 as disabled (non-selectable) rows. Default \code{NULL}.}
 
 \item{hues}{Optional named integer vector of HSL hue angles (0 to 360) for
-the \code{"filled"} style. Auto-assigned if \code{NULL}.}
+the \code{"filled"} style when \code{fill_colors = "multi"}.
+Auto-assigned if \code{NULL}.}
 
 \item{dark_selector}{Optional CSS selector that signals dark mode (e.g.
 \code{"body.dark-mode"} for bs4Dash). When provided, emits an extra
@@ -83,11 +100,61 @@ reverts colors to the dark-mode defaults whenever that selector is active.}
 choices and use \code{\link[=glassMultiSelectServer]{glassMultiSelectServer()}} to search the full choice set
 from the Shiny server. Default \code{FALSE}.}
 
-\item{server_limit}{Maximum number of choices rendered initially and returned
-for each server-side search. Default \code{50}.}
+\item{server_limit}{Maximum number of choices rendered initially.
+Search results are bounded separately by the \code{limit} argument of
+the \code{*Server()} helper. Default \code{50}. Explicitly selected
+values that fall outside the initial slice are still rendered as extra
+rows so they stay visible and checked.}
 
 \item{server_min_chars}{Minimum search characters required before server-side
 matching filters choices. Default \code{0}.}
+
+\item{searchable}{Search visibility. Use \code{TRUE} (default) to always
+show search, \code{FALSE} to hide it, or \code{"auto"} to show it only
+when the choice count reaches \code{search_threshold}.}
+
+\item{search_threshold}{Choice count at which \code{searchable = "auto"}
+shows the search field. Default \code{15}.}
+
+\item{selection_display}{How partial selections are summarized in the
+trigger: \code{"auto"} (the existing behavior), \code{"count"},
+\code{"summary"}, or \code{"labels"}.}
+
+\item{selection_max_items}{Number of labels shown by
+\code{selection_display = "summary"} before the remaining count is shown.}
+
+\item{dropdown_max_height}{Maximum height of the scrolling option area as a
+CSS unit, such as \code{"18rem"} or \code{"320px"}. The default is
+\code{"260px"}.}
+
+\item{no_matches_text}{Text shown when a search matches no choices.
+Default \code{"No matches"}.}
+
+\item{tongue}{Logical. When \code{TRUE} (default), the dropdown attaches to
+the trigger and uses the signature tongue unfurl/retract animation. Set to
+\code{FALSE} for a detached panel with a short fade that sits more
+naturally beside native Shiny inputs.}
+
+\item{label_bold}{Logical. Use a semibold field label, matching native Shiny
+inputs, when \code{TRUE} (default). Set to \code{FALSE} for regular-weight
+label text.}
+
+\item{fill_colors}{Color treatment for \code{check_style = "filled"}.
+\code{"single"} (default) uses the theme accent for every selected row;
+\code{"multi"} keeps the categorical per-option colors.}
+
+\item{label_size}{CSS size for the field label. The default, \code{"14px"},
+keeps the title visually distinct from the dropdown options.}
+
+\item{search_focus_ring}{Logical. When \code{TRUE}, focusing the dropdown
+search field adds the accent-colored outline. The default, \code{FALSE},
+uses a quieter background and border change without the outer ring.}
+
+\item{overflow_tooltip}{Tooltip behavior for long option text inside the
+open dropdown. \code{"auto"} (default) shows one tooltip for the truncated
+option currently under the pointer; \code{"never"} disables it. The
+multi-value trigger keeps its complete accessible label without showing a
+combined visual tooltip for every selection.}
 }
 \value{
 An \code{htmltools::tagList} containing the trigger button, dropdown

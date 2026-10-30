@@ -1,3 +1,269 @@
+# glasstabs 0.4.1
+
+0.4.1 is a stabilization release: the dropdowns keep their look and
+gain predictable behavior. Highlights: the tongue dropdown (the panel
+unfurls flush from the field), accessible chrome controls (real
+buttons with arrow-key navigation and full ARIA semantics), selection
+correctness (one Select-all scope, server disabled choices, an "All"
+row that survives updates), server reliability (value search,
+sequenced responses, a stuck-search guard, indexed filtering), and a
+documentation reorganization (selection semantics, server precision,
+module and linked-filter recipes, troubleshooting, migration, and an
+example gallery). The detailed fixes follow.
+
+## Fixes
+
+* The pkgdown articles now give multi-select its own prominent Selects entry,
+  backed by a complete guide to selection semantics, search, summaries, tag
+  pills, linked filters, server search, transactional updates, accessibility,
+  and migration from native Shiny multi-selects. Cross-links keep the
+  single-select and multi-select documentation equally discoverable.
+
+* `glassSelect()` now supports `searchable = "auto"` with a configurable
+  `search_threshold`, matching the multi-select behavior. Short lists can keep
+  the search field hidden and reveal it automatically as choices grow. Both
+  settings can also be changed with `updateGlassSelect()`.
+
+* `glassSelect()` automatic search no longer counts the synthetic "All" row
+  toward `search_threshold`: with `include_all = TRUE`, the search box
+  appears only once the real choice count reaches the threshold.
+
+* Select and tab constructors now reject invalid logical arguments instead of
+  silently treating values such as `"yes"` as `FALSE`; update helpers validate
+  sessions, disabled state, and missing selections consistently. Choice and
+  integer settings reject missing or out-of-range values before rendering.
+
+* `glassSelect()` now honors an explicit `dark_selector` in fixed light themes
+  as well as automatic themes, matching tabs and multi-selects. Choice-only
+  updates preserve existing disabled rows unless `disabled_choices` is
+  explicitly supplied, and server-backed selects no longer resend their
+  already-rendered initial page during registration.
+
+* Hyphenated tab ids no longer produce a false namespacing warning. Initial
+  and appended tabs now emit the same clean class names, and select dropdown
+  base positioning matches the absolute positioning used while teleported.
+
+* Ellipsized single-select trigger text now exposes a viewport-safe label
+  preview through a hover/keyboard tooltip by default. Truncated multi-select
+  options expose the currently hovered or keyboard-active option inside the
+  open dropdown, without combining selected labels into a noisy trigger tip.
+  Single-select options expose the same hover/keyboard preview inside the
+  open dropdown.
+  Set `overflow_tooltip = "never"` to disable visual tooltips; full accessible
+  names remain available, and touch users can open the dropdown to read the
+  wrapped option. The formerly dark-only built-in examples now include live
+  light/dark switches and use `theme = "auto"` consistently. Example apps now
+  return standard Shiny app objects for automated launchers, and an obsolete
+  `shinyjs` scratch app was removed from the installed examples.
+* Select chrome controls are now real buttons reachable by keyboard: the
+  multi-select style switcher, Select-all row, and Clear-all button, and the
+  single-select Clear button, all take arrow-key focus inside the open
+  dropdown (Tab still closes and exits). Multi-select listboxes now report
+  `aria-multiselectable`, field labels are associated with their triggers,
+  search fields have accessible names, and the Select-all row reports its
+  tri-state (`true` / `mixed` / `false`) instead of a plain selected flag.
+* The multi-select Select-all indicator now uses the same enabled-and-visible
+  scope as the Select-all click: a disabled option no longer makes the
+  indicator read partial when every selectable option is selected, and the
+  initial indicator uses the same scope. Previously the indicator counted
+  visible options including disabled ones while the click skipped them.
+* `glassSelectServer()` and `glassMultiSelectServer()` now accept
+  `disabled_choices`, so a disabled value takes effect when it first arrives
+  in a server search response instead of only when it was already rendered.
+  `NULL` (the default) preserves the previous behavior of keeping
+  already-loaded disabled state.
+* `glassSelect()` choices updates no longer drop the synthetic "All" row:
+  widgets created with `include_all = TRUE` keep the row — and an active
+  "All" selection — across `updateGlassSelect()` calls.
+* Client-side search now matches option values as well as labels, matching
+  server-side search: typing a value finds its option even when the label
+  does not contain it.
+* Server search responses now carry the sequence of the search they answer,
+  and the browser ignores a response older than the latest search issued
+  for that widget, so rapid typing cannot leave stale results on screen. The
+  sequence replaces the old timestamp nonce, which served the same
+  retriggering purpose.
+* A server search that never receives a response no longer leaves the
+  "Searching..." status stuck: it clears on its own after ten seconds. A
+  late response still applies normally.
+* Search filtering no longer scans all choices for every visible row: the
+  option-visibility pass uses a value-to-choice index rebuilt on every
+  choices update.
+* Documentation: the multi-select guide gains an "All, Some, and None"
+  selection section with explicit empty-means-none and empty-means-all
+  patterns, and the server-search section now states the two
+  independent limits (`server_limit` for the initial slice, the
+  `*Server()` helper's `limit` per search) and the bounded-not-paginated
+  result model; the wrong `server_limit` wording ("returned for each
+  server-side search") is corrected in both roxygen blocks and both
+  help files. New recipe articles cover Shiny modules and dependent
+  dropdowns / dynamic UI, and the single-select guide documents the
+  "All" option's behavior, invalid-selection clearing, and server
+  edge cases.
+* Select field titles now default to a distinct 14px semibold treatment and
+  accept `label_size` alongside `label_bold`. Dropdown search uses a quieter
+  neutral focus treatment by default; `search_focus_ring = TRUE` opts into the
+  accent outline. The native-comparison lab groups shared settings separately
+  from the feature controls for each demonstration.
+* Select dropdowns match their trigger width, wrap longer option labels inside
+  that shared width, and clamp safely to narrow viewports. The multi-select
+  Check / Box / Fill switcher also falls back to compact text-only buttons on
+  extremely narrow screens, so Fill is never clipped.
+* Added `runGlassExample("light-mode")`, a dedicated light-interface example
+  covering tabs, single-select, multi-select, and intentionally long labels.
+* `no_matches_text` moved to the end of the `glassSelect()` and
+  `glassMultiSelect()` signatures. It was added in the middle, so existing
+  positional calls could silently bind the wrong arguments.
+* The full-screen overlay observer now watches the whole document subtree
+  and scans descendants of inserted nodes, so overlays nested inside app
+  wrappers and hidden overlays revealed by class/style toggles also dismiss
+  open select dropdowns. Browser tests cover the nested and toggled cases.
+* `glassTabsUI(content_min_height = NULL)` (the new default) no longer
+  writes an inline `--gt-content-min-height`, restoring the `60px` compact
+  minimum: compact widgets use `60px`, regular widgets `120px`, and an
+  explicitly supplied value still wins.
+* Attached vertical tabs in RTL layouts now fully reset to the stacked
+  top-bar layout below 760px (the base `[dir="rtl"]` rules previously
+  outranked the narrow-screen reset, leaving side borders and corner radii
+  active).
+* `%||%` is internal again instead of exported: its length-zero fallback
+  semantics differ from `rlang::%||%`, and exporting it risked masking
+  between the two. Vignettes and example apps now use a small local
+  `fallback()` helper.
+* `updateGlassTabBadge()` caps huge counts at 100 instead of letting
+  `as.integer()` coerce them to `NA` with a warning; the browser already
+  renders anything above 99 as `"99+"`.
+* `glass_tab_theme()` docs no longer claim unset fields always inherit dark
+  defaults; they inherit from the `mode` base preset. The README function
+  table now lists `content_min_height`, `style`, and `transition` in the
+  `glassTabsUI()` signature.
+
+* The `%||%` operator is internal (`@noRd`) rather than a documented export,
+  so `R CMD check` has no `|`-in-`\name` concern at all.
+* Browser-test and stylesheet tests updated to match intended behavior: open
+  dropdowns reposition (not close) on window resize, and `color-mix()` in
+  `glass.css` is used only where unsupported browsers degrade gracefully.
+* The spelling wordlist now covers package vocabulary (`mojibake`, `rlang`,
+  `shinytest`, `ungrouped`), and browser tests clean up Chrome's temp
+  directories so `R CMD check` reports no detritus.
+
+* Vignettes and example apps that used `%||%` now define a small local
+  `fallback()` helper instead; the operator stays internal to the package.
+* `updateGlassTabBadge()` no longer crashes on `count = NULL`; `NULL` and
+  empty vectors hide the badge like `NA` does. Non-numeric, multi-length,
+  negative, or infinite counts now raise a clear `glasstabs_error_bad_argument`
+  error instead of producing corrupt messages.
+* `glassTabPanel()` validates that `value` and `label` are single strings,
+  replacing cryptic downstream errors (empty labels remain allowed for
+  icon-only tabs).
+* `glass_tab_theme()` gains a `mode` argument (`"dark"`/`"light"`). Unset
+  fields now inherit from the mode's base preset, and light-mode custom themes
+  receive the structural `theme-light` class in `glassTabsUI()` (previously a
+  dead branch).
+* Invalid tab theme presets no longer list `"auto"` as valid; `"auto"` is
+  resolved by `glassTabsUI()` before theme resolution runs.
+* `glassSelect()` and `glassMultiSelect()` reject duplicate choice values
+  with a clear error instead of rendering ambiguous duplicate options.
+* Out-of-range `rgb()`/`rgba()` components are clamped the way browsers do,
+  and malformed components yield a clean fallback instead of invalid CSS.
+* Server-mode `glassMultiSelect()` now renders every explicitly selected value
+  outside the initial `server_limit` slice as an extra checked row, so
+  pre-selections stay visible (previously only a single out-of-slice value
+  got an extra row). Default selections remain bounded to the slice.
+* Grouped-`choices` docs now note that a one-element named list is treated as
+  a flat choice, mirroring `shiny::selectInput()`.
+* Vignettes now document the `input$<id>_ready` signal emitted once a select
+  widget finishes initializing.
+* Removed the dead `glasstabs_close_select` custom message handler and its
+  orphaned `closeDropdownById()` helper from `glass.js`; single-widget closes
+  travel through the widget controllers via input messages.
+* Corrected a stale CSS comment that claimed teleported dropdowns use
+  `position:fixed` (they deliberately use `position:absolute`).
+* Open select dropdowns no longer slam shut when an unrelated Shiny output
+  updates. Only dropdowns anchored inside the updated output are closed, so
+  dropdowns stay usable next to live outputs like timers and previews.
+* Window resizes (mobile URL-bar show/hide, the on-screen keyboard) now keep
+  open select dropdowns glued to their trigger via repositioning instead of
+  closing them. Dropdowns still close when their trigger is detached or has
+  no layout box.
+* Open select dropdowns are now dismissed when a full-screen overlay appears
+  (loading screens, waiter veils, custom overlays), instead of floating above
+  or lingering beneath it. Smaller floating panels do not trigger this.
+* `glassSelect()` and `glassMultiSelect()` gain a `no_matches_text` argument
+  to customize the "No matches" empty-search message.
+* Tab content now sits in a subtle glass container by default (barely-there
+  background and hairline border) instead of an invisible box, so the tab bar
+  and content read as one component. The old invisible look is still
+  available via `glass_tab_theme(content_bg = "transparent", content_border =
+  "transparent")`. Double padding between the tab bar and content is gone
+  (22px instead of 44px) and the tab bar sits slightly closer to the content.
+* `glassTabsUI()` gains `content_min_height` (default `NULL`, using the regular
+  120px or compact 60px layout minimum) in place of the fixed 200px minimum;
+  use `"0"` for none, and an explicitly supplied value always wins.
+* Tabs feel connected to their content: the active tab now shows a subtle
+  inner light on its content-facing edge (bottom for horizontal tabs, side
+  for a vertical rail, RTL-aware) in the halo color, and the content box's
+  top edge picks up the same halo color to bridge the gap. The underline
+  indicator keeps its own connection cue.
+* `glassTabsUI()` gains `style = "attached"`, which docks the tab bar
+  directly onto the content box so they share one border and read as a
+  single unified card (`"floating"` keeps the default two-piece look).
+* `glassTabsUI()` gains `transition = "slide"`, sliding panes horizontally
+  in the direction of travel following tab order (`"fade"` keeps the default
+  fade-and-rise).
+* Server-side choice search now normalizes the choice set once per widget
+  instead of on every keystroke, making search over large choice sets
+  noticeably snappier.
+* Server search responses now apply only when they answer the latest
+  issued search for the widget: a stale response can no longer replace
+  current results or disarm the latest search's loading guard.
+* Empty-string choice values are now ordinary values in `glassSelect()`:
+  selecting one reports `""`, while clearing the field reports `NULL`.
+* `updateGlassSelect()` with `selected = ""` now selects the
+  empty-string choice instead of clearing: the server-update path
+  still converted `""` to `NULL` before the controller saw it.
+
+## Docs and examples
+
+* Fixed stale `v0.4.0` references, a placeholder GitHub username in the
+  getting-started vignette, mojibake em dashes in the dashboard/bs4dash
+  examples, and a wrong input id in the basic example's narrative.
+* The pkgdown reference now indexes `closeGlassMultiSelect` and
+  `closeAllGlassSelects`; `%||%` remains an internal helper.
+* CI now installs stable Chrome so the shinytest2 browser suite actually runs
+  instead of failing on a missing browser.
+* The linked-filter recipe no longer teaches silencing intermediates
+  behind a single notification: every input whose server value must sync
+  needs its own notification.
+* The migration guide now defines its sample dataset, and its final
+  example runs end to end.
+* Both migration examples are now individually runnable: the native
+  example ends in `shinyApp()` and the glasstabs example defines its
+  own dataset instead of reusing the before example's objects.
+* Server search wording now says bounded, not paged, everywhere.
+
+## Select dropdown sizing
+
+* Select dropdowns now open like a tongue from the field: the panel attaches
+  flush against the trigger with no gap, the adjoining corners square off so
+  the two read as one continuous surface, and the panel unfurls with a smooth
+  scale animation anchored at the attached edge. When space is tight below,
+  the panel flips above the field and the tongue retracts upward instead.
+* `glassSelect()` and `glassMultiSelect()` dropdown panels now follow their
+  trigger width. Short option lists stay aligned with the field instead of
+  opening a wider fixed panel, while the viewport cap still protects narrow
+  screens.
+* Long option labels, group headings, and unbroken identifiers now wrap inside
+  the panel instead of being clipped or creating horizontal overflow.
+* `glassMultiSelect()` gains configurable and automatic search visibility,
+  compact count or label summaries, and a configurable option-list height.
+* `updateGlassMultiSelect()` now applies linked changes as one transaction,
+  preserves or drops selections explicitly, and can notify Shiny only when the
+  effective value changes, always, or never.
+* `glassMultiSelectValue()` now keeps the raw selection while offering a
+  separate resolved value for apps where an empty filter means none, all, or
+  `NULL`.
+
 # glasstabs 0.4.0
 
 ## Responsive and accessible navigation

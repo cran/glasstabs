@@ -30,13 +30,28 @@
 #' @family glass tabs
 #' @export
 glassTabPanel <- function(value, label, ..., icon = NULL, selected = FALSE) {
+  .gt_check_string(
+    value, "value",
+    "glassTabPanel(): `value` must be a single non-empty string."
+  )
+  # `label` may be "" for icon-only tabs, but must still be a single string.
+  if (!is.character(label) || length(label) != 1L || is.na(label)) {
+    .gt_abort(
+      "glassTabPanel(): `label` must be a single string.",
+      class = "glasstabs_error_bad_argument",
+      argument = "label",
+      value = label,
+      expected = "a single character string"
+    )
+  }
+  .gt_check_flag(selected, "selected")
   structure(
     list(
       value    = value,
       label    = label,
       icon     = icon,
       content  = list(...),
-      selected = isTRUE(selected)
+      selected = selected
     ),
     class = "glassTabPanel"
   )
@@ -52,6 +67,18 @@ glassTabPanel <- function(value, label, ..., icon = NULL, selected = FALSE) {
 #' @param compact Logical. When `TRUE` applies reduced padding and spacing via
 #'   the `.gt-compact` CSS modifier - useful inside dashboard cards or tight
 #'   layouts (e.g. bs4Dash).
+#' @param content_min_height Minimum height of the tab content area as a CSS
+#'   length, e.g. `"120px"`. Stabilizes the layout when tabs hold different
+#'   amounts of content. Use `"0"` for no minimum. When `NULL` (the default),
+#'   no inline height is set: the default is `120px`, or `60px` when
+#'   `compact = TRUE`. An explicitly supplied value always wins.
+#' @param style Visual relationship between the tab bar and the content box.
+#'   `"floating"` (default) renders them as two separate floating pieces.
+#'   `"attached"` docks the tab bar directly onto the content box: they share
+#'   one border and read as a single unified card.
+#' @param transition How panes animate when switching tabs. `"fade"`
+#'   (default) fades and rises the incoming pane. `"slide"` slides panes
+#'   horizontally in the direction of travel, following tab order.
 #' @param shape Corner style for the tab bar and content. One of `"rounded"`
 #'   (default) for the signature glass look, or `"square"` for crisp,
 #'   selectize-style corners that match [glassSelect()] and
@@ -108,6 +135,9 @@ glassTabsUI <- function(
     selected = NULL,
     wrap = TRUE,
     compact = FALSE,
+    content_min_height = NULL,
+    style = c("floating", "attached"),
+    transition = c("fade", "slide"),
     shape = c("rounded", "square"),
     indicator = c("glass", "solid", "underline"),
     orientation = c("horizontal", "vertical"),
@@ -121,6 +151,9 @@ glassTabsUI <- function(
 ) {
   ns          <- shiny::NS(id)
   panels      <- list(...)
+  .gt_check_flag(wrap, "wrap")
+  .gt_check_flag(compact, "compact")
+  .gt_check_flag(swipe, "swipe")
   shape       <- .gt_match_arg(shape, c("rounded", "square"), "shape")
   indicator   <- .gt_match_arg(indicator, c("glass", "solid", "underline"), "indicator")
   orientation <- .gt_match_arg(orientation, c("horizontal", "vertical"), "orientation")
@@ -141,15 +174,11 @@ glassTabsUI <- function(
     )
   }
 
-  if (!is.logical(swipe) || length(swipe) != 1L || is.na(swipe)) {
-    .gt_abort(
-      "glassTabsUI(): `swipe` must be either TRUE or FALSE.",
-      class = "glasstabs_error_bad_argument",
-      argument = "swipe",
-      value = swipe,
-      expected = "TRUE or FALSE"
-    )
+  if (!is.null(content_min_height)) {
+    content_min_height <- .gt_css_unit(content_min_height, "content_min_height")
   }
+  style      <- .gt_match_arg(style, c("floating", "attached"), "style")
+  transition <- .gt_match_arg(transition, c("fade", "slide"), "transition")
 
   ## theme = "auto": bridge to Bootstrap 5 / bslib color modes. Base vars are
   ## the light preset; dark vars are scoped under [data-bs-theme="dark"] via
@@ -235,7 +264,7 @@ glassTabsUI <- function(
   }
 
   tab_links <- lapply(panels, function(p) {
-    .gt_tab_link(p, p$value == active_val, id, preserve_inactive_space = TRUE)
+    .gt_tab_link(p, p$value == active_val, id)
   })
 
   panes <- lapply(panels, function(p) {
@@ -243,8 +272,7 @@ glassTabsUI <- function(
       p,
       p$value == active_val,
       ns(paste0("pane-", p$value)),
-      tab_id = ns(paste0("tab-", p$value)),
-      preserve_inactive_space = TRUE
+      tab_id = ns(paste0("tab-", p$value))
     )
   })
 
@@ -299,11 +327,19 @@ glassTabsUI <- function(
     .make_style_tag(theme_css),
     dark_override_style,
     topbar,
-    shiny::div(class = "gt-tab-wrap", panes)
+    shiny::div(
+      class = "gt-tab-wrap",
+      style = if (is.null(content_min_height)) {
+        NULL
+      } else {
+        sprintf("--gt-content-min-height:%s;", content_min_height)
+      },
+      panes
+    )
   )
 
   is_light <- identical(theme, "light") ||
-    (inherits(theme, "glass_tab_theme") && isTRUE(attr(theme, "mode") == "light"))
+    (inherits(theme, "glass_tab_theme") && isTRUE(theme$mode == "light"))
 
   container_cls <- trimws(paste(
     c(if (isTRUE(wrap))    "gt-container",
@@ -311,6 +347,8 @@ glassTabsUI <- function(
       if (isTRUE(compact)) "gt-compact",
       if (identical(shape, "square")) "shape-square",
       if (!identical(indicator, "glass")) paste0("indicator-", indicator),
+      if (!identical(style, "floating")) paste0("style-", style),
+      if (!identical(transition, "fade")) paste0("transition-", transition),
       if (identical(orientation, "vertical")) "gt-vertical",
       paste0("gt-overflow-", overflow),
       paste0("gt-align-", tab_align),
@@ -361,11 +399,19 @@ glassTabsUI <- function(
 #' @family glass tabs
 #' @export
 updateGlassTabsUI <- function(session, id, selected) {
+  .gt_check_tab_session(session)
   session$sendCustomMessage(
     "glasstabs_update_tabs",
     list(ns = session$ns(id), selected = selected)
   )
   invisible(NULL)
+}
+
+#' @noRd
+.gt_check_tab_session <- function(session) {
+  .gt_check_session(session, "sendCustomMessage")
+  .gt_check_session(session, "ns")
+  invisible(session)
 }
 
 #' Update the badge count on a glass tab
@@ -378,7 +424,8 @@ updateGlassTabsUI <- function(session, id, selected) {
 #' @param id      Module id matching the `id` passed to [glassTabsUI()].
 #' @param value   Value of the tab to update.
 #' @param count   Integer count to display. Values above 99 are shown as
-#'   `"99+"`. `0` or `NA` hides the badge.
+#'   `"99+"`. `0`, `NA`, or `NULL` hides the badge. Fractional values are
+#'   truncated toward zero.
 #'
 #' @return Called for its side effect; returns \code{NULL} invisibly.
 #'
@@ -406,12 +453,39 @@ updateGlassTabsUI <- function(session, id, selected) {
 #' @family glass tabs
 #' @export
 updateGlassTabBadge <- function(session, id, value, count) {
-  count <- if (is.na(count)) 0L else as.integer(count)
+  .gt_check_tab_session(session)
+  count <- .gt_badge_count(count)
   session$sendCustomMessage(
     "glasstabs_tab_badge",
     list(ns = session$ns(id), value = value, count = count)
   )
   invisible(NULL)
+}
+
+#' @noRd
+.gt_badge_count <- function(count) {
+  # NULL (or an empty vector) means "no count": hide the badge, mirroring
+  # the documented NA behavior. This previously crashed in is.na().
+  if (is.null(count) || length(count) == 0L || isTRUE(is.na(count))) {
+    return(0L)
+  }
+  if (!is.numeric(count) || length(count) != 1L ||
+      !is.finite(count) || count < 0) {
+    .gt_abort(
+      paste0(
+        "`count` must be a single non-negative number. ",
+        "`0`, `NA`, or `NULL` hides the badge."
+      ),
+      class = "glasstabs_error_bad_argument",
+      argument = "count",
+      value = count,
+      expected = "a single non-negative number"
+    )
+  }
+  # The browser renders any count above 99 as "99+", so cap the transported
+  # value at 100: huge counts (e.g. 1e20) would otherwise coerce to NA with
+  # a warning via as.integer().
+  as.integer(min(count, 100))
 }
 
 #' Show or hide a glass tab
@@ -450,6 +524,7 @@ updateGlassTabBadge <- function(session, id, value, count) {
 #' @family glass tabs
 #' @export
 showGlassTab <- function(session, id, value) {
+  .gt_check_tab_session(session)
   session$sendCustomMessage(
     "glasstabs_show_tab",
     list(ns = session$ns(id), value = value)
@@ -460,6 +535,7 @@ showGlassTab <- function(session, id, value) {
 #' @rdname showGlassTab
 #' @export
 hideGlassTab <- function(session, id, value) {
+  .gt_check_tab_session(session)
   session$sendCustomMessage(
     "glasstabs_hide_tab",
     list(ns = session$ns(id), value = value)
@@ -504,6 +580,7 @@ hideGlassTab <- function(session, id, value) {
 #' @family glass tabs
 #' @export
 disableGlassTab <- function(session, id, value) {
+  .gt_check_tab_session(session)
   session$sendCustomMessage(
     "glasstabs_disable_tab",
     list(ns = session$ns(id), value = value)
@@ -514,6 +591,7 @@ disableGlassTab <- function(session, id, value) {
 #' @rdname disableGlassTab
 #' @export
 enableGlassTab <- function(session, id, value) {
+  .gt_check_tab_session(session)
   session$sendCustomMessage(
     "glasstabs_enable_tab",
     list(ns = session$ns(id), value = value)
@@ -564,6 +642,8 @@ enableGlassTab <- function(session, id, value) {
 #' @family glass tabs
 #' @export
 appendGlassTab <- function(session, id, tab, select = FALSE) {
+  .gt_check_tab_session(session)
+  .gt_check_flag(select, "select")
   if (!inherits(tab, "glassTabPanel")) {
     .gt_abort(
       sprintf(
@@ -597,7 +677,7 @@ appendGlassTab <- function(session, id, tab, select = FALSE) {
       value     = tab$value,
       link_html = link_html,
       pane_html = pane_html,
-      select    = isTRUE(select)
+      select    = select
     )
   )
   invisible(NULL)
@@ -606,6 +686,7 @@ appendGlassTab <- function(session, id, tab, select = FALSE) {
 #' @rdname appendGlassTab
 #' @export
 removeGlassTab <- function(session, id, value) {
+  .gt_check_tab_session(session)
   session$sendCustomMessage(
     "glasstabs_remove_tab",
     list(ns = session$ns(id), value = value)
@@ -696,27 +777,13 @@ removeGlassTab <- function(session, id, value) {
 #' @family glass tabs
 #' @export
 glassTabsServer <- function(id, bookmark = TRUE) {
-  if (grepl("-", id, fixed = TRUE)) {
-    warning(
-      sprintf(
-        paste0(
-          "glassTabsServer() received id \"%s\" which contains \"-\".\n",
-          "This usually means ns(\"tabs\") was passed instead of the bare id \"tabs\".\n",
-          "Fix: glassTabsServer(\"tabs\")  # NOT glassTabsServer(ns(\"tabs\"))\n",
-          "moduleServer() handles namespacing automatically."
-        ),
-        id
-      ),
-      call. = FALSE
-    )
-  }
-
+  .gt_check_flag(bookmark, "bookmark")
   shiny::moduleServer(id, function(input, output, session) {
     active <- shiny::reactive({
       input$active_tab
     })
 
-    if (isTRUE(bookmark)) {
+    if (bookmark) {
       session$onBookmark(function(state) {
         state$values$active_tab <- active()
       })

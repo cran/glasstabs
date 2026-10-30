@@ -20,14 +20,14 @@
       
       TABS: dark rounded 
       <div class="gt-container gt-overflow-scroll gt-align-center gt-text-align-center" id="tabs-wrap" data-swipe="false">
-        <style>#tabs-wrap{--gt-tab-text:rgba(207,230,255,0.78);--gt-tab-active-text:#ffffff;--gt-halo-bg:rgba(126,195,247,0.16);--gt-halo-border:rgba(126,195,247,0.38);--gt-focus-ring:#7ec3f7;--gt-halo-shadow:inset 0 1px 0 rgba(255,255,255,.22),inset 0 -1px 0 rgba(255,255,255,.06),0 6px 20px rgba(0,0,0,.38),0 0 0 1px rgba(255,255,255,.03);--gt-content-bg:transparent;--gt-content-border:transparent;--gt-card-bg:transparent;--gt-card-text:#cfe6ff;}</style>
+        <style>#tabs-wrap{--gt-tab-text:rgba(207,230,255,0.78);--gt-tab-active-text:#ffffff;--gt-halo-bg:rgba(126,195,247,0.16);--gt-halo-border:rgba(126,195,247,0.38);--gt-focus-ring:#7ec3f7;--gt-halo-shadow:inset 0 1px 0 rgba(255,255,255,.22),inset 0 -1px 0 rgba(255,255,255,.06),0 6px 20px rgba(0,0,0,.38),0 0 0 1px rgba(255,255,255,.03);--gt-content-bg:rgba(255,255,255,0.03);--gt-content-border:rgba(255,255,255,0.08);--gt-card-bg:transparent;--gt-card-text:#cfe6ff;}</style>
         <div class="gt-topbar">
           <div class="gt-tab-viewport">
             <div class="gt-navbar" id="tabs-navbar" data-ns="tabs" role="tablist" aria-orientation="horizontal">
               <div class="gt-tab-link active" id="tabs-tab-one" data-value="one" data-ns="tabs" role="tab" tabindex="0" aria-selected="true" aria-controls="tabs-pane-one">
                 <span class="gt-tab-label">One</span>
               </div>
-              <div class="gt-tab-link " id="tabs-tab-two" data-value="two" data-ns="tabs" role="tab" tabindex="-1" aria-selected="false" aria-controls="tabs-pane-two">
+              <div class="gt-tab-link" id="tabs-tab-two" data-value="two" data-ns="tabs" role="tab" tabindex="-1" aria-selected="false" aria-controls="tabs-pane-two">
                 <span class="gt-tab-icon">
                   <i class="fas fa-table" role="presentation" aria-label="table icon"></i>
                 </span>
@@ -45,7 +45,7 @@
               <p>First</p>
             </div>
           </div>
-          <div class="gt-tab-pane " id="tabs-pane-two" role="tabpanel" aria-labelledby="tabs-tab-two" aria-hidden="true" inert="" tabindex="-1">
+          <div class="gt-tab-pane" id="tabs-pane-two" role="tabpanel" aria-labelledby="tabs-tab-two" aria-hidden="true" inert="" tabindex="-1">
             <div class="gt-card">
               <p>Second</p>
             </div>
@@ -53,10 +53,10 @@
         </div>
       </div>
       MULTISELECT: dark rounded 
-      <style>#multi-field{--ms-bg:rgba(9,20,42,0.97);--ms-border:rgba(255,255,255,0.10);--ms-text:#cfe6ff;--ms-accent:#7ec3f7;--ms-focus-ring:#7ec3f7;--ms-label:#cfe6ff;--ms-ac-12:rgba(126,195,247,0.120);--ms-ac-16:rgba(126,195,247,0.160);--ms-ac-18:rgba(126,195,247,0.180);--ms-ac-22:rgba(126,195,247,0.220);--ms-ac-28:rgba(126,195,247,0.280);--ms-ac-32:rgba(126,195,247,0.320);--ms-ac-40:rgba(126,195,247,0.400);--ms-ac-55:rgba(126,195,247,0.550);--ms-ac-60:rgba(126,195,247,0.600);--ms-ac-75:rgba(126,195,247,0.750);--ms-tx-03:rgba(207,230,255,0.030);--ms-tx-04:rgba(207,230,255,0.040);--ms-tx-05:rgba(207,230,255,0.050);--ms-tx-06:rgba(207,230,255,0.060);--ms-tx-08:rgba(207,230,255,0.080);--ms-tx-35:rgba(207,230,255,0.350);--ms-tx-45:rgba(207,230,255,0.450);--ms-tx-50:rgba(207,230,255,0.500);--ms-tx-80:rgba(207,230,255,0.800);--ms-ac-tx-75:rgba(146,204,249,1.000);}</style>
+      <style>#multi-field{--ms-bg:rgba(9,20,42,0.97);--ms-border:rgba(255,255,255,0.10);--ms-text:#cfe6ff;--ms-accent:#7ec3f7;--ms-focus-ring:#7ec3f7;--ms-label:#cfe6ff;--gt-label-size:14px;--ms-dropdown-max-height:260px;--ms-ac-12:rgba(126,195,247,0.120);--ms-ac-16:rgba(126,195,247,0.160);--ms-ac-18:rgba(126,195,247,0.180);--ms-ac-22:rgba(126,195,247,0.220);--ms-ac-28:rgba(126,195,247,0.280);--ms-ac-32:rgba(126,195,247,0.320);--ms-ac-40:rgba(126,195,247,0.400);--ms-ac-55:rgba(126,195,247,0.550);--ms-ac-60:rgba(126,195,247,0.600);--ms-ac-75:rgba(126,195,247,0.750);--ms-tx-03:rgba(207,230,255,0.030);--ms-tx-04:rgba(207,230,255,0.040);--ms-tx-05:rgba(207,230,255,0.050);--ms-tx-06:rgba(207,230,255,0.060);--ms-tx-08:rgba(207,230,255,0.080);--ms-tx-35:rgba(207,230,255,0.350);--ms-tx-45:rgba(207,230,255,0.450);--ms-tx-50:rgba(207,230,255,0.500);--ms-tx-80:rgba(207,230,255,0.800);--ms-ac-tx-75:rgba(146,204,249,1.000);}</style>
       <div class="gt-ms-field" id="multi-field">
-        <div class="gt-ms-wrap style-checkbox    " id="multi-wrap" data-input-id="multi" data-placeholder="Filter by Category" data-all-label="All categories" data-server="false" data-server-total="2" data-server-min-chars="0" data-selected-values="[&quot;apple&quot;]">
-          <div class="gt-ms-trigger" id="multi-trigger" role="combobox" tabindex="0" aria-haspopup="listbox" aria-expanded="false" aria-controls="multi-dropdown">
+        <div class="gt-ms-wrap style-checkbox fill-single" id="multi-wrap" data-input-id="multi" data-placeholder="Filter by Category" data-no-matches-text="No matches" data-all-label="All categories" data-server="false" data-server-total="2" data-server-min-chars="0" data-searchable="always" data-search-threshold="15" data-selection-display="auto" data-selection-max-items="2" data-overflow-tooltip="auto" data-selected-values="[&quot;apple&quot;]">
+          <div class="gt-ms-trigger" id="multi-trigger" role="combobox" tabindex="0" aria-haspopup="listbox" aria-expanded="false" aria-controls="multi-dropdown" aria-labelledby="multi-label">
             <span id="multi-label">Apple</span>
             <div style="display:flex;align-items:center;gap:6px;">
               <span class="gt-ms-badge hidden" id="multi-badge">1</span>
@@ -65,43 +65,43 @@
               </svg>
             </div>
           </div>
-          <div class="gt-ms-dropdown" id="multi-dropdown" role="listbox">
+          <div class="gt-ms-dropdown" id="multi-dropdown" role="listbox" aria-multiselectable="true">
             <div class="gt-ms-search">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#7ec3f7" stroke-width="2.2">
                 <circle cx="11" cy="11" r="8"></circle>
                 <path stroke-linecap="round" d="M21 21l-4.35-4.35"></path>
               </svg>
-              <input type="text" id="multi-search" placeholder="Search options..." autocomplete="off"/>
+              <input type="text" id="multi-search" placeholder="Search options..." aria-label="Search options" autocomplete="off"/>
             </div>
-            <div class="gt-style-switcher">
-              <div class="gt-style-btn " data-style="check-only">
+            <div class="gt-style-switcher" role="group" aria-label="Selection style">
+              <button type="button" tabindex="-1" class="gt-style-btn " data-style="check-only" aria-pressed="false">
                 <svg class="gt-sb-icon" viewBox="0 0 14 14" fill="none">
                   <path d="M2 7l3.5 4L12 3" stroke="#7ec3f7" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"></path>
                 </svg>
                 <span>Check</span>
-              </div>
-              <div class="gt-style-btn active" data-style="checkbox">
+              </button>
+              <button type="button" tabindex="-1" class="gt-style-btn active" data-style="checkbox" aria-pressed="true">
                 <svg class="gt-sb-icon" viewBox="0 0 14 14" fill="none">
                   <rect x="1.5" y="1.5" width="11" height="11" rx="3" stroke="#7ec3f7" stroke-width="1.6"></rect>
                   <path d="M3.5 7l2.8 3L10.5 4" stroke="#7ec3f7" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"></path>
                 </svg>
                 <span>Box</span>
-              </div>
-              <div class="gt-style-btn " data-style="filled">
+              </button>
+              <button type="button" tabindex="-1" class="gt-style-btn " data-style="filled" aria-pressed="false">
                 <svg class="gt-sb-icon" viewBox="0 0 14 14" fill="none">
                   <rect x="1.5" y="1.5" width="11" height="11" rx="3" fill="#7ec3f7" fill-opacity="0.45" stroke="#7ec3f7" stroke-opacity="0.75" stroke-width="1.4"></rect>
                 </svg>
                 <span>Fill</span>
-              </div>
+              </button>
             </div>
-            <div class="gt-ms-all indeterminate" id="multi-all" role="option" aria-selected="false">
+            <button type="button" tabindex="-1" class="gt-ms-all indeterminate" id="multi-all" role="checkbox" aria-checked="mixed">
               <div class="gt-ms-check">
                 <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
                   <path d="M1 4l2.8 3L9 1" stroke="#7ec3f7" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
                 </svg>
               </div>
               <span>Select all</span>
-            </div>
+            </button>
             <div id="multi-options">
               <div class="gt-ms-option checked" data-value="apple" style="--opt-hue:200;" role="option" aria-selected="true">
                 <div class="gt-ms-check">
@@ -122,19 +122,19 @@
             </div>
             <div class="gt-ms-footer">
               <span class="gt-ms-count" id="multi-count">1 / 2 selected</span>
-              <span class="gt-ms-clear" id="multi-clear">Clear all</span>
+              <button type="button" tabindex="-1" class="gt-ms-clear" id="multi-clear">Clear all</button>
             </div>
           </div>
         </div>
       </div>
       SELECT: dark rounded 
-      <style>#single-field{--ms-bg:rgba(9,20,42,0.97);--ms-border:rgba(255,255,255,0.10);--ms-text:#cfe6ff;--ms-accent:#7ec3f7;--ms-focus-ring:#7ec3f7;--ms-label:#cfe6ff;--ms-ac-12:rgba(126,195,247,0.120);--ms-ac-16:rgba(126,195,247,0.160);--ms-ac-18:rgba(126,195,247,0.180);--ms-ac-22:rgba(126,195,247,0.220);--ms-ac-28:rgba(126,195,247,0.280);--ms-ac-32:rgba(126,195,247,0.320);--ms-ac-40:rgba(126,195,247,0.400);--ms-ac-55:rgba(126,195,247,0.550);--ms-ac-60:rgba(126,195,247,0.600);--ms-ac-75:rgba(126,195,247,0.750);--ms-tx-03:rgba(207,230,255,0.030);--ms-tx-04:rgba(207,230,255,0.040);--ms-tx-05:rgba(207,230,255,0.050);--ms-tx-06:rgba(207,230,255,0.060);--ms-tx-08:rgba(207,230,255,0.080);--ms-tx-35:rgba(207,230,255,0.350);--ms-tx-45:rgba(207,230,255,0.450);--ms-tx-50:rgba(207,230,255,0.500);--ms-tx-80:rgba(207,230,255,0.800);--ms-ac-tx-75:rgba(146,204,249,1.000);}</style>
+      <style>#single-field{--ms-bg:rgba(9,20,42,0.97);--ms-border:rgba(255,255,255,0.10);--ms-text:#cfe6ff;--ms-accent:#7ec3f7;--ms-focus-ring:#7ec3f7;--ms-label:#cfe6ff;--gt-label-size:14px;--ms-ac-12:rgba(126,195,247,0.120);--ms-ac-16:rgba(126,195,247,0.160);--ms-ac-18:rgba(126,195,247,0.180);--ms-ac-22:rgba(126,195,247,0.220);--ms-ac-28:rgba(126,195,247,0.280);--ms-ac-32:rgba(126,195,247,0.320);--ms-ac-40:rgba(126,195,247,0.400);--ms-ac-55:rgba(126,195,247,0.550);--ms-ac-60:rgba(126,195,247,0.600);--ms-ac-75:rgba(126,195,247,0.750);--ms-tx-03:rgba(207,230,255,0.030);--ms-tx-04:rgba(207,230,255,0.040);--ms-tx-05:rgba(207,230,255,0.050);--ms-tx-06:rgba(207,230,255,0.060);--ms-tx-08:rgba(207,230,255,0.080);--ms-tx-35:rgba(207,230,255,0.350);--ms-tx-45:rgba(207,230,255,0.450);--ms-tx-50:rgba(207,230,255,0.500);--ms-tx-80:rgba(207,230,255,0.800);--ms-ac-tx-75:rgba(146,204,249,1.000);}</style>
       <div class="gt-gs-field" id="single-field">
-        <div class="gt-gs-wrap style-checkbox    " id="single-wrap" data-input-id="single" data-placeholder="Select an option" data-searchable="true" data-clearable="false" data-all-choice-label="All categories" data-all-choice-value="__all__" data-server="false" data-server-total="2" data-server-min-chars="0">
-          <div class="gt-gs-trigger" id="single-trigger" role="combobox" tabindex="0" aria-haspopup="listbox" aria-expanded="false" aria-controls="single-dropdown">
+        <div class="gt-gs-wrap style-checkbox" id="single-wrap" data-input-id="single" data-placeholder="Select an option" data-no-matches-text="No matches" data-searchable="always" data-search-threshold="15" data-clearable="false" data-all-choice-label="All categories" data-all-choice-value="__all__" data-include-all="false" data-server="false" data-server-total="2" data-server-min-chars="0" data-overflow-tooltip="auto">
+          <div class="gt-gs-trigger" id="single-trigger" role="combobox" tabindex="0" aria-haspopup="listbox" aria-expanded="false" aria-controls="single-dropdown" aria-labelledby="single-label">
             <span id="single-label">Banana</span>
             <div style="display:flex;align-items:center;gap:6px;">
-              <span class="gt-gs-clear" id="single-clear" style="display:none;">Clear</span>
+              <button type="button" tabindex="-1" class="gt-gs-clear" id="single-clear" style="display:none;">Clear</button>
               <svg class="gt-gs-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path>
               </svg>
@@ -146,7 +146,7 @@
                 <circle cx="11" cy="11" r="8"></circle>
                 <path stroke-linecap="round" d="M21 21l-4.35-4.35"></path>
               </svg>
-              <input type="text" id="single-search" placeholder="Search options..." autocomplete="off"/>
+              <input type="text" id="single-search" placeholder="Search options..." aria-label="Search options" autocomplete="off"/>
             </div>
             <div id="single-options">
               <div class="gt-gs-option" data-value="apple" role="option" aria-selected="false">
@@ -172,14 +172,14 @@
       
       TABS: light rounded 
       <div class="gt-container gt-overflow-scroll gt-align-center gt-text-align-center theme-light" id="tabs-wrap" data-swipe="false">
-        <style>#tabs-wrap{--gt-tab-text:#374151;--gt-tab-active-text:#1d4ed8;--gt-halo-bg:rgba(37,99,235,0.12);--gt-halo-border:rgba(37,99,235,0.60);--gt-focus-ring:#1d4ed8;--gt-halo-shadow:inset 0 1px 0 rgba(255,255,255,.80),0 4px 16px rgba(37,99,235,.20),0 0 0 1px rgba(37,99,235,.12);--gt-content-bg:transparent;--gt-content-border:transparent;--gt-card-bg:transparent;--gt-card-text:#1e293b;}</style>
+        <style>#tabs-wrap{--gt-tab-text:#374151;--gt-tab-active-text:#1d4ed8;--gt-halo-bg:rgba(37,99,235,0.12);--gt-halo-border:rgba(37,99,235,0.60);--gt-focus-ring:#1d4ed8;--gt-halo-shadow:inset 0 1px 0 rgba(255,255,255,.80),0 4px 16px rgba(37,99,235,.20),0 0 0 1px rgba(37,99,235,.12);--gt-content-bg:rgba(15,23,42,0.03);--gt-content-border:rgba(15,23,42,0.10);--gt-card-bg:transparent;--gt-card-text:#1e293b;}</style>
         <div class="gt-topbar">
           <div class="gt-tab-viewport">
             <div class="gt-navbar" id="tabs-navbar" data-ns="tabs" role="tablist" aria-orientation="horizontal">
               <div class="gt-tab-link active" id="tabs-tab-one" data-value="one" data-ns="tabs" role="tab" tabindex="0" aria-selected="true" aria-controls="tabs-pane-one">
                 <span class="gt-tab-label">One</span>
               </div>
-              <div class="gt-tab-link " id="tabs-tab-two" data-value="two" data-ns="tabs" role="tab" tabindex="-1" aria-selected="false" aria-controls="tabs-pane-two">
+              <div class="gt-tab-link" id="tabs-tab-two" data-value="two" data-ns="tabs" role="tab" tabindex="-1" aria-selected="false" aria-controls="tabs-pane-two">
                 <span class="gt-tab-icon">
                   <i class="fas fa-table" role="presentation" aria-label="table icon"></i>
                 </span>
@@ -197,7 +197,7 @@
               <p>First</p>
             </div>
           </div>
-          <div class="gt-tab-pane " id="tabs-pane-two" role="tabpanel" aria-labelledby="tabs-tab-two" aria-hidden="true" inert="" tabindex="-1">
+          <div class="gt-tab-pane" id="tabs-pane-two" role="tabpanel" aria-labelledby="tabs-tab-two" aria-hidden="true" inert="" tabindex="-1">
             <div class="gt-card">
               <p>Second</p>
             </div>
@@ -205,10 +205,10 @@
         </div>
       </div>
       MULTISELECT: light rounded 
-      <style>#multi-field{--ms-bg:rgba(255,255,255,0.98);--ms-border:rgba(0,0,0,0.12);--ms-text:#111111;--ms-accent:#2563eb;--ms-focus-ring:#1d4ed8;--ms-label:#111111;--ms-ac-12:rgba(37,99,235,0.120);--ms-ac-16:rgba(37,99,235,0.160);--ms-ac-18:rgba(37,99,235,0.180);--ms-ac-22:rgba(37,99,235,0.220);--ms-ac-28:rgba(37,99,235,0.280);--ms-ac-32:rgba(37,99,235,0.320);--ms-ac-40:rgba(37,99,235,0.400);--ms-ac-55:rgba(37,99,235,0.550);--ms-ac-60:rgba(37,99,235,0.600);--ms-ac-75:rgba(37,99,235,0.750);--ms-tx-03:rgba(17,17,17,0.030);--ms-tx-04:rgba(17,17,17,0.040);--ms-tx-05:rgba(17,17,17,0.050);--ms-tx-06:rgba(17,17,17,0.060);--ms-tx-08:rgba(17,17,17,0.080);--ms-tx-35:rgba(17,17,17,0.350);--ms-tx-45:rgba(17,17,17,0.450);--ms-tx-50:rgba(17,17,17,0.500);--ms-tx-80:rgba(17,17,17,0.800);--ms-ac-tx-75:rgba(32,78,180,1.000);}</style>
+      <style>#multi-field{--ms-bg:rgba(255,255,255,0.98);--ms-border:rgba(0,0,0,0.12);--ms-text:#111111;--ms-accent:#2563eb;--ms-focus-ring:#1d4ed8;--ms-label:#111111;--gt-label-size:14px;--ms-dropdown-max-height:260px;--ms-ac-12:rgba(37,99,235,0.120);--ms-ac-16:rgba(37,99,235,0.160);--ms-ac-18:rgba(37,99,235,0.180);--ms-ac-22:rgba(37,99,235,0.220);--ms-ac-28:rgba(37,99,235,0.280);--ms-ac-32:rgba(37,99,235,0.320);--ms-ac-40:rgba(37,99,235,0.400);--ms-ac-55:rgba(37,99,235,0.550);--ms-ac-60:rgba(37,99,235,0.600);--ms-ac-75:rgba(37,99,235,0.750);--ms-tx-03:rgba(17,17,17,0.030);--ms-tx-04:rgba(17,17,17,0.040);--ms-tx-05:rgba(17,17,17,0.050);--ms-tx-06:rgba(17,17,17,0.060);--ms-tx-08:rgba(17,17,17,0.080);--ms-tx-35:rgba(17,17,17,0.350);--ms-tx-45:rgba(17,17,17,0.450);--ms-tx-50:rgba(17,17,17,0.500);--ms-tx-80:rgba(17,17,17,0.800);--ms-ac-tx-75:rgba(32,78,180,1.000);}</style>
       <div class="gt-ms-field" id="multi-field">
-        <div class="gt-ms-wrap style-checkbox    theme-light" id="multi-wrap" data-input-id="multi" data-placeholder="Filter by Category" data-all-label="All categories" data-server="false" data-server-total="2" data-server-min-chars="0" data-selected-values="[&quot;apple&quot;]">
-          <div class="gt-ms-trigger" id="multi-trigger" role="combobox" tabindex="0" aria-haspopup="listbox" aria-expanded="false" aria-controls="multi-dropdown">
+        <div class="gt-ms-wrap style-checkbox fill-single theme-light" id="multi-wrap" data-input-id="multi" data-placeholder="Filter by Category" data-no-matches-text="No matches" data-all-label="All categories" data-server="false" data-server-total="2" data-server-min-chars="0" data-searchable="always" data-search-threshold="15" data-selection-display="auto" data-selection-max-items="2" data-overflow-tooltip="auto" data-selected-values="[&quot;apple&quot;]">
+          <div class="gt-ms-trigger" id="multi-trigger" role="combobox" tabindex="0" aria-haspopup="listbox" aria-expanded="false" aria-controls="multi-dropdown" aria-labelledby="multi-label">
             <span id="multi-label">Apple</span>
             <div style="display:flex;align-items:center;gap:6px;">
               <span class="gt-ms-badge hidden" id="multi-badge">1</span>
@@ -217,43 +217,43 @@
               </svg>
             </div>
           </div>
-          <div class="gt-ms-dropdown" id="multi-dropdown" role="listbox">
+          <div class="gt-ms-dropdown" id="multi-dropdown" role="listbox" aria-multiselectable="true">
             <div class="gt-ms-search">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.2">
                 <circle cx="11" cy="11" r="8"></circle>
                 <path stroke-linecap="round" d="M21 21l-4.35-4.35"></path>
               </svg>
-              <input type="text" id="multi-search" placeholder="Search options..." autocomplete="off"/>
+              <input type="text" id="multi-search" placeholder="Search options..." aria-label="Search options" autocomplete="off"/>
             </div>
-            <div class="gt-style-switcher">
-              <div class="gt-style-btn " data-style="check-only">
+            <div class="gt-style-switcher" role="group" aria-label="Selection style">
+              <button type="button" tabindex="-1" class="gt-style-btn " data-style="check-only" aria-pressed="false">
                 <svg class="gt-sb-icon" viewBox="0 0 14 14" fill="none">
                   <path d="M2 7l3.5 4L12 3" stroke="#2563eb" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"></path>
                 </svg>
                 <span>Check</span>
-              </div>
-              <div class="gt-style-btn active" data-style="checkbox">
+              </button>
+              <button type="button" tabindex="-1" class="gt-style-btn active" data-style="checkbox" aria-pressed="true">
                 <svg class="gt-sb-icon" viewBox="0 0 14 14" fill="none">
                   <rect x="1.5" y="1.5" width="11" height="11" rx="3" stroke="#2563eb" stroke-width="1.6"></rect>
                   <path d="M3.5 7l2.8 3L10.5 4" stroke="#2563eb" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"></path>
                 </svg>
                 <span>Box</span>
-              </div>
-              <div class="gt-style-btn " data-style="filled">
+              </button>
+              <button type="button" tabindex="-1" class="gt-style-btn " data-style="filled" aria-pressed="false">
                 <svg class="gt-sb-icon" viewBox="0 0 14 14" fill="none">
                   <rect x="1.5" y="1.5" width="11" height="11" rx="3" fill="#2563eb" fill-opacity="0.45" stroke="#2563eb" stroke-opacity="0.75" stroke-width="1.4"></rect>
                 </svg>
                 <span>Fill</span>
-              </div>
+              </button>
             </div>
-            <div class="gt-ms-all indeterminate" id="multi-all" role="option" aria-selected="false">
+            <button type="button" tabindex="-1" class="gt-ms-all indeterminate" id="multi-all" role="checkbox" aria-checked="mixed">
               <div class="gt-ms-check">
                 <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
                   <path d="M1 4l2.8 3L9 1" stroke="#2563eb" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
                 </svg>
               </div>
               <span>Select all</span>
-            </div>
+            </button>
             <div id="multi-options">
               <div class="gt-ms-option checked" data-value="apple" style="--opt-hue:200;" role="option" aria-selected="true">
                 <div class="gt-ms-check">
@@ -274,19 +274,19 @@
             </div>
             <div class="gt-ms-footer">
               <span class="gt-ms-count" id="multi-count">1 / 2 selected</span>
-              <span class="gt-ms-clear" id="multi-clear">Clear all</span>
+              <button type="button" tabindex="-1" class="gt-ms-clear" id="multi-clear">Clear all</button>
             </div>
           </div>
         </div>
       </div>
       SELECT: light rounded 
-      <style>#single-field{--ms-bg:rgba(255,255,255,0.98);--ms-border:rgba(0,0,0,0.12);--ms-text:#111111;--ms-accent:#2563eb;--ms-focus-ring:#1d4ed8;--ms-label:#111111;--ms-ac-12:rgba(37,99,235,0.120);--ms-ac-16:rgba(37,99,235,0.160);--ms-ac-18:rgba(37,99,235,0.180);--ms-ac-22:rgba(37,99,235,0.220);--ms-ac-28:rgba(37,99,235,0.280);--ms-ac-32:rgba(37,99,235,0.320);--ms-ac-40:rgba(37,99,235,0.400);--ms-ac-55:rgba(37,99,235,0.550);--ms-ac-60:rgba(37,99,235,0.600);--ms-ac-75:rgba(37,99,235,0.750);--ms-tx-03:rgba(17,17,17,0.030);--ms-tx-04:rgba(17,17,17,0.040);--ms-tx-05:rgba(17,17,17,0.050);--ms-tx-06:rgba(17,17,17,0.060);--ms-tx-08:rgba(17,17,17,0.080);--ms-tx-35:rgba(17,17,17,0.350);--ms-tx-45:rgba(17,17,17,0.450);--ms-tx-50:rgba(17,17,17,0.500);--ms-tx-80:rgba(17,17,17,0.800);--ms-ac-tx-75:rgba(32,78,180,1.000);}</style>
+      <style>#single-field{--ms-bg:rgba(255,255,255,0.98);--ms-border:rgba(0,0,0,0.12);--ms-text:#111111;--ms-accent:#2563eb;--ms-focus-ring:#1d4ed8;--ms-label:#111111;--gt-label-size:14px;--ms-ac-12:rgba(37,99,235,0.120);--ms-ac-16:rgba(37,99,235,0.160);--ms-ac-18:rgba(37,99,235,0.180);--ms-ac-22:rgba(37,99,235,0.220);--ms-ac-28:rgba(37,99,235,0.280);--ms-ac-32:rgba(37,99,235,0.320);--ms-ac-40:rgba(37,99,235,0.400);--ms-ac-55:rgba(37,99,235,0.550);--ms-ac-60:rgba(37,99,235,0.600);--ms-ac-75:rgba(37,99,235,0.750);--ms-tx-03:rgba(17,17,17,0.030);--ms-tx-04:rgba(17,17,17,0.040);--ms-tx-05:rgba(17,17,17,0.050);--ms-tx-06:rgba(17,17,17,0.060);--ms-tx-08:rgba(17,17,17,0.080);--ms-tx-35:rgba(17,17,17,0.350);--ms-tx-45:rgba(17,17,17,0.450);--ms-tx-50:rgba(17,17,17,0.500);--ms-tx-80:rgba(17,17,17,0.800);--ms-ac-tx-75:rgba(32,78,180,1.000);}</style>
       <div class="gt-gs-field" id="single-field">
-        <div class="gt-gs-wrap style-checkbox    theme-light" id="single-wrap" data-input-id="single" data-placeholder="Select an option" data-searchable="true" data-clearable="false" data-all-choice-label="All categories" data-all-choice-value="__all__" data-server="false" data-server-total="2" data-server-min-chars="0">
-          <div class="gt-gs-trigger" id="single-trigger" role="combobox" tabindex="0" aria-haspopup="listbox" aria-expanded="false" aria-controls="single-dropdown">
+        <div class="gt-gs-wrap style-checkbox theme-light" id="single-wrap" data-input-id="single" data-placeholder="Select an option" data-no-matches-text="No matches" data-searchable="always" data-search-threshold="15" data-clearable="false" data-all-choice-label="All categories" data-all-choice-value="__all__" data-include-all="false" data-server="false" data-server-total="2" data-server-min-chars="0" data-overflow-tooltip="auto">
+          <div class="gt-gs-trigger" id="single-trigger" role="combobox" tabindex="0" aria-haspopup="listbox" aria-expanded="false" aria-controls="single-dropdown" aria-labelledby="single-label">
             <span id="single-label">Banana</span>
             <div style="display:flex;align-items:center;gap:6px;">
-              <span class="gt-gs-clear" id="single-clear" style="display:none;">Clear</span>
+              <button type="button" tabindex="-1" class="gt-gs-clear" id="single-clear" style="display:none;">Clear</button>
               <svg class="gt-gs-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path>
               </svg>
@@ -298,7 +298,7 @@
                 <circle cx="11" cy="11" r="8"></circle>
                 <path stroke-linecap="round" d="M21 21l-4.35-4.35"></path>
               </svg>
-              <input type="text" id="single-search" placeholder="Search options..." autocomplete="off"/>
+              <input type="text" id="single-search" placeholder="Search options..." aria-label="Search options" autocomplete="off"/>
             </div>
             <div id="single-options">
               <div class="gt-gs-option" data-value="apple" role="option" aria-selected="false">
@@ -324,15 +324,15 @@
       
       TABS: auto rounded 
       <div class="gt-container gt-overflow-scroll gt-align-center gt-text-align-center theme-auto theme-light" id="tabs-wrap" data-swipe="false">
-        <style>#tabs-wrap{--gt-tab-text:#374151;--gt-tab-active-text:#1d4ed8;--gt-halo-bg:rgba(37,99,235,0.12);--gt-halo-border:rgba(37,99,235,0.60);--gt-focus-ring:#1d4ed8;--gt-halo-shadow:inset 0 1px 0 rgba(255,255,255,.80),0 4px 16px rgba(37,99,235,.20),0 0 0 1px rgba(37,99,235,.12);--gt-content-bg:transparent;--gt-content-border:transparent;--gt-card-bg:transparent;--gt-card-text:#1e293b;}</style>
-        <style>[data-bs-theme="dark"] #tabs-wrap{--gt-tab-text:rgba(207,230,255,0.78);--gt-tab-active-text:#ffffff;--gt-halo-bg:rgba(126,195,247,0.16);--gt-halo-border:rgba(126,195,247,0.38);--gt-focus-ring:#7ec3f7;--gt-halo-shadow:inset 0 1px 0 rgba(255,255,255,.22),inset 0 -1px 0 rgba(255,255,255,.06),0 6px 20px rgba(0,0,0,.38),0 0 0 1px rgba(255,255,255,.03);--gt-content-bg:transparent;--gt-content-border:transparent;--gt-card-bg:transparent;--gt-card-text:#cfe6ff;}</style>
+        <style>#tabs-wrap{--gt-tab-text:#374151;--gt-tab-active-text:#1d4ed8;--gt-halo-bg:rgba(37,99,235,0.12);--gt-halo-border:rgba(37,99,235,0.60);--gt-focus-ring:#1d4ed8;--gt-halo-shadow:inset 0 1px 0 rgba(255,255,255,.80),0 4px 16px rgba(37,99,235,.20),0 0 0 1px rgba(37,99,235,.12);--gt-content-bg:rgba(15,23,42,0.03);--gt-content-border:rgba(15,23,42,0.10);--gt-card-bg:transparent;--gt-card-text:#1e293b;}</style>
+        <style>[data-bs-theme="dark"] #tabs-wrap{--gt-tab-text:rgba(207,230,255,0.78);--gt-tab-active-text:#ffffff;--gt-halo-bg:rgba(126,195,247,0.16);--gt-halo-border:rgba(126,195,247,0.38);--gt-focus-ring:#7ec3f7;--gt-halo-shadow:inset 0 1px 0 rgba(255,255,255,.22),inset 0 -1px 0 rgba(255,255,255,.06),0 6px 20px rgba(0,0,0,.38),0 0 0 1px rgba(255,255,255,.03);--gt-content-bg:rgba(255,255,255,0.03);--gt-content-border:rgba(255,255,255,0.08);--gt-card-bg:transparent;--gt-card-text:#cfe6ff;}</style>
         <div class="gt-topbar">
           <div class="gt-tab-viewport">
             <div class="gt-navbar" id="tabs-navbar" data-ns="tabs" role="tablist" aria-orientation="horizontal">
               <div class="gt-tab-link active" id="tabs-tab-one" data-value="one" data-ns="tabs" role="tab" tabindex="0" aria-selected="true" aria-controls="tabs-pane-one">
                 <span class="gt-tab-label">One</span>
               </div>
-              <div class="gt-tab-link " id="tabs-tab-two" data-value="two" data-ns="tabs" role="tab" tabindex="-1" aria-selected="false" aria-controls="tabs-pane-two">
+              <div class="gt-tab-link" id="tabs-tab-two" data-value="two" data-ns="tabs" role="tab" tabindex="-1" aria-selected="false" aria-controls="tabs-pane-two">
                 <span class="gt-tab-icon">
                   <i class="fas fa-table" role="presentation" aria-label="table icon"></i>
                 </span>
@@ -350,7 +350,7 @@
               <p>First</p>
             </div>
           </div>
-          <div class="gt-tab-pane " id="tabs-pane-two" role="tabpanel" aria-labelledby="tabs-tab-two" aria-hidden="true" inert="" tabindex="-1">
+          <div class="gt-tab-pane" id="tabs-pane-two" role="tabpanel" aria-labelledby="tabs-tab-two" aria-hidden="true" inert="" tabindex="-1">
             <div class="gt-card">
               <p>Second</p>
             </div>
@@ -358,11 +358,11 @@
         </div>
       </div>
       MULTISELECT: auto rounded 
-      <style>#multi-field{--ms-bg:rgba(255,255,255,0.98);--ms-border:rgba(0,0,0,0.12);--ms-text:#111111;--ms-accent:#2563eb;--ms-focus-ring:#1d4ed8;--ms-label:#111111;--ms-ac-12:rgba(37,99,235,0.120);--ms-ac-16:rgba(37,99,235,0.160);--ms-ac-18:rgba(37,99,235,0.180);--ms-ac-22:rgba(37,99,235,0.220);--ms-ac-28:rgba(37,99,235,0.280);--ms-ac-32:rgba(37,99,235,0.320);--ms-ac-40:rgba(37,99,235,0.400);--ms-ac-55:rgba(37,99,235,0.550);--ms-ac-60:rgba(37,99,235,0.600);--ms-ac-75:rgba(37,99,235,0.750);--ms-tx-03:rgba(17,17,17,0.030);--ms-tx-04:rgba(17,17,17,0.040);--ms-tx-05:rgba(17,17,17,0.050);--ms-tx-06:rgba(17,17,17,0.060);--ms-tx-08:rgba(17,17,17,0.080);--ms-tx-35:rgba(17,17,17,0.350);--ms-tx-45:rgba(17,17,17,0.450);--ms-tx-50:rgba(17,17,17,0.500);--ms-tx-80:rgba(17,17,17,0.800);--ms-ac-tx-75:rgba(32,78,180,1.000);}</style>
+      <style>#multi-field{--ms-bg:rgba(255,255,255,0.98);--ms-border:rgba(0,0,0,0.12);--ms-text:#111111;--ms-accent:#2563eb;--ms-focus-ring:#1d4ed8;--ms-label:#111111;--gt-label-size:14px;--ms-dropdown-max-height:260px;--ms-ac-12:rgba(37,99,235,0.120);--ms-ac-16:rgba(37,99,235,0.160);--ms-ac-18:rgba(37,99,235,0.180);--ms-ac-22:rgba(37,99,235,0.220);--ms-ac-28:rgba(37,99,235,0.280);--ms-ac-32:rgba(37,99,235,0.320);--ms-ac-40:rgba(37,99,235,0.400);--ms-ac-55:rgba(37,99,235,0.550);--ms-ac-60:rgba(37,99,235,0.600);--ms-ac-75:rgba(37,99,235,0.750);--ms-tx-03:rgba(17,17,17,0.030);--ms-tx-04:rgba(17,17,17,0.040);--ms-tx-05:rgba(17,17,17,0.050);--ms-tx-06:rgba(17,17,17,0.060);--ms-tx-08:rgba(17,17,17,0.080);--ms-tx-35:rgba(17,17,17,0.350);--ms-tx-45:rgba(17,17,17,0.450);--ms-tx-50:rgba(17,17,17,0.500);--ms-tx-80:rgba(17,17,17,0.800);--ms-ac-tx-75:rgba(32,78,180,1.000);}</style>
       <style>[data-bs-theme="dark"] #multi-field{--ms-bg:rgba(9,20,42,0.97);--ms-border:rgba(255,255,255,0.10);--ms-text:#cfe6ff;--ms-accent:#7ec3f7;--ms-focus-ring:#7ec3f7;--ms-label:#cfe6ff;--ms-ac-12:rgba(126,195,247,0.120);--ms-ac-16:rgba(126,195,247,0.160);--ms-ac-18:rgba(126,195,247,0.180);--ms-ac-22:rgba(126,195,247,0.220);--ms-ac-28:rgba(126,195,247,0.280);--ms-ac-32:rgba(126,195,247,0.320);--ms-ac-40:rgba(126,195,247,0.400);--ms-ac-55:rgba(126,195,247,0.550);--ms-ac-60:rgba(126,195,247,0.600);--ms-ac-75:rgba(126,195,247,0.750);--ms-tx-03:rgba(207,230,255,0.030);--ms-tx-04:rgba(207,230,255,0.040);--ms-tx-05:rgba(207,230,255,0.050);--ms-tx-06:rgba(207,230,255,0.060);--ms-tx-08:rgba(207,230,255,0.080);--ms-tx-35:rgba(207,230,255,0.350);--ms-tx-45:rgba(207,230,255,0.450);--ms-tx-50:rgba(207,230,255,0.500);--ms-tx-80:rgba(207,230,255,0.800);--ms-ac-tx-75:rgba(146,204,249,1.000);}</style>
       <div class="gt-ms-field" id="multi-field">
-        <div class="gt-ms-wrap style-checkbox   theme-auto theme-light" id="multi-wrap" data-input-id="multi" data-placeholder="Filter by Category" data-all-label="All categories" data-server="false" data-server-total="2" data-server-min-chars="0" data-selected-values="[&quot;apple&quot;]">
-          <div class="gt-ms-trigger" id="multi-trigger" role="combobox" tabindex="0" aria-haspopup="listbox" aria-expanded="false" aria-controls="multi-dropdown">
+        <div class="gt-ms-wrap style-checkbox fill-single theme-auto theme-light" id="multi-wrap" data-input-id="multi" data-placeholder="Filter by Category" data-no-matches-text="No matches" data-all-label="All categories" data-server="false" data-server-total="2" data-server-min-chars="0" data-searchable="always" data-search-threshold="15" data-selection-display="auto" data-selection-max-items="2" data-overflow-tooltip="auto" data-selected-values="[&quot;apple&quot;]">
+          <div class="gt-ms-trigger" id="multi-trigger" role="combobox" tabindex="0" aria-haspopup="listbox" aria-expanded="false" aria-controls="multi-dropdown" aria-labelledby="multi-label">
             <span id="multi-label">Apple</span>
             <div style="display:flex;align-items:center;gap:6px;">
               <span class="gt-ms-badge hidden" id="multi-badge">1</span>
@@ -371,43 +371,43 @@
               </svg>
             </div>
           </div>
-          <div class="gt-ms-dropdown" id="multi-dropdown" role="listbox">
+          <div class="gt-ms-dropdown" id="multi-dropdown" role="listbox" aria-multiselectable="true">
             <div class="gt-ms-search">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.2">
                 <circle cx="11" cy="11" r="8"></circle>
                 <path stroke-linecap="round" d="M21 21l-4.35-4.35"></path>
               </svg>
-              <input type="text" id="multi-search" placeholder="Search options..." autocomplete="off"/>
+              <input type="text" id="multi-search" placeholder="Search options..." aria-label="Search options" autocomplete="off"/>
             </div>
-            <div class="gt-style-switcher">
-              <div class="gt-style-btn " data-style="check-only">
+            <div class="gt-style-switcher" role="group" aria-label="Selection style">
+              <button type="button" tabindex="-1" class="gt-style-btn " data-style="check-only" aria-pressed="false">
                 <svg class="gt-sb-icon" viewBox="0 0 14 14" fill="none">
                   <path d="M2 7l3.5 4L12 3" stroke="#2563eb" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"></path>
                 </svg>
                 <span>Check</span>
-              </div>
-              <div class="gt-style-btn active" data-style="checkbox">
+              </button>
+              <button type="button" tabindex="-1" class="gt-style-btn active" data-style="checkbox" aria-pressed="true">
                 <svg class="gt-sb-icon" viewBox="0 0 14 14" fill="none">
                   <rect x="1.5" y="1.5" width="11" height="11" rx="3" stroke="#2563eb" stroke-width="1.6"></rect>
                   <path d="M3.5 7l2.8 3L10.5 4" stroke="#2563eb" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"></path>
                 </svg>
                 <span>Box</span>
-              </div>
-              <div class="gt-style-btn " data-style="filled">
+              </button>
+              <button type="button" tabindex="-1" class="gt-style-btn " data-style="filled" aria-pressed="false">
                 <svg class="gt-sb-icon" viewBox="0 0 14 14" fill="none">
                   <rect x="1.5" y="1.5" width="11" height="11" rx="3" fill="#2563eb" fill-opacity="0.45" stroke="#2563eb" stroke-opacity="0.75" stroke-width="1.4"></rect>
                 </svg>
                 <span>Fill</span>
-              </div>
+              </button>
             </div>
-            <div class="gt-ms-all indeterminate" id="multi-all" role="option" aria-selected="false">
+            <button type="button" tabindex="-1" class="gt-ms-all indeterminate" id="multi-all" role="checkbox" aria-checked="mixed">
               <div class="gt-ms-check">
                 <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
                   <path d="M1 4l2.8 3L9 1" stroke="#2563eb" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
                 </svg>
               </div>
               <span>Select all</span>
-            </div>
+            </button>
             <div id="multi-options">
               <div class="gt-ms-option checked" data-value="apple" style="--opt-hue:200;" role="option" aria-selected="true">
                 <div class="gt-ms-check">
@@ -428,20 +428,20 @@
             </div>
             <div class="gt-ms-footer">
               <span class="gt-ms-count" id="multi-count">1 / 2 selected</span>
-              <span class="gt-ms-clear" id="multi-clear">Clear all</span>
+              <button type="button" tabindex="-1" class="gt-ms-clear" id="multi-clear">Clear all</button>
             </div>
           </div>
         </div>
       </div>
       SELECT: auto rounded 
-      <style>#single-field{--ms-bg:rgba(255,255,255,0.98);--ms-border:rgba(0,0,0,0.12);--ms-text:#111111;--ms-accent:#2563eb;--ms-focus-ring:#1d4ed8;--ms-label:#111111;--ms-ac-12:rgba(37,99,235,0.120);--ms-ac-16:rgba(37,99,235,0.160);--ms-ac-18:rgba(37,99,235,0.180);--ms-ac-22:rgba(37,99,235,0.220);--ms-ac-28:rgba(37,99,235,0.280);--ms-ac-32:rgba(37,99,235,0.320);--ms-ac-40:rgba(37,99,235,0.400);--ms-ac-55:rgba(37,99,235,0.550);--ms-ac-60:rgba(37,99,235,0.600);--ms-ac-75:rgba(37,99,235,0.750);--ms-tx-03:rgba(17,17,17,0.030);--ms-tx-04:rgba(17,17,17,0.040);--ms-tx-05:rgba(17,17,17,0.050);--ms-tx-06:rgba(17,17,17,0.060);--ms-tx-08:rgba(17,17,17,0.080);--ms-tx-35:rgba(17,17,17,0.350);--ms-tx-45:rgba(17,17,17,0.450);--ms-tx-50:rgba(17,17,17,0.500);--ms-tx-80:rgba(17,17,17,0.800);--ms-ac-tx-75:rgba(32,78,180,1.000);}</style>
+      <style>#single-field{--ms-bg:rgba(255,255,255,0.98);--ms-border:rgba(0,0,0,0.12);--ms-text:#111111;--ms-accent:#2563eb;--ms-focus-ring:#1d4ed8;--ms-label:#111111;--gt-label-size:14px;--ms-ac-12:rgba(37,99,235,0.120);--ms-ac-16:rgba(37,99,235,0.160);--ms-ac-18:rgba(37,99,235,0.180);--ms-ac-22:rgba(37,99,235,0.220);--ms-ac-28:rgba(37,99,235,0.280);--ms-ac-32:rgba(37,99,235,0.320);--ms-ac-40:rgba(37,99,235,0.400);--ms-ac-55:rgba(37,99,235,0.550);--ms-ac-60:rgba(37,99,235,0.600);--ms-ac-75:rgba(37,99,235,0.750);--ms-tx-03:rgba(17,17,17,0.030);--ms-tx-04:rgba(17,17,17,0.040);--ms-tx-05:rgba(17,17,17,0.050);--ms-tx-06:rgba(17,17,17,0.060);--ms-tx-08:rgba(17,17,17,0.080);--ms-tx-35:rgba(17,17,17,0.350);--ms-tx-45:rgba(17,17,17,0.450);--ms-tx-50:rgba(17,17,17,0.500);--ms-tx-80:rgba(17,17,17,0.800);--ms-ac-tx-75:rgba(32,78,180,1.000);}</style>
       <style>[data-bs-theme="dark"] #single-field{--ms-bg:rgba(9,20,42,0.97);--ms-border:rgba(255,255,255,0.10);--ms-text:#cfe6ff;--ms-accent:#7ec3f7;--ms-focus-ring:#7ec3f7;--ms-label:#cfe6ff;--ms-ac-12:rgba(126,195,247,0.120);--ms-ac-16:rgba(126,195,247,0.160);--ms-ac-18:rgba(126,195,247,0.180);--ms-ac-22:rgba(126,195,247,0.220);--ms-ac-28:rgba(126,195,247,0.280);--ms-ac-32:rgba(126,195,247,0.320);--ms-ac-40:rgba(126,195,247,0.400);--ms-ac-55:rgba(126,195,247,0.550);--ms-ac-60:rgba(126,195,247,0.600);--ms-ac-75:rgba(126,195,247,0.750);--ms-tx-03:rgba(207,230,255,0.030);--ms-tx-04:rgba(207,230,255,0.040);--ms-tx-05:rgba(207,230,255,0.050);--ms-tx-06:rgba(207,230,255,0.060);--ms-tx-08:rgba(207,230,255,0.080);--ms-tx-35:rgba(207,230,255,0.350);--ms-tx-45:rgba(207,230,255,0.450);--ms-tx-50:rgba(207,230,255,0.500);--ms-tx-80:rgba(207,230,255,0.800);--ms-ac-tx-75:rgba(146,204,249,1.000);}</style>
       <div class="gt-gs-field" id="single-field">
-        <div class="gt-gs-wrap style-checkbox   theme-auto theme-light" id="single-wrap" data-input-id="single" data-placeholder="Select an option" data-searchable="true" data-clearable="false" data-all-choice-label="All categories" data-all-choice-value="__all__" data-server="false" data-server-total="2" data-server-min-chars="0">
-          <div class="gt-gs-trigger" id="single-trigger" role="combobox" tabindex="0" aria-haspopup="listbox" aria-expanded="false" aria-controls="single-dropdown">
+        <div class="gt-gs-wrap style-checkbox theme-auto theme-light" id="single-wrap" data-input-id="single" data-placeholder="Select an option" data-no-matches-text="No matches" data-searchable="always" data-search-threshold="15" data-clearable="false" data-all-choice-label="All categories" data-all-choice-value="__all__" data-include-all="false" data-server="false" data-server-total="2" data-server-min-chars="0" data-overflow-tooltip="auto">
+          <div class="gt-gs-trigger" id="single-trigger" role="combobox" tabindex="0" aria-haspopup="listbox" aria-expanded="false" aria-controls="single-dropdown" aria-labelledby="single-label">
             <span id="single-label">Banana</span>
             <div style="display:flex;align-items:center;gap:6px;">
-              <span class="gt-gs-clear" id="single-clear" style="display:none;">Clear</span>
+              <button type="button" tabindex="-1" class="gt-gs-clear" id="single-clear" style="display:none;">Clear</button>
               <svg class="gt-gs-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path>
               </svg>
@@ -453,7 +453,7 @@
                 <circle cx="11" cy="11" r="8"></circle>
                 <path stroke-linecap="round" d="M21 21l-4.35-4.35"></path>
               </svg>
-              <input type="text" id="single-search" placeholder="Search options..." autocomplete="off"/>
+              <input type="text" id="single-search" placeholder="Search options..." aria-label="Search options" autocomplete="off"/>
             </div>
             <div id="single-options">
               <div class="gt-gs-option" data-value="apple" role="option" aria-selected="false">
@@ -479,14 +479,14 @@
       
       TABS: dark square 
       <div class="gt-container shape-square gt-overflow-scroll gt-align-center gt-text-align-center" id="tabs-wrap" data-swipe="false">
-        <style>#tabs-wrap{--gt-tab-text:rgba(207,230,255,0.78);--gt-tab-active-text:#ffffff;--gt-halo-bg:rgba(126,195,247,0.16);--gt-halo-border:rgba(126,195,247,0.38);--gt-focus-ring:#7ec3f7;--gt-halo-shadow:inset 0 1px 0 rgba(255,255,255,.22),inset 0 -1px 0 rgba(255,255,255,.06),0 6px 20px rgba(0,0,0,.38),0 0 0 1px rgba(255,255,255,.03);--gt-content-bg:transparent;--gt-content-border:transparent;--gt-card-bg:transparent;--gt-card-text:#cfe6ff;}</style>
+        <style>#tabs-wrap{--gt-tab-text:rgba(207,230,255,0.78);--gt-tab-active-text:#ffffff;--gt-halo-bg:rgba(126,195,247,0.16);--gt-halo-border:rgba(126,195,247,0.38);--gt-focus-ring:#7ec3f7;--gt-halo-shadow:inset 0 1px 0 rgba(255,255,255,.22),inset 0 -1px 0 rgba(255,255,255,.06),0 6px 20px rgba(0,0,0,.38),0 0 0 1px rgba(255,255,255,.03);--gt-content-bg:rgba(255,255,255,0.03);--gt-content-border:rgba(255,255,255,0.08);--gt-card-bg:transparent;--gt-card-text:#cfe6ff;}</style>
         <div class="gt-topbar">
           <div class="gt-tab-viewport">
             <div class="gt-navbar" id="tabs-navbar" data-ns="tabs" role="tablist" aria-orientation="horizontal">
               <div class="gt-tab-link active" id="tabs-tab-one" data-value="one" data-ns="tabs" role="tab" tabindex="0" aria-selected="true" aria-controls="tabs-pane-one">
                 <span class="gt-tab-label">One</span>
               </div>
-              <div class="gt-tab-link " id="tabs-tab-two" data-value="two" data-ns="tabs" role="tab" tabindex="-1" aria-selected="false" aria-controls="tabs-pane-two">
+              <div class="gt-tab-link" id="tabs-tab-two" data-value="two" data-ns="tabs" role="tab" tabindex="-1" aria-selected="false" aria-controls="tabs-pane-two">
                 <span class="gt-tab-icon">
                   <i class="fas fa-table" role="presentation" aria-label="table icon"></i>
                 </span>
@@ -504,7 +504,7 @@
               <p>First</p>
             </div>
           </div>
-          <div class="gt-tab-pane " id="tabs-pane-two" role="tabpanel" aria-labelledby="tabs-tab-two" aria-hidden="true" inert="" tabindex="-1">
+          <div class="gt-tab-pane" id="tabs-pane-two" role="tabpanel" aria-labelledby="tabs-tab-two" aria-hidden="true" inert="" tabindex="-1">
             <div class="gt-card">
               <p>Second</p>
             </div>
@@ -512,10 +512,10 @@
         </div>
       </div>
       MULTISELECT: dark square 
-      <style>#multi-field{--ms-bg:rgba(9,20,42,0.97);--ms-border:rgba(255,255,255,0.10);--ms-text:#cfe6ff;--ms-accent:#7ec3f7;--ms-focus-ring:#7ec3f7;--ms-label:#cfe6ff;--ms-ac-12:rgba(126,195,247,0.120);--ms-ac-16:rgba(126,195,247,0.160);--ms-ac-18:rgba(126,195,247,0.180);--ms-ac-22:rgba(126,195,247,0.220);--ms-ac-28:rgba(126,195,247,0.280);--ms-ac-32:rgba(126,195,247,0.320);--ms-ac-40:rgba(126,195,247,0.400);--ms-ac-55:rgba(126,195,247,0.550);--ms-ac-60:rgba(126,195,247,0.600);--ms-ac-75:rgba(126,195,247,0.750);--ms-tx-03:rgba(207,230,255,0.030);--ms-tx-04:rgba(207,230,255,0.040);--ms-tx-05:rgba(207,230,255,0.050);--ms-tx-06:rgba(207,230,255,0.060);--ms-tx-08:rgba(207,230,255,0.080);--ms-tx-35:rgba(207,230,255,0.350);--ms-tx-45:rgba(207,230,255,0.450);--ms-tx-50:rgba(207,230,255,0.500);--ms-tx-80:rgba(207,230,255,0.800);--ms-ac-tx-75:rgba(146,204,249,1.000);}</style>
+      <style>#multi-field{--ms-bg:rgba(9,20,42,0.97);--ms-border:rgba(255,255,255,0.10);--ms-text:#cfe6ff;--ms-accent:#7ec3f7;--ms-focus-ring:#7ec3f7;--ms-label:#cfe6ff;--gt-label-size:14px;--ms-dropdown-max-height:260px;--ms-ac-12:rgba(126,195,247,0.120);--ms-ac-16:rgba(126,195,247,0.160);--ms-ac-18:rgba(126,195,247,0.180);--ms-ac-22:rgba(126,195,247,0.220);--ms-ac-28:rgba(126,195,247,0.280);--ms-ac-32:rgba(126,195,247,0.320);--ms-ac-40:rgba(126,195,247,0.400);--ms-ac-55:rgba(126,195,247,0.550);--ms-ac-60:rgba(126,195,247,0.600);--ms-ac-75:rgba(126,195,247,0.750);--ms-tx-03:rgba(207,230,255,0.030);--ms-tx-04:rgba(207,230,255,0.040);--ms-tx-05:rgba(207,230,255,0.050);--ms-tx-06:rgba(207,230,255,0.060);--ms-tx-08:rgba(207,230,255,0.080);--ms-tx-35:rgba(207,230,255,0.350);--ms-tx-45:rgba(207,230,255,0.450);--ms-tx-50:rgba(207,230,255,0.500);--ms-tx-80:rgba(207,230,255,0.800);--ms-ac-tx-75:rgba(146,204,249,1.000);}</style>
       <div class="gt-ms-field" id="multi-field">
-        <div class="gt-ms-wrap style-checkbox shape-square   " id="multi-wrap" data-input-id="multi" data-placeholder="Filter by Category" data-all-label="All categories" data-server="false" data-server-total="2" data-server-min-chars="0" data-selected-values="[&quot;apple&quot;]">
-          <div class="gt-ms-trigger" id="multi-trigger" role="combobox" tabindex="0" aria-haspopup="listbox" aria-expanded="false" aria-controls="multi-dropdown">
+        <div class="gt-ms-wrap style-checkbox fill-single shape-square" id="multi-wrap" data-input-id="multi" data-placeholder="Filter by Category" data-no-matches-text="No matches" data-all-label="All categories" data-server="false" data-server-total="2" data-server-min-chars="0" data-searchable="always" data-search-threshold="15" data-selection-display="auto" data-selection-max-items="2" data-overflow-tooltip="auto" data-selected-values="[&quot;apple&quot;]">
+          <div class="gt-ms-trigger" id="multi-trigger" role="combobox" tabindex="0" aria-haspopup="listbox" aria-expanded="false" aria-controls="multi-dropdown" aria-labelledby="multi-label">
             <span id="multi-label">Apple</span>
             <div style="display:flex;align-items:center;gap:6px;">
               <span class="gt-ms-badge hidden" id="multi-badge">1</span>
@@ -524,43 +524,43 @@
               </svg>
             </div>
           </div>
-          <div class="gt-ms-dropdown" id="multi-dropdown" role="listbox">
+          <div class="gt-ms-dropdown" id="multi-dropdown" role="listbox" aria-multiselectable="true">
             <div class="gt-ms-search">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#7ec3f7" stroke-width="2.2">
                 <circle cx="11" cy="11" r="8"></circle>
                 <path stroke-linecap="round" d="M21 21l-4.35-4.35"></path>
               </svg>
-              <input type="text" id="multi-search" placeholder="Search options..." autocomplete="off"/>
+              <input type="text" id="multi-search" placeholder="Search options..." aria-label="Search options" autocomplete="off"/>
             </div>
-            <div class="gt-style-switcher">
-              <div class="gt-style-btn " data-style="check-only">
+            <div class="gt-style-switcher" role="group" aria-label="Selection style">
+              <button type="button" tabindex="-1" class="gt-style-btn " data-style="check-only" aria-pressed="false">
                 <svg class="gt-sb-icon" viewBox="0 0 14 14" fill="none">
                   <path d="M2 7l3.5 4L12 3" stroke="#7ec3f7" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"></path>
                 </svg>
                 <span>Check</span>
-              </div>
-              <div class="gt-style-btn active" data-style="checkbox">
+              </button>
+              <button type="button" tabindex="-1" class="gt-style-btn active" data-style="checkbox" aria-pressed="true">
                 <svg class="gt-sb-icon" viewBox="0 0 14 14" fill="none">
                   <rect x="1.5" y="1.5" width="11" height="11" rx="3" stroke="#7ec3f7" stroke-width="1.6"></rect>
                   <path d="M3.5 7l2.8 3L10.5 4" stroke="#7ec3f7" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"></path>
                 </svg>
                 <span>Box</span>
-              </div>
-              <div class="gt-style-btn " data-style="filled">
+              </button>
+              <button type="button" tabindex="-1" class="gt-style-btn " data-style="filled" aria-pressed="false">
                 <svg class="gt-sb-icon" viewBox="0 0 14 14" fill="none">
                   <rect x="1.5" y="1.5" width="11" height="11" rx="3" fill="#7ec3f7" fill-opacity="0.45" stroke="#7ec3f7" stroke-opacity="0.75" stroke-width="1.4"></rect>
                 </svg>
                 <span>Fill</span>
-              </div>
+              </button>
             </div>
-            <div class="gt-ms-all indeterminate" id="multi-all" role="option" aria-selected="false">
+            <button type="button" tabindex="-1" class="gt-ms-all indeterminate" id="multi-all" role="checkbox" aria-checked="mixed">
               <div class="gt-ms-check">
                 <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
                   <path d="M1 4l2.8 3L9 1" stroke="#7ec3f7" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
                 </svg>
               </div>
               <span>Select all</span>
-            </div>
+            </button>
             <div id="multi-options">
               <div class="gt-ms-option checked" data-value="apple" style="--opt-hue:200;" role="option" aria-selected="true">
                 <div class="gt-ms-check">
@@ -581,19 +581,19 @@
             </div>
             <div class="gt-ms-footer">
               <span class="gt-ms-count" id="multi-count">1 / 2 selected</span>
-              <span class="gt-ms-clear" id="multi-clear">Clear all</span>
+              <button type="button" tabindex="-1" class="gt-ms-clear" id="multi-clear">Clear all</button>
             </div>
           </div>
         </div>
       </div>
       SELECT: dark square 
-      <style>#single-field{--ms-bg:rgba(9,20,42,0.97);--ms-border:rgba(255,255,255,0.10);--ms-text:#cfe6ff;--ms-accent:#7ec3f7;--ms-focus-ring:#7ec3f7;--ms-label:#cfe6ff;--ms-ac-12:rgba(126,195,247,0.120);--ms-ac-16:rgba(126,195,247,0.160);--ms-ac-18:rgba(126,195,247,0.180);--ms-ac-22:rgba(126,195,247,0.220);--ms-ac-28:rgba(126,195,247,0.280);--ms-ac-32:rgba(126,195,247,0.320);--ms-ac-40:rgba(126,195,247,0.400);--ms-ac-55:rgba(126,195,247,0.550);--ms-ac-60:rgba(126,195,247,0.600);--ms-ac-75:rgba(126,195,247,0.750);--ms-tx-03:rgba(207,230,255,0.030);--ms-tx-04:rgba(207,230,255,0.040);--ms-tx-05:rgba(207,230,255,0.050);--ms-tx-06:rgba(207,230,255,0.060);--ms-tx-08:rgba(207,230,255,0.080);--ms-tx-35:rgba(207,230,255,0.350);--ms-tx-45:rgba(207,230,255,0.450);--ms-tx-50:rgba(207,230,255,0.500);--ms-tx-80:rgba(207,230,255,0.800);--ms-ac-tx-75:rgba(146,204,249,1.000);}</style>
+      <style>#single-field{--ms-bg:rgba(9,20,42,0.97);--ms-border:rgba(255,255,255,0.10);--ms-text:#cfe6ff;--ms-accent:#7ec3f7;--ms-focus-ring:#7ec3f7;--ms-label:#cfe6ff;--gt-label-size:14px;--ms-ac-12:rgba(126,195,247,0.120);--ms-ac-16:rgba(126,195,247,0.160);--ms-ac-18:rgba(126,195,247,0.180);--ms-ac-22:rgba(126,195,247,0.220);--ms-ac-28:rgba(126,195,247,0.280);--ms-ac-32:rgba(126,195,247,0.320);--ms-ac-40:rgba(126,195,247,0.400);--ms-ac-55:rgba(126,195,247,0.550);--ms-ac-60:rgba(126,195,247,0.600);--ms-ac-75:rgba(126,195,247,0.750);--ms-tx-03:rgba(207,230,255,0.030);--ms-tx-04:rgba(207,230,255,0.040);--ms-tx-05:rgba(207,230,255,0.050);--ms-tx-06:rgba(207,230,255,0.060);--ms-tx-08:rgba(207,230,255,0.080);--ms-tx-35:rgba(207,230,255,0.350);--ms-tx-45:rgba(207,230,255,0.450);--ms-tx-50:rgba(207,230,255,0.500);--ms-tx-80:rgba(207,230,255,0.800);--ms-ac-tx-75:rgba(146,204,249,1.000);}</style>
       <div class="gt-gs-field" id="single-field">
-        <div class="gt-gs-wrap style-checkbox shape-square   " id="single-wrap" data-input-id="single" data-placeholder="Select an option" data-searchable="true" data-clearable="false" data-all-choice-label="All categories" data-all-choice-value="__all__" data-server="false" data-server-total="2" data-server-min-chars="0">
-          <div class="gt-gs-trigger" id="single-trigger" role="combobox" tabindex="0" aria-haspopup="listbox" aria-expanded="false" aria-controls="single-dropdown">
+        <div class="gt-gs-wrap style-checkbox shape-square" id="single-wrap" data-input-id="single" data-placeholder="Select an option" data-no-matches-text="No matches" data-searchable="always" data-search-threshold="15" data-clearable="false" data-all-choice-label="All categories" data-all-choice-value="__all__" data-include-all="false" data-server="false" data-server-total="2" data-server-min-chars="0" data-overflow-tooltip="auto">
+          <div class="gt-gs-trigger" id="single-trigger" role="combobox" tabindex="0" aria-haspopup="listbox" aria-expanded="false" aria-controls="single-dropdown" aria-labelledby="single-label">
             <span id="single-label">Banana</span>
             <div style="display:flex;align-items:center;gap:6px;">
-              <span class="gt-gs-clear" id="single-clear" style="display:none;">Clear</span>
+              <button type="button" tabindex="-1" class="gt-gs-clear" id="single-clear" style="display:none;">Clear</button>
               <svg class="gt-gs-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path>
               </svg>
@@ -605,7 +605,7 @@
                 <circle cx="11" cy="11" r="8"></circle>
                 <path stroke-linecap="round" d="M21 21l-4.35-4.35"></path>
               </svg>
-              <input type="text" id="single-search" placeholder="Search options..." autocomplete="off"/>
+              <input type="text" id="single-search" placeholder="Search options..." aria-label="Search options" autocomplete="off"/>
             </div>
             <div id="single-options">
               <div class="gt-gs-option" data-value="apple" role="option" aria-selected="false">
@@ -631,14 +631,14 @@
       
       TABS: light square 
       <div class="gt-container shape-square gt-overflow-scroll gt-align-center gt-text-align-center theme-light" id="tabs-wrap" data-swipe="false">
-        <style>#tabs-wrap{--gt-tab-text:#374151;--gt-tab-active-text:#1d4ed8;--gt-halo-bg:rgba(37,99,235,0.12);--gt-halo-border:rgba(37,99,235,0.60);--gt-focus-ring:#1d4ed8;--gt-halo-shadow:inset 0 1px 0 rgba(255,255,255,.80),0 4px 16px rgba(37,99,235,.20),0 0 0 1px rgba(37,99,235,.12);--gt-content-bg:transparent;--gt-content-border:transparent;--gt-card-bg:transparent;--gt-card-text:#1e293b;}</style>
+        <style>#tabs-wrap{--gt-tab-text:#374151;--gt-tab-active-text:#1d4ed8;--gt-halo-bg:rgba(37,99,235,0.12);--gt-halo-border:rgba(37,99,235,0.60);--gt-focus-ring:#1d4ed8;--gt-halo-shadow:inset 0 1px 0 rgba(255,255,255,.80),0 4px 16px rgba(37,99,235,.20),0 0 0 1px rgba(37,99,235,.12);--gt-content-bg:rgba(15,23,42,0.03);--gt-content-border:rgba(15,23,42,0.10);--gt-card-bg:transparent;--gt-card-text:#1e293b;}</style>
         <div class="gt-topbar">
           <div class="gt-tab-viewport">
             <div class="gt-navbar" id="tabs-navbar" data-ns="tabs" role="tablist" aria-orientation="horizontal">
               <div class="gt-tab-link active" id="tabs-tab-one" data-value="one" data-ns="tabs" role="tab" tabindex="0" aria-selected="true" aria-controls="tabs-pane-one">
                 <span class="gt-tab-label">One</span>
               </div>
-              <div class="gt-tab-link " id="tabs-tab-two" data-value="two" data-ns="tabs" role="tab" tabindex="-1" aria-selected="false" aria-controls="tabs-pane-two">
+              <div class="gt-tab-link" id="tabs-tab-two" data-value="two" data-ns="tabs" role="tab" tabindex="-1" aria-selected="false" aria-controls="tabs-pane-two">
                 <span class="gt-tab-icon">
                   <i class="fas fa-table" role="presentation" aria-label="table icon"></i>
                 </span>
@@ -656,7 +656,7 @@
               <p>First</p>
             </div>
           </div>
-          <div class="gt-tab-pane " id="tabs-pane-two" role="tabpanel" aria-labelledby="tabs-tab-two" aria-hidden="true" inert="" tabindex="-1">
+          <div class="gt-tab-pane" id="tabs-pane-two" role="tabpanel" aria-labelledby="tabs-tab-two" aria-hidden="true" inert="" tabindex="-1">
             <div class="gt-card">
               <p>Second</p>
             </div>
@@ -664,10 +664,10 @@
         </div>
       </div>
       MULTISELECT: light square 
-      <style>#multi-field{--ms-bg:rgba(255,255,255,0.98);--ms-border:rgba(0,0,0,0.12);--ms-text:#111111;--ms-accent:#2563eb;--ms-focus-ring:#1d4ed8;--ms-label:#111111;--ms-ac-12:rgba(37,99,235,0.120);--ms-ac-16:rgba(37,99,235,0.160);--ms-ac-18:rgba(37,99,235,0.180);--ms-ac-22:rgba(37,99,235,0.220);--ms-ac-28:rgba(37,99,235,0.280);--ms-ac-32:rgba(37,99,235,0.320);--ms-ac-40:rgba(37,99,235,0.400);--ms-ac-55:rgba(37,99,235,0.550);--ms-ac-60:rgba(37,99,235,0.600);--ms-ac-75:rgba(37,99,235,0.750);--ms-tx-03:rgba(17,17,17,0.030);--ms-tx-04:rgba(17,17,17,0.040);--ms-tx-05:rgba(17,17,17,0.050);--ms-tx-06:rgba(17,17,17,0.060);--ms-tx-08:rgba(17,17,17,0.080);--ms-tx-35:rgba(17,17,17,0.350);--ms-tx-45:rgba(17,17,17,0.450);--ms-tx-50:rgba(17,17,17,0.500);--ms-tx-80:rgba(17,17,17,0.800);--ms-ac-tx-75:rgba(32,78,180,1.000);}</style>
+      <style>#multi-field{--ms-bg:rgba(255,255,255,0.98);--ms-border:rgba(0,0,0,0.12);--ms-text:#111111;--ms-accent:#2563eb;--ms-focus-ring:#1d4ed8;--ms-label:#111111;--gt-label-size:14px;--ms-dropdown-max-height:260px;--ms-ac-12:rgba(37,99,235,0.120);--ms-ac-16:rgba(37,99,235,0.160);--ms-ac-18:rgba(37,99,235,0.180);--ms-ac-22:rgba(37,99,235,0.220);--ms-ac-28:rgba(37,99,235,0.280);--ms-ac-32:rgba(37,99,235,0.320);--ms-ac-40:rgba(37,99,235,0.400);--ms-ac-55:rgba(37,99,235,0.550);--ms-ac-60:rgba(37,99,235,0.600);--ms-ac-75:rgba(37,99,235,0.750);--ms-tx-03:rgba(17,17,17,0.030);--ms-tx-04:rgba(17,17,17,0.040);--ms-tx-05:rgba(17,17,17,0.050);--ms-tx-06:rgba(17,17,17,0.060);--ms-tx-08:rgba(17,17,17,0.080);--ms-tx-35:rgba(17,17,17,0.350);--ms-tx-45:rgba(17,17,17,0.450);--ms-tx-50:rgba(17,17,17,0.500);--ms-tx-80:rgba(17,17,17,0.800);--ms-ac-tx-75:rgba(32,78,180,1.000);}</style>
       <div class="gt-ms-field" id="multi-field">
-        <div class="gt-ms-wrap style-checkbox shape-square   theme-light" id="multi-wrap" data-input-id="multi" data-placeholder="Filter by Category" data-all-label="All categories" data-server="false" data-server-total="2" data-server-min-chars="0" data-selected-values="[&quot;apple&quot;]">
-          <div class="gt-ms-trigger" id="multi-trigger" role="combobox" tabindex="0" aria-haspopup="listbox" aria-expanded="false" aria-controls="multi-dropdown">
+        <div class="gt-ms-wrap style-checkbox fill-single shape-square theme-light" id="multi-wrap" data-input-id="multi" data-placeholder="Filter by Category" data-no-matches-text="No matches" data-all-label="All categories" data-server="false" data-server-total="2" data-server-min-chars="0" data-searchable="always" data-search-threshold="15" data-selection-display="auto" data-selection-max-items="2" data-overflow-tooltip="auto" data-selected-values="[&quot;apple&quot;]">
+          <div class="gt-ms-trigger" id="multi-trigger" role="combobox" tabindex="0" aria-haspopup="listbox" aria-expanded="false" aria-controls="multi-dropdown" aria-labelledby="multi-label">
             <span id="multi-label">Apple</span>
             <div style="display:flex;align-items:center;gap:6px;">
               <span class="gt-ms-badge hidden" id="multi-badge">1</span>
@@ -676,43 +676,43 @@
               </svg>
             </div>
           </div>
-          <div class="gt-ms-dropdown" id="multi-dropdown" role="listbox">
+          <div class="gt-ms-dropdown" id="multi-dropdown" role="listbox" aria-multiselectable="true">
             <div class="gt-ms-search">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.2">
                 <circle cx="11" cy="11" r="8"></circle>
                 <path stroke-linecap="round" d="M21 21l-4.35-4.35"></path>
               </svg>
-              <input type="text" id="multi-search" placeholder="Search options..." autocomplete="off"/>
+              <input type="text" id="multi-search" placeholder="Search options..." aria-label="Search options" autocomplete="off"/>
             </div>
-            <div class="gt-style-switcher">
-              <div class="gt-style-btn " data-style="check-only">
+            <div class="gt-style-switcher" role="group" aria-label="Selection style">
+              <button type="button" tabindex="-1" class="gt-style-btn " data-style="check-only" aria-pressed="false">
                 <svg class="gt-sb-icon" viewBox="0 0 14 14" fill="none">
                   <path d="M2 7l3.5 4L12 3" stroke="#2563eb" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"></path>
                 </svg>
                 <span>Check</span>
-              </div>
-              <div class="gt-style-btn active" data-style="checkbox">
+              </button>
+              <button type="button" tabindex="-1" class="gt-style-btn active" data-style="checkbox" aria-pressed="true">
                 <svg class="gt-sb-icon" viewBox="0 0 14 14" fill="none">
                   <rect x="1.5" y="1.5" width="11" height="11" rx="3" stroke="#2563eb" stroke-width="1.6"></rect>
                   <path d="M3.5 7l2.8 3L10.5 4" stroke="#2563eb" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"></path>
                 </svg>
                 <span>Box</span>
-              </div>
-              <div class="gt-style-btn " data-style="filled">
+              </button>
+              <button type="button" tabindex="-1" class="gt-style-btn " data-style="filled" aria-pressed="false">
                 <svg class="gt-sb-icon" viewBox="0 0 14 14" fill="none">
                   <rect x="1.5" y="1.5" width="11" height="11" rx="3" fill="#2563eb" fill-opacity="0.45" stroke="#2563eb" stroke-opacity="0.75" stroke-width="1.4"></rect>
                 </svg>
                 <span>Fill</span>
-              </div>
+              </button>
             </div>
-            <div class="gt-ms-all indeterminate" id="multi-all" role="option" aria-selected="false">
+            <button type="button" tabindex="-1" class="gt-ms-all indeterminate" id="multi-all" role="checkbox" aria-checked="mixed">
               <div class="gt-ms-check">
                 <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
                   <path d="M1 4l2.8 3L9 1" stroke="#2563eb" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
                 </svg>
               </div>
               <span>Select all</span>
-            </div>
+            </button>
             <div id="multi-options">
               <div class="gt-ms-option checked" data-value="apple" style="--opt-hue:200;" role="option" aria-selected="true">
                 <div class="gt-ms-check">
@@ -733,19 +733,19 @@
             </div>
             <div class="gt-ms-footer">
               <span class="gt-ms-count" id="multi-count">1 / 2 selected</span>
-              <span class="gt-ms-clear" id="multi-clear">Clear all</span>
+              <button type="button" tabindex="-1" class="gt-ms-clear" id="multi-clear">Clear all</button>
             </div>
           </div>
         </div>
       </div>
       SELECT: light square 
-      <style>#single-field{--ms-bg:rgba(255,255,255,0.98);--ms-border:rgba(0,0,0,0.12);--ms-text:#111111;--ms-accent:#2563eb;--ms-focus-ring:#1d4ed8;--ms-label:#111111;--ms-ac-12:rgba(37,99,235,0.120);--ms-ac-16:rgba(37,99,235,0.160);--ms-ac-18:rgba(37,99,235,0.180);--ms-ac-22:rgba(37,99,235,0.220);--ms-ac-28:rgba(37,99,235,0.280);--ms-ac-32:rgba(37,99,235,0.320);--ms-ac-40:rgba(37,99,235,0.400);--ms-ac-55:rgba(37,99,235,0.550);--ms-ac-60:rgba(37,99,235,0.600);--ms-ac-75:rgba(37,99,235,0.750);--ms-tx-03:rgba(17,17,17,0.030);--ms-tx-04:rgba(17,17,17,0.040);--ms-tx-05:rgba(17,17,17,0.050);--ms-tx-06:rgba(17,17,17,0.060);--ms-tx-08:rgba(17,17,17,0.080);--ms-tx-35:rgba(17,17,17,0.350);--ms-tx-45:rgba(17,17,17,0.450);--ms-tx-50:rgba(17,17,17,0.500);--ms-tx-80:rgba(17,17,17,0.800);--ms-ac-tx-75:rgba(32,78,180,1.000);}</style>
+      <style>#single-field{--ms-bg:rgba(255,255,255,0.98);--ms-border:rgba(0,0,0,0.12);--ms-text:#111111;--ms-accent:#2563eb;--ms-focus-ring:#1d4ed8;--ms-label:#111111;--gt-label-size:14px;--ms-ac-12:rgba(37,99,235,0.120);--ms-ac-16:rgba(37,99,235,0.160);--ms-ac-18:rgba(37,99,235,0.180);--ms-ac-22:rgba(37,99,235,0.220);--ms-ac-28:rgba(37,99,235,0.280);--ms-ac-32:rgba(37,99,235,0.320);--ms-ac-40:rgba(37,99,235,0.400);--ms-ac-55:rgba(37,99,235,0.550);--ms-ac-60:rgba(37,99,235,0.600);--ms-ac-75:rgba(37,99,235,0.750);--ms-tx-03:rgba(17,17,17,0.030);--ms-tx-04:rgba(17,17,17,0.040);--ms-tx-05:rgba(17,17,17,0.050);--ms-tx-06:rgba(17,17,17,0.060);--ms-tx-08:rgba(17,17,17,0.080);--ms-tx-35:rgba(17,17,17,0.350);--ms-tx-45:rgba(17,17,17,0.450);--ms-tx-50:rgba(17,17,17,0.500);--ms-tx-80:rgba(17,17,17,0.800);--ms-ac-tx-75:rgba(32,78,180,1.000);}</style>
       <div class="gt-gs-field" id="single-field">
-        <div class="gt-gs-wrap style-checkbox shape-square   theme-light" id="single-wrap" data-input-id="single" data-placeholder="Select an option" data-searchable="true" data-clearable="false" data-all-choice-label="All categories" data-all-choice-value="__all__" data-server="false" data-server-total="2" data-server-min-chars="0">
-          <div class="gt-gs-trigger" id="single-trigger" role="combobox" tabindex="0" aria-haspopup="listbox" aria-expanded="false" aria-controls="single-dropdown">
+        <div class="gt-gs-wrap style-checkbox shape-square theme-light" id="single-wrap" data-input-id="single" data-placeholder="Select an option" data-no-matches-text="No matches" data-searchable="always" data-search-threshold="15" data-clearable="false" data-all-choice-label="All categories" data-all-choice-value="__all__" data-include-all="false" data-server="false" data-server-total="2" data-server-min-chars="0" data-overflow-tooltip="auto">
+          <div class="gt-gs-trigger" id="single-trigger" role="combobox" tabindex="0" aria-haspopup="listbox" aria-expanded="false" aria-controls="single-dropdown" aria-labelledby="single-label">
             <span id="single-label">Banana</span>
             <div style="display:flex;align-items:center;gap:6px;">
-              <span class="gt-gs-clear" id="single-clear" style="display:none;">Clear</span>
+              <button type="button" tabindex="-1" class="gt-gs-clear" id="single-clear" style="display:none;">Clear</button>
               <svg class="gt-gs-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path>
               </svg>
@@ -757,7 +757,7 @@
                 <circle cx="11" cy="11" r="8"></circle>
                 <path stroke-linecap="round" d="M21 21l-4.35-4.35"></path>
               </svg>
-              <input type="text" id="single-search" placeholder="Search options..." autocomplete="off"/>
+              <input type="text" id="single-search" placeholder="Search options..." aria-label="Search options" autocomplete="off"/>
             </div>
             <div id="single-options">
               <div class="gt-gs-option" data-value="apple" role="option" aria-selected="false">
@@ -783,15 +783,15 @@
       
       TABS: auto square 
       <div class="gt-container shape-square gt-overflow-scroll gt-align-center gt-text-align-center theme-auto theme-light" id="tabs-wrap" data-swipe="false">
-        <style>#tabs-wrap{--gt-tab-text:#374151;--gt-tab-active-text:#1d4ed8;--gt-halo-bg:rgba(37,99,235,0.12);--gt-halo-border:rgba(37,99,235,0.60);--gt-focus-ring:#1d4ed8;--gt-halo-shadow:inset 0 1px 0 rgba(255,255,255,.80),0 4px 16px rgba(37,99,235,.20),0 0 0 1px rgba(37,99,235,.12);--gt-content-bg:transparent;--gt-content-border:transparent;--gt-card-bg:transparent;--gt-card-text:#1e293b;}</style>
-        <style>[data-bs-theme="dark"] #tabs-wrap{--gt-tab-text:rgba(207,230,255,0.78);--gt-tab-active-text:#ffffff;--gt-halo-bg:rgba(126,195,247,0.16);--gt-halo-border:rgba(126,195,247,0.38);--gt-focus-ring:#7ec3f7;--gt-halo-shadow:inset 0 1px 0 rgba(255,255,255,.22),inset 0 -1px 0 rgba(255,255,255,.06),0 6px 20px rgba(0,0,0,.38),0 0 0 1px rgba(255,255,255,.03);--gt-content-bg:transparent;--gt-content-border:transparent;--gt-card-bg:transparent;--gt-card-text:#cfe6ff;}</style>
+        <style>#tabs-wrap{--gt-tab-text:#374151;--gt-tab-active-text:#1d4ed8;--gt-halo-bg:rgba(37,99,235,0.12);--gt-halo-border:rgba(37,99,235,0.60);--gt-focus-ring:#1d4ed8;--gt-halo-shadow:inset 0 1px 0 rgba(255,255,255,.80),0 4px 16px rgba(37,99,235,.20),0 0 0 1px rgba(37,99,235,.12);--gt-content-bg:rgba(15,23,42,0.03);--gt-content-border:rgba(15,23,42,0.10);--gt-card-bg:transparent;--gt-card-text:#1e293b;}</style>
+        <style>[data-bs-theme="dark"] #tabs-wrap{--gt-tab-text:rgba(207,230,255,0.78);--gt-tab-active-text:#ffffff;--gt-halo-bg:rgba(126,195,247,0.16);--gt-halo-border:rgba(126,195,247,0.38);--gt-focus-ring:#7ec3f7;--gt-halo-shadow:inset 0 1px 0 rgba(255,255,255,.22),inset 0 -1px 0 rgba(255,255,255,.06),0 6px 20px rgba(0,0,0,.38),0 0 0 1px rgba(255,255,255,.03);--gt-content-bg:rgba(255,255,255,0.03);--gt-content-border:rgba(255,255,255,0.08);--gt-card-bg:transparent;--gt-card-text:#cfe6ff;}</style>
         <div class="gt-topbar">
           <div class="gt-tab-viewport">
             <div class="gt-navbar" id="tabs-navbar" data-ns="tabs" role="tablist" aria-orientation="horizontal">
               <div class="gt-tab-link active" id="tabs-tab-one" data-value="one" data-ns="tabs" role="tab" tabindex="0" aria-selected="true" aria-controls="tabs-pane-one">
                 <span class="gt-tab-label">One</span>
               </div>
-              <div class="gt-tab-link " id="tabs-tab-two" data-value="two" data-ns="tabs" role="tab" tabindex="-1" aria-selected="false" aria-controls="tabs-pane-two">
+              <div class="gt-tab-link" id="tabs-tab-two" data-value="two" data-ns="tabs" role="tab" tabindex="-1" aria-selected="false" aria-controls="tabs-pane-two">
                 <span class="gt-tab-icon">
                   <i class="fas fa-table" role="presentation" aria-label="table icon"></i>
                 </span>
@@ -809,7 +809,7 @@
               <p>First</p>
             </div>
           </div>
-          <div class="gt-tab-pane " id="tabs-pane-two" role="tabpanel" aria-labelledby="tabs-tab-two" aria-hidden="true" inert="" tabindex="-1">
+          <div class="gt-tab-pane" id="tabs-pane-two" role="tabpanel" aria-labelledby="tabs-tab-two" aria-hidden="true" inert="" tabindex="-1">
             <div class="gt-card">
               <p>Second</p>
             </div>
@@ -817,11 +817,11 @@
         </div>
       </div>
       MULTISELECT: auto square 
-      <style>#multi-field{--ms-bg:rgba(255,255,255,0.98);--ms-border:rgba(0,0,0,0.12);--ms-text:#111111;--ms-accent:#2563eb;--ms-focus-ring:#1d4ed8;--ms-label:#111111;--ms-ac-12:rgba(37,99,235,0.120);--ms-ac-16:rgba(37,99,235,0.160);--ms-ac-18:rgba(37,99,235,0.180);--ms-ac-22:rgba(37,99,235,0.220);--ms-ac-28:rgba(37,99,235,0.280);--ms-ac-32:rgba(37,99,235,0.320);--ms-ac-40:rgba(37,99,235,0.400);--ms-ac-55:rgba(37,99,235,0.550);--ms-ac-60:rgba(37,99,235,0.600);--ms-ac-75:rgba(37,99,235,0.750);--ms-tx-03:rgba(17,17,17,0.030);--ms-tx-04:rgba(17,17,17,0.040);--ms-tx-05:rgba(17,17,17,0.050);--ms-tx-06:rgba(17,17,17,0.060);--ms-tx-08:rgba(17,17,17,0.080);--ms-tx-35:rgba(17,17,17,0.350);--ms-tx-45:rgba(17,17,17,0.450);--ms-tx-50:rgba(17,17,17,0.500);--ms-tx-80:rgba(17,17,17,0.800);--ms-ac-tx-75:rgba(32,78,180,1.000);}</style>
+      <style>#multi-field{--ms-bg:rgba(255,255,255,0.98);--ms-border:rgba(0,0,0,0.12);--ms-text:#111111;--ms-accent:#2563eb;--ms-focus-ring:#1d4ed8;--ms-label:#111111;--gt-label-size:14px;--ms-dropdown-max-height:260px;--ms-ac-12:rgba(37,99,235,0.120);--ms-ac-16:rgba(37,99,235,0.160);--ms-ac-18:rgba(37,99,235,0.180);--ms-ac-22:rgba(37,99,235,0.220);--ms-ac-28:rgba(37,99,235,0.280);--ms-ac-32:rgba(37,99,235,0.320);--ms-ac-40:rgba(37,99,235,0.400);--ms-ac-55:rgba(37,99,235,0.550);--ms-ac-60:rgba(37,99,235,0.600);--ms-ac-75:rgba(37,99,235,0.750);--ms-tx-03:rgba(17,17,17,0.030);--ms-tx-04:rgba(17,17,17,0.040);--ms-tx-05:rgba(17,17,17,0.050);--ms-tx-06:rgba(17,17,17,0.060);--ms-tx-08:rgba(17,17,17,0.080);--ms-tx-35:rgba(17,17,17,0.350);--ms-tx-45:rgba(17,17,17,0.450);--ms-tx-50:rgba(17,17,17,0.500);--ms-tx-80:rgba(17,17,17,0.800);--ms-ac-tx-75:rgba(32,78,180,1.000);}</style>
       <style>[data-bs-theme="dark"] #multi-field{--ms-bg:rgba(9,20,42,0.97);--ms-border:rgba(255,255,255,0.10);--ms-text:#cfe6ff;--ms-accent:#7ec3f7;--ms-focus-ring:#7ec3f7;--ms-label:#cfe6ff;--ms-ac-12:rgba(126,195,247,0.120);--ms-ac-16:rgba(126,195,247,0.160);--ms-ac-18:rgba(126,195,247,0.180);--ms-ac-22:rgba(126,195,247,0.220);--ms-ac-28:rgba(126,195,247,0.280);--ms-ac-32:rgba(126,195,247,0.320);--ms-ac-40:rgba(126,195,247,0.400);--ms-ac-55:rgba(126,195,247,0.550);--ms-ac-60:rgba(126,195,247,0.600);--ms-ac-75:rgba(126,195,247,0.750);--ms-tx-03:rgba(207,230,255,0.030);--ms-tx-04:rgba(207,230,255,0.040);--ms-tx-05:rgba(207,230,255,0.050);--ms-tx-06:rgba(207,230,255,0.060);--ms-tx-08:rgba(207,230,255,0.080);--ms-tx-35:rgba(207,230,255,0.350);--ms-tx-45:rgba(207,230,255,0.450);--ms-tx-50:rgba(207,230,255,0.500);--ms-tx-80:rgba(207,230,255,0.800);--ms-ac-tx-75:rgba(146,204,249,1.000);}</style>
       <div class="gt-ms-field" id="multi-field">
-        <div class="gt-ms-wrap style-checkbox shape-square  theme-auto theme-light" id="multi-wrap" data-input-id="multi" data-placeholder="Filter by Category" data-all-label="All categories" data-server="false" data-server-total="2" data-server-min-chars="0" data-selected-values="[&quot;apple&quot;]">
-          <div class="gt-ms-trigger" id="multi-trigger" role="combobox" tabindex="0" aria-haspopup="listbox" aria-expanded="false" aria-controls="multi-dropdown">
+        <div class="gt-ms-wrap style-checkbox fill-single shape-square theme-auto theme-light" id="multi-wrap" data-input-id="multi" data-placeholder="Filter by Category" data-no-matches-text="No matches" data-all-label="All categories" data-server="false" data-server-total="2" data-server-min-chars="0" data-searchable="always" data-search-threshold="15" data-selection-display="auto" data-selection-max-items="2" data-overflow-tooltip="auto" data-selected-values="[&quot;apple&quot;]">
+          <div class="gt-ms-trigger" id="multi-trigger" role="combobox" tabindex="0" aria-haspopup="listbox" aria-expanded="false" aria-controls="multi-dropdown" aria-labelledby="multi-label">
             <span id="multi-label">Apple</span>
             <div style="display:flex;align-items:center;gap:6px;">
               <span class="gt-ms-badge hidden" id="multi-badge">1</span>
@@ -830,43 +830,43 @@
               </svg>
             </div>
           </div>
-          <div class="gt-ms-dropdown" id="multi-dropdown" role="listbox">
+          <div class="gt-ms-dropdown" id="multi-dropdown" role="listbox" aria-multiselectable="true">
             <div class="gt-ms-search">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.2">
                 <circle cx="11" cy="11" r="8"></circle>
                 <path stroke-linecap="round" d="M21 21l-4.35-4.35"></path>
               </svg>
-              <input type="text" id="multi-search" placeholder="Search options..." autocomplete="off"/>
+              <input type="text" id="multi-search" placeholder="Search options..." aria-label="Search options" autocomplete="off"/>
             </div>
-            <div class="gt-style-switcher">
-              <div class="gt-style-btn " data-style="check-only">
+            <div class="gt-style-switcher" role="group" aria-label="Selection style">
+              <button type="button" tabindex="-1" class="gt-style-btn " data-style="check-only" aria-pressed="false">
                 <svg class="gt-sb-icon" viewBox="0 0 14 14" fill="none">
                   <path d="M2 7l3.5 4L12 3" stroke="#2563eb" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"></path>
                 </svg>
                 <span>Check</span>
-              </div>
-              <div class="gt-style-btn active" data-style="checkbox">
+              </button>
+              <button type="button" tabindex="-1" class="gt-style-btn active" data-style="checkbox" aria-pressed="true">
                 <svg class="gt-sb-icon" viewBox="0 0 14 14" fill="none">
                   <rect x="1.5" y="1.5" width="11" height="11" rx="3" stroke="#2563eb" stroke-width="1.6"></rect>
                   <path d="M3.5 7l2.8 3L10.5 4" stroke="#2563eb" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"></path>
                 </svg>
                 <span>Box</span>
-              </div>
-              <div class="gt-style-btn " data-style="filled">
+              </button>
+              <button type="button" tabindex="-1" class="gt-style-btn " data-style="filled" aria-pressed="false">
                 <svg class="gt-sb-icon" viewBox="0 0 14 14" fill="none">
                   <rect x="1.5" y="1.5" width="11" height="11" rx="3" fill="#2563eb" fill-opacity="0.45" stroke="#2563eb" stroke-opacity="0.75" stroke-width="1.4"></rect>
                 </svg>
                 <span>Fill</span>
-              </div>
+              </button>
             </div>
-            <div class="gt-ms-all indeterminate" id="multi-all" role="option" aria-selected="false">
+            <button type="button" tabindex="-1" class="gt-ms-all indeterminate" id="multi-all" role="checkbox" aria-checked="mixed">
               <div class="gt-ms-check">
                 <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
                   <path d="M1 4l2.8 3L9 1" stroke="#2563eb" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
                 </svg>
               </div>
               <span>Select all</span>
-            </div>
+            </button>
             <div id="multi-options">
               <div class="gt-ms-option checked" data-value="apple" style="--opt-hue:200;" role="option" aria-selected="true">
                 <div class="gt-ms-check">
@@ -887,20 +887,20 @@
             </div>
             <div class="gt-ms-footer">
               <span class="gt-ms-count" id="multi-count">1 / 2 selected</span>
-              <span class="gt-ms-clear" id="multi-clear">Clear all</span>
+              <button type="button" tabindex="-1" class="gt-ms-clear" id="multi-clear">Clear all</button>
             </div>
           </div>
         </div>
       </div>
       SELECT: auto square 
-      <style>#single-field{--ms-bg:rgba(255,255,255,0.98);--ms-border:rgba(0,0,0,0.12);--ms-text:#111111;--ms-accent:#2563eb;--ms-focus-ring:#1d4ed8;--ms-label:#111111;--ms-ac-12:rgba(37,99,235,0.120);--ms-ac-16:rgba(37,99,235,0.160);--ms-ac-18:rgba(37,99,235,0.180);--ms-ac-22:rgba(37,99,235,0.220);--ms-ac-28:rgba(37,99,235,0.280);--ms-ac-32:rgba(37,99,235,0.320);--ms-ac-40:rgba(37,99,235,0.400);--ms-ac-55:rgba(37,99,235,0.550);--ms-ac-60:rgba(37,99,235,0.600);--ms-ac-75:rgba(37,99,235,0.750);--ms-tx-03:rgba(17,17,17,0.030);--ms-tx-04:rgba(17,17,17,0.040);--ms-tx-05:rgba(17,17,17,0.050);--ms-tx-06:rgba(17,17,17,0.060);--ms-tx-08:rgba(17,17,17,0.080);--ms-tx-35:rgba(17,17,17,0.350);--ms-tx-45:rgba(17,17,17,0.450);--ms-tx-50:rgba(17,17,17,0.500);--ms-tx-80:rgba(17,17,17,0.800);--ms-ac-tx-75:rgba(32,78,180,1.000);}</style>
+      <style>#single-field{--ms-bg:rgba(255,255,255,0.98);--ms-border:rgba(0,0,0,0.12);--ms-text:#111111;--ms-accent:#2563eb;--ms-focus-ring:#1d4ed8;--ms-label:#111111;--gt-label-size:14px;--ms-ac-12:rgba(37,99,235,0.120);--ms-ac-16:rgba(37,99,235,0.160);--ms-ac-18:rgba(37,99,235,0.180);--ms-ac-22:rgba(37,99,235,0.220);--ms-ac-28:rgba(37,99,235,0.280);--ms-ac-32:rgba(37,99,235,0.320);--ms-ac-40:rgba(37,99,235,0.400);--ms-ac-55:rgba(37,99,235,0.550);--ms-ac-60:rgba(37,99,235,0.600);--ms-ac-75:rgba(37,99,235,0.750);--ms-tx-03:rgba(17,17,17,0.030);--ms-tx-04:rgba(17,17,17,0.040);--ms-tx-05:rgba(17,17,17,0.050);--ms-tx-06:rgba(17,17,17,0.060);--ms-tx-08:rgba(17,17,17,0.080);--ms-tx-35:rgba(17,17,17,0.350);--ms-tx-45:rgba(17,17,17,0.450);--ms-tx-50:rgba(17,17,17,0.500);--ms-tx-80:rgba(17,17,17,0.800);--ms-ac-tx-75:rgba(32,78,180,1.000);}</style>
       <style>[data-bs-theme="dark"] #single-field{--ms-bg:rgba(9,20,42,0.97);--ms-border:rgba(255,255,255,0.10);--ms-text:#cfe6ff;--ms-accent:#7ec3f7;--ms-focus-ring:#7ec3f7;--ms-label:#cfe6ff;--ms-ac-12:rgba(126,195,247,0.120);--ms-ac-16:rgba(126,195,247,0.160);--ms-ac-18:rgba(126,195,247,0.180);--ms-ac-22:rgba(126,195,247,0.220);--ms-ac-28:rgba(126,195,247,0.280);--ms-ac-32:rgba(126,195,247,0.320);--ms-ac-40:rgba(126,195,247,0.400);--ms-ac-55:rgba(126,195,247,0.550);--ms-ac-60:rgba(126,195,247,0.600);--ms-ac-75:rgba(126,195,247,0.750);--ms-tx-03:rgba(207,230,255,0.030);--ms-tx-04:rgba(207,230,255,0.040);--ms-tx-05:rgba(207,230,255,0.050);--ms-tx-06:rgba(207,230,255,0.060);--ms-tx-08:rgba(207,230,255,0.080);--ms-tx-35:rgba(207,230,255,0.350);--ms-tx-45:rgba(207,230,255,0.450);--ms-tx-50:rgba(207,230,255,0.500);--ms-tx-80:rgba(207,230,255,0.800);--ms-ac-tx-75:rgba(146,204,249,1.000);}</style>
       <div class="gt-gs-field" id="single-field">
-        <div class="gt-gs-wrap style-checkbox shape-square  theme-auto theme-light" id="single-wrap" data-input-id="single" data-placeholder="Select an option" data-searchable="true" data-clearable="false" data-all-choice-label="All categories" data-all-choice-value="__all__" data-server="false" data-server-total="2" data-server-min-chars="0">
-          <div class="gt-gs-trigger" id="single-trigger" role="combobox" tabindex="0" aria-haspopup="listbox" aria-expanded="false" aria-controls="single-dropdown">
+        <div class="gt-gs-wrap style-checkbox shape-square theme-auto theme-light" id="single-wrap" data-input-id="single" data-placeholder="Select an option" data-no-matches-text="No matches" data-searchable="always" data-search-threshold="15" data-clearable="false" data-all-choice-label="All categories" data-all-choice-value="__all__" data-include-all="false" data-server="false" data-server-total="2" data-server-min-chars="0" data-overflow-tooltip="auto">
+          <div class="gt-gs-trigger" id="single-trigger" role="combobox" tabindex="0" aria-haspopup="listbox" aria-expanded="false" aria-controls="single-dropdown" aria-labelledby="single-label">
             <span id="single-label">Banana</span>
             <div style="display:flex;align-items:center;gap:6px;">
-              <span class="gt-gs-clear" id="single-clear" style="display:none;">Clear</span>
+              <button type="button" tabindex="-1" class="gt-gs-clear" id="single-clear" style="display:none;">Clear</button>
               <svg class="gt-gs-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path>
               </svg>
@@ -912,7 +912,7 @@
                 <circle cx="11" cy="11" r="8"></circle>
                 <path stroke-linecap="round" d="M21 21l-4.35-4.35"></path>
               </svg>
-              <input type="text" id="single-search" placeholder="Search options..." autocomplete="off"/>
+              <input type="text" id="single-search" placeholder="Search options..." aria-label="Search options" autocomplete="off"/>
             </div>
             <div id="single-options">
               <div class="gt-gs-option" data-value="apple" role="option" aria-selected="false">
@@ -935,6 +935,142 @@
           </div>
         </div>
       </div>
+    Code
+      cat("\nSELECT MODES: auto search\n")
+    Output
+      
+      SELECT MODES: auto search
+    Code
+      cat(as.character(glassSelect("single_auto", choices, searchable = "auto",
+        search_threshold = 3)))
+    Output
+      <style>#single_auto-field{--ms-bg:rgba(9,20,42,0.97);--ms-border:rgba(255,255,255,0.10);--ms-text:#cfe6ff;--ms-accent:#7ec3f7;--ms-focus-ring:#7ec3f7;--ms-label:#cfe6ff;--gt-label-size:14px;--ms-ac-12:rgba(126,195,247,0.120);--ms-ac-16:rgba(126,195,247,0.160);--ms-ac-18:rgba(126,195,247,0.180);--ms-ac-22:rgba(126,195,247,0.220);--ms-ac-28:rgba(126,195,247,0.280);--ms-ac-32:rgba(126,195,247,0.320);--ms-ac-40:rgba(126,195,247,0.400);--ms-ac-55:rgba(126,195,247,0.550);--ms-ac-60:rgba(126,195,247,0.600);--ms-ac-75:rgba(126,195,247,0.750);--ms-tx-03:rgba(207,230,255,0.030);--ms-tx-04:rgba(207,230,255,0.040);--ms-tx-05:rgba(207,230,255,0.050);--ms-tx-06:rgba(207,230,255,0.060);--ms-tx-08:rgba(207,230,255,0.080);--ms-tx-35:rgba(207,230,255,0.350);--ms-tx-45:rgba(207,230,255,0.450);--ms-tx-50:rgba(207,230,255,0.500);--ms-tx-80:rgba(207,230,255,0.800);--ms-ac-tx-75:rgba(146,204,249,1.000);}</style>
+      <div class="gt-gs-field" id="single_auto-field">
+        <div class="gt-gs-wrap style-checkbox" id="single_auto-wrap" data-input-id="single_auto" data-placeholder="Select an option" data-no-matches-text="No matches" data-searchable="auto" data-search-threshold="3" data-clearable="false" data-all-choice-label="All categories" data-all-choice-value="__all__" data-include-all="false" data-server="false" data-server-total="2" data-server-min-chars="0" data-overflow-tooltip="auto">
+          <div class="gt-gs-trigger" id="single_auto-trigger" role="combobox" tabindex="0" aria-haspopup="listbox" aria-expanded="false" aria-controls="single_auto-dropdown" aria-labelledby="single_auto-label">
+            <span id="single_auto-label">Select an option</span>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <button type="button" tabindex="-1" class="gt-gs-clear" id="single_auto-clear" style="display:none;">Clear</button>
+              <svg class="gt-gs-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </div>
+          </div>
+          <div class="gt-gs-dropdown" id="single_auto-dropdown" role="listbox">
+            <div class="gt-gs-search hidden">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#7ec3f7" stroke-width="2.2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <path stroke-linecap="round" d="M21 21l-4.35-4.35"></path>
+              </svg>
+              <input type="text" id="single_auto-search" placeholder="Search options..." aria-label="Search options" autocomplete="off"/>
+            </div>
+            <div id="single_auto-options">
+              <div class="gt-gs-option" data-value="apple" role="option" aria-selected="false">
+                <div class="gt-gs-check">
+                  <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                    <path d="M1 4l2.8 3L9 1" stroke="#7ec3f7" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
+                  </svg>
+                </div>
+                <span>Apple</span>
+              </div>
+              <div class="gt-gs-option" data-value="banana" role="option" aria-selected="false">
+                <div class="gt-gs-check">
+                  <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                    <path d="M1 4l2.8 3L9 1" stroke="#7ec3f7" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
+                  </svg>
+                </div>
+                <span>Banana</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    Code
+      cat("\nMULTISELECT MODES: no overflow tooltip\n")
+    Output
+      
+      MULTISELECT MODES: no overflow tooltip
+    Code
+      cat(as.character(glassMultiSelect("multi_never", choices, overflow_tooltip = "never")))
+    Output
+      <style>#multi_never-field{--ms-bg:rgba(9,20,42,0.97);--ms-border:rgba(255,255,255,0.10);--ms-text:#cfe6ff;--ms-accent:#7ec3f7;--ms-focus-ring:#7ec3f7;--ms-label:#cfe6ff;--gt-label-size:14px;--ms-dropdown-max-height:260px;--ms-ac-12:rgba(126,195,247,0.120);--ms-ac-16:rgba(126,195,247,0.160);--ms-ac-18:rgba(126,195,247,0.180);--ms-ac-22:rgba(126,195,247,0.220);--ms-ac-28:rgba(126,195,247,0.280);--ms-ac-32:rgba(126,195,247,0.320);--ms-ac-40:rgba(126,195,247,0.400);--ms-ac-55:rgba(126,195,247,0.550);--ms-ac-60:rgba(126,195,247,0.600);--ms-ac-75:rgba(126,195,247,0.750);--ms-tx-03:rgba(207,230,255,0.030);--ms-tx-04:rgba(207,230,255,0.040);--ms-tx-05:rgba(207,230,255,0.050);--ms-tx-06:rgba(207,230,255,0.060);--ms-tx-08:rgba(207,230,255,0.080);--ms-tx-35:rgba(207,230,255,0.350);--ms-tx-45:rgba(207,230,255,0.450);--ms-tx-50:rgba(207,230,255,0.500);--ms-tx-80:rgba(207,230,255,0.800);--ms-ac-tx-75:rgba(146,204,249,1.000);}</style>
+      <div class="gt-ms-field" id="multi_never-field">
+        <div class="gt-ms-wrap style-checkbox fill-single" id="multi_never-wrap" data-input-id="multi_never" data-placeholder="Filter by Category" data-no-matches-text="No matches" data-all-label="All categories" data-server="false" data-server-total="2" data-server-min-chars="0" data-searchable="always" data-search-threshold="15" data-selection-display="auto" data-selection-max-items="2" data-overflow-tooltip="never" data-selected-values="[&quot;apple&quot;,&quot;banana&quot;]">
+          <div class="gt-ms-trigger" id="multi_never-trigger" role="combobox" tabindex="0" aria-haspopup="listbox" aria-expanded="false" aria-controls="multi_never-dropdown" aria-labelledby="multi_never-label">
+            <span id="multi_never-label">All categories</span>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span class="gt-ms-badge hidden" id="multi_never-badge">2</span>
+              <svg class="gt-ms-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </div>
+          </div>
+          <div class="gt-ms-dropdown" id="multi_never-dropdown" role="listbox" aria-multiselectable="true">
+            <div class="gt-ms-search">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#7ec3f7" stroke-width="2.2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <path stroke-linecap="round" d="M21 21l-4.35-4.35"></path>
+              </svg>
+              <input type="text" id="multi_never-search" placeholder="Search options..." aria-label="Search options" autocomplete="off"/>
+            </div>
+            <div class="gt-style-switcher" role="group" aria-label="Selection style">
+              <button type="button" tabindex="-1" class="gt-style-btn " data-style="check-only" aria-pressed="false">
+                <svg class="gt-sb-icon" viewBox="0 0 14 14" fill="none">
+                  <path d="M2 7l3.5 4L12 3" stroke="#7ec3f7" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"></path>
+                </svg>
+                <span>Check</span>
+              </button>
+              <button type="button" tabindex="-1" class="gt-style-btn active" data-style="checkbox" aria-pressed="true">
+                <svg class="gt-sb-icon" viewBox="0 0 14 14" fill="none">
+                  <rect x="1.5" y="1.5" width="11" height="11" rx="3" stroke="#7ec3f7" stroke-width="1.6"></rect>
+                  <path d="M3.5 7l2.8 3L10.5 4" stroke="#7ec3f7" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"></path>
+                </svg>
+                <span>Box</span>
+              </button>
+              <button type="button" tabindex="-1" class="gt-style-btn " data-style="filled" aria-pressed="false">
+                <svg class="gt-sb-icon" viewBox="0 0 14 14" fill="none">
+                  <rect x="1.5" y="1.5" width="11" height="11" rx="3" fill="#7ec3f7" fill-opacity="0.45" stroke="#7ec3f7" stroke-opacity="0.75" stroke-width="1.4"></rect>
+                </svg>
+                <span>Fill</span>
+              </button>
+            </div>
+            <button type="button" tabindex="-1" class="gt-ms-all checked" id="multi_never-all" role="checkbox" aria-checked="true">
+              <div class="gt-ms-check">
+                <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                  <path d="M1 4l2.8 3L9 1" stroke="#7ec3f7" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
+                </svg>
+              </div>
+              <span>Select all</span>
+            </button>
+            <div id="multi_never-options">
+              <div class="gt-ms-option checked" data-value="apple" style="--opt-hue:200;" role="option" aria-selected="true">
+                <div class="gt-ms-check">
+                  <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                    <path d="M1 4l2.8 3L9 1" stroke="#7ec3f7" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
+                  </svg>
+                </div>
+                <span>Apple</span>
+              </div>
+              <div class="gt-ms-option checked" data-value="banana" style="--opt-hue:20;" role="option" aria-selected="true">
+                <div class="gt-ms-check">
+                  <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                    <path d="M1 4l2.8 3L9 1" stroke="#7ec3f7" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
+                  </svg>
+                </div>
+                <span>Banana</span>
+              </div>
+            </div>
+            <div class="gt-ms-footer">
+              <span class="gt-ms-count" id="multi_never-count">2 / 2 selected</span>
+              <button type="button" tabindex="-1" class="gt-ms-clear" id="multi_never-clear">Clear all</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    Code
+      cat("\n")
+    Output
+      
 
 # side-effect message payloads remain byte-stable
 
@@ -1355,10 +1491,25 @@
                     "names": {
                       "type": "character",
                       "attributes": {},
-                      "value": ["choices", "selected", "shape"]
+                      "value": ["preserve_selection", "drop_invalid", "notify", "choices", "selected", "shape"]
                     }
                   },
                   "value": [
+                    {
+                      "type": "logical",
+                      "attributes": {},
+                      "value": [true]
+                    },
+                    {
+                      "type": "logical",
+                      "attributes": {},
+                      "value": [true]
+                    },
+                    {
+                      "type": "character",
+                      "attributes": {},
+                      "value": ["changed"]
+                    },
                     {
                       "type": "list",
                       "attributes": {},
@@ -1369,7 +1520,7 @@
                             "names": {
                               "type": "character",
                               "attributes": {},
-                              "value": ["label", "value", "group", "disabled"]
+                              "value": ["label", "value", "group"]
                             }
                           },
                           "value": [
@@ -1387,11 +1538,6 @@
                               "type": "character",
                               "attributes": {},
                               "value": [""]
-                            },
-                            {
-                              "type": "logical",
-                              "attributes": {},
-                              "value": [false]
                             }
                           ]
                         },
@@ -1401,7 +1547,7 @@
                             "names": {
                               "type": "character",
                               "attributes": {},
-                              "value": ["label", "value", "group", "disabled"]
+                              "value": ["label", "value", "group"]
                             }
                           },
                           "value": [
@@ -1419,11 +1565,6 @@
                               "type": "character",
                               "attributes": {},
                               "value": [""]
-                            },
-                            {
-                              "type": "logical",
-                              "attributes": {},
-                              "value": [false]
                             }
                           ]
                         }
@@ -1451,19 +1592,19 @@
             "names": {
               "type": "character",
               "attributes": {},
-              "value": ["method", "inputId", "message"]
+              "value": ["method", "type", "message"]
             }
           },
           "value": [
             {
               "type": "character",
               "attributes": {},
-              "value": ["sendInputMessage"]
+              "value": ["sendCustomMessage"]
             },
             {
               "type": "character",
               "attributes": {},
-              "value": ["single"]
+              "value": ["glasstabs_update_select"]
             },
             {
               "type": "list",
@@ -1471,89 +1612,96 @@
                 "names": {
                   "type": "character",
                   "attributes": {},
-                  "value": ["choices", "selected", "shape"]
+                  "value": ["inputId", "data"]
                 }
               },
               "value": [
                 {
-                  "type": "list",
+                  "type": "character",
                   "attributes": {},
+                  "value": ["mod-single"]
+                },
+                {
+                  "type": "list",
+                  "attributes": {
+                    "names": {
+                      "type": "character",
+                      "attributes": {},
+                      "value": ["choices", "selected", "shape"]
+                    }
+                  },
                   "value": [
                     {
                       "type": "list",
-                      "attributes": {
-                        "names": {
-                          "type": "character",
-                          "attributes": {},
-                          "value": ["label", "value", "group", "disabled"]
-                        }
-                      },
+                      "attributes": {},
                       "value": [
                         {
-                          "type": "character",
-                          "attributes": {},
-                          "value": ["Apple"]
+                          "type": "list",
+                          "attributes": {
+                            "names": {
+                              "type": "character",
+                              "attributes": {},
+                              "value": ["label", "value", "group"]
+                            }
+                          },
+                          "value": [
+                            {
+                              "type": "character",
+                              "attributes": {},
+                              "value": ["Apple"]
+                            },
+                            {
+                              "type": "character",
+                              "attributes": {},
+                              "value": ["apple"]
+                            },
+                            {
+                              "type": "character",
+                              "attributes": {},
+                              "value": [""]
+                            }
+                          ]
                         },
                         {
-                          "type": "character",
-                          "attributes": {},
-                          "value": ["apple"]
-                        },
-                        {
-                          "type": "character",
-                          "attributes": {},
-                          "value": [""]
-                        },
-                        {
-                          "type": "logical",
-                          "attributes": {},
-                          "value": [false]
+                          "type": "list",
+                          "attributes": {
+                            "names": {
+                              "type": "character",
+                              "attributes": {},
+                              "value": ["label", "value", "group"]
+                            }
+                          },
+                          "value": [
+                            {
+                              "type": "character",
+                              "attributes": {},
+                              "value": ["Banana"]
+                            },
+                            {
+                              "type": "character",
+                              "attributes": {},
+                              "value": ["banana"]
+                            },
+                            {
+                              "type": "character",
+                              "attributes": {},
+                              "value": [""]
+                            }
+                          ]
                         }
                       ]
                     },
                     {
-                      "type": "list",
-                      "attributes": {
-                        "names": {
-                          "type": "character",
-                          "attributes": {},
-                          "value": ["label", "value", "group", "disabled"]
-                        }
-                      },
-                      "value": [
-                        {
-                          "type": "character",
-                          "attributes": {},
-                          "value": ["Banana"]
-                        },
-                        {
-                          "type": "character",
-                          "attributes": {},
-                          "value": ["banana"]
-                        },
-                        {
-                          "type": "character",
-                          "attributes": {},
-                          "value": [""]
-                        },
-                        {
-                          "type": "logical",
-                          "attributes": {},
-                          "value": [false]
-                        }
-                      ]
+                      "type": "character",
+                      "attributes": {},
+                      "value": ["banana"]
+                    },
+                    {
+                      "type": "character",
+                      "attributes": {},
+                      "value": ["square"]
                     }
                   ]
-                },
-                {
-                  "type": "character",
-                  "attributes": {},
-                  "value": ["banana"]
-                },
-                {
-                  "type": "character",
-                  "attributes": {},
-                  "value": ["square"]
                 }
               ]
             }
@@ -1699,10 +1847,25 @@
                 "names": {
                   "type": "character",
                   "attributes": {},
-                  "value": ["choices", "selected"]
+                  "value": ["preserve_selection", "drop_invalid", "notify", "choices", "selected"]
                 }
               },
               "value": [
+                {
+                  "type": "logical",
+                  "attributes": {},
+                  "value": [true]
+                },
+                {
+                  "type": "logical",
+                  "attributes": {},
+                  "value": [true]
+                },
+                {
+                  "type": "character",
+                  "attributes": {},
+                  "value": ["changed"]
+                },
                 {
                   "type": "list",
                   "attributes": {},
@@ -1713,7 +1876,7 @@
                         "names": {
                           "type": "character",
                           "attributes": {},
-                          "value": ["label", "value", "group", "disabled"]
+                          "value": ["label", "value", "group"]
                         }
                       },
                       "value": [
@@ -1731,11 +1894,6 @@
                           "type": "character",
                           "attributes": {},
                           "value": [""]
-                        },
-                        {
-                          "type": "logical",
-                          "attributes": {},
-                          "value": [false]
                         }
                       ]
                     },
@@ -1745,7 +1903,7 @@
                         "names": {
                           "type": "character",
                           "attributes": {},
-                          "value": ["label", "value", "group", "disabled"]
+                          "value": ["label", "value", "group"]
                         }
                       },
                       "value": [
@@ -1763,11 +1921,6 @@
                           "type": "character",
                           "attributes": {},
                           "value": [""]
-                        },
-                        {
-                          "type": "logical",
-                          "attributes": {},
-                          "value": [false]
                         }
                       ]
                     }
@@ -1822,7 +1975,7 @@
                         "names": {
                           "type": "character",
                           "attributes": {},
-                          "value": ["label", "value", "group", "disabled"]
+                          "value": ["label", "value", "group"]
                         }
                       },
                       "value": [
@@ -1840,11 +1993,6 @@
                           "type": "character",
                           "attributes": {},
                           "value": [""]
-                        },
-                        {
-                          "type": "logical",
-                          "attributes": {},
-                          "value": [false]
                         }
                       ]
                     },
@@ -1854,7 +2002,7 @@
                         "names": {
                           "type": "character",
                           "attributes": {},
-                          "value": ["label", "value", "group", "disabled"]
+                          "value": ["label", "value", "group"]
                         }
                       },
                       "value": [
@@ -1872,11 +2020,6 @@
                           "type": "character",
                           "attributes": {},
                           "value": [""]
-                        },
-                        {
-                          "type": "logical",
-                          "attributes": {},
-                          "value": [false]
                         }
                       ]
                     }

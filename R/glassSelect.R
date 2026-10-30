@@ -11,8 +11,9 @@
 #' }
 #'
 #' @param selected Initially selected value. Defaults to \code{NULL}.
-#' @param searchable Logical. Show search input inside dropdown? Default
-#'   \code{TRUE}.
+#' @param searchable Search visibility. Use \code{TRUE} (default) to always
+#'   show search, \code{FALSE} to hide it, or \code{"auto"} to show it only
+#'   when the choice count reaches \code{search_threshold}.
 #' @param clearable Logical. Show clear control for removing the current
 #'   selection? Default \code{FALSE}.
 #' @param include_all Logical. Prepend an explicit "All" option. Default
@@ -22,6 +23,11 @@
 #' @param server Logical. If \code{TRUE}, render only an initial slice of
 #'   choices and use [glassSelectServer()] to search the full choice set from
 #'   the Shiny server. Default \code{FALSE}.
+#' @param overflow_tooltip Tooltip behavior for trigger text that is visually
+#'   truncated with an ellipsis. \code{"auto"} (default) shows the complete
+#'   text on pointer hover or keyboard focus only when truncation is detected;
+#'   \code{"never"} disables it. On touch devices, opening the dropdown remains
+#'   the primary way to inspect the full, wrapped option text.
 #' @inheritParams glassMultiSelect
 #'
 #' @return An \code{htmltools::tagList} containing the single-select trigger,
@@ -74,29 +80,54 @@ glassSelect <- function(
     disabled_choices = NULL,
     server = FALSE,
     server_limit = 50L,
-    server_min_chars = 0L
+    server_min_chars = 0L,
+    no_matches_text = "No matches",
+    tongue = TRUE,
+    label_bold = TRUE,
+    label_size = "14px",
+    search_focus_ring = FALSE,
+    overflow_tooltip = c("auto", "never"),
+    search_threshold = 15L,
+    dark_selector = NULL
 ) {
   .gt_check_string(
     inputId,
     "inputId",
     "glassSelect(): `inputId` must be a single non-empty string."
   )
+  .gt_check_text(no_matches_text, "no_matches_text", "glassSelect")
+  .gt_check_flag(clearable, "clearable")
+  .gt_check_flag(include_all, "include_all")
+  .gt_check_flag(disabled, "disabled")
+  .gt_check_flag(server, "server")
+  .gt_check_flag(tongue, "tongue")
+  .gt_check_flag(label_bold, "label_bold")
+  .gt_check_flag(search_focus_ring, "search_focus_ring")
+  label_size <- .gt_css_unit(label_size, "label_size")
+  overflow_tooltip <- .gt_match_arg(
+    overflow_tooltip,
+    c("auto", "never"),
+    "overflow_tooltip"
+  )
   check_style <- .gt_match_arg(check_style, c("checkbox", "check-only", "filled"), "check_style")
   shape <- .gt_match_arg(shape, c("rounded", "square"), "shape")
+  searchable <- .gt_search_mode(searchable)
+  search_threshold <- .gt_positive_int(search_threshold, "search_threshold")
   field_width_style <- .gt_field_width_style(width)
   inner_width_style <- if (is.null(width)) NULL else "width:100%;"
-  disabled <- isTRUE(disabled)
   disabled_choices <- if (is.null(disabled_choices)) character(0) else as.character(disabled_choices)
-  server <- isTRUE(server)
   server_limit <- .gt_positive_int(server_limit, "server_limit")
   server_min_chars <- .gt_nonnegative_int(server_min_chars, "server_min_chars")
   colors <- .ms_resolve_theme(theme)
   is_auto <- .is_auto_theme(theme)
+  if (is_auto && is.null(dark_selector)) dark_selector <- '[data-bs-theme="dark"]'
+  if (!is.null(dark_selector)) .gt_check_string(dark_selector, "dark_selector")
 
   normalized <- .gt_normalize_choices(choices)
   vals <- normalized$values
   labels <- normalized$labels
-  groups <- normalized$groups %||% rep("", length(vals))
+  groups <- normalized$groups
+  search_choice_count <- length(vals)
 
   if (isTRUE(include_all) && !all_choice_value %in% vals) {
     vals <- c(all_choice_value, vals)
@@ -105,6 +136,7 @@ glassSelect <- function(
   }
 
   if (!is.null(selected)) {
+    .gt_check_no_missing(selected, "selected", "glassSelect")
     selected <- as.character(selected)
 
     if (length(selected) > 1) {
@@ -159,24 +191,29 @@ glassSelect <- function(
   scope_id <- paste0(inputId, "-wrap")
 
   theme_css <- sprintf(
-    "#%s{--ms-bg:%s;--ms-border:%s;--ms-text:%s;--ms-accent:%s;--ms-focus-ring:%s;--ms-label:%s;%s}",
+    "#%s{--ms-bg:%s;--ms-border:%s;--ms-text:%s;--ms-accent:%s;--ms-focus-ring:%s;--ms-label:%s;--gt-label-size:%s;%s}",
     field_id, colors$bg, colors$border, colors$text, colors$accent, colors$focus, colors$label,
-    .to_rgba_vars(colors)
+    label_size, .to_rgba_vars(colors)
   )
-  dark_override_style <- if (is_auto) {
-    .select_dark_override_style('[data-bs-theme="dark"]', field_id)
+  dark_override_style <- if (!is.null(dark_selector)) {
+    .select_dark_override_style(dark_selector, field_id)
   } else {
     NULL
   }
 
-  wrap_cls <- paste(
-    "gt-gs-wrap",
-    paste0("style-", check_style),
-    if (identical(shape, "square")) "shape-square" else NULL,
-    if (disabled) "gt-disabled" else NULL,
-    if (is_auto) "theme-auto" else NULL,
-    if (.is_light_theme(theme)) "theme-light" else NULL
-  )
+  wrap_cls <- trimws(gsub(
+    "[ ]+", " ",
+    paste(
+      "gt-gs-wrap",
+      paste0("style-", check_style),
+      if (search_focus_ring) "gt-search-ring" else NULL,
+      if (!tongue) "gt-no-tongue" else NULL,
+      if (identical(shape, "square")) "shape-square" else NULL,
+      if (disabled) "gt-disabled" else NULL,
+      if (is_auto) "theme-auto" else NULL,
+      if (.is_light_theme(theme)) "theme-light" else NULL
+    )
+  ))
 
   check_svg <- shiny::tags$svg(
     width = "10",
@@ -194,7 +231,11 @@ glassSelect <- function(
 
   label_tag <- if (!is.null(label)) {
     shiny::tags$label(
-      class = "gt-input-label",
+      class = trimws(paste(
+        "gt-input-label",
+        if (!label_bold) "gt-label-regular" else NULL
+      )),
+      id = paste0(inputId, "-field-label"),
       `for` = paste0(inputId, "-trigger"),
       label
     )
@@ -242,13 +283,17 @@ glassSelect <- function(
   }
 
   clear_btn <- if (isTRUE(clearable)) {
-    shiny::tags$span(
+    shiny::tags$button(
+      type = "button",
+      tabindex = "-1",
       class = "gt-gs-clear",
       id = paste0(inputId, "-clear"),
       "Clear"
     )
   } else {
-    shiny::tags$span(
+    shiny::tags$button(
+      type = "button",
+      tabindex = "-1",
       class = "gt-gs-clear",
       id = paste0(inputId, "-clear"),
       style = "display:none;",
@@ -270,13 +315,17 @@ glassSelect <- function(
         style = inner_width_style,
         `data-input-id` = inputId,
         `data-placeholder` = placeholder,
-        `data-searchable` = tolower(as.character(searchable)),
+        `data-no-matches-text` = no_matches_text,
+        `data-searchable` = searchable,
+        `data-search-threshold` = as.character(search_threshold),
         `data-clearable` = tolower(as.character(clearable)),
         `data-all-choice-label` = all_choice_label,
         `data-all-choice-value` = all_choice_value,
+        `data-include-all` = tolower(as.character(include_all)),
         `data-server` = tolower(as.character(server)),
-        `data-server-total` = as.character(length(vals)),
+        `data-server-total` = as.character(search_choice_count),
         `data-server-min-chars` = as.character(server_min_chars),
+        `data-overflow-tooltip` = overflow_tooltip,
 
         shiny::div(
           class = "gt-gs-trigger",
@@ -288,6 +337,11 @@ glassSelect <- function(
           `aria-expanded` = "false",
           `aria-disabled` = if (disabled) "true" else NULL,
           `aria-controls` = paste0(inputId, "-dropdown"),
+          `aria-labelledby` = if (!is.null(label)) {
+            paste0(inputId, "-field-label")
+          } else {
+            paste0(inputId, "-label")
+          },
           shiny::tags$span(id = paste0(inputId, "-label"), init_label),
           shiny::div(
             style = "display:flex;align-items:center;gap:6px;",
@@ -312,27 +366,30 @@ glassSelect <- function(
           id = paste0(inputId, "-dropdown"),
           role = "listbox",
 
-          if (isTRUE(searchable)) {
-            shiny::div(
-              class = "gt-gs-search",
-              shiny::tags$svg(
-                width = "13",
-                height = "13",
-                viewBox = "0 0 24 24",
-                fill = "none",
-                stroke = colors$accent,
-                `stroke-width` = "2.2",
-                shiny::tags$circle(cx = "11", cy = "11", r = "8"),
-                shiny::tags$path(`stroke-linecap` = "round", d = "M21 21l-4.35-4.35")
-              ),
-              shiny::tags$input(
-                type = "text",
-                id = paste0(inputId, "-search"),
-                placeholder = "Search options...",
-                autocomplete = "off"
-              )
+          shiny::div(
+            class = trimws(paste(
+              "gt-gs-search",
+              if (identical(searchable, "never") ||
+                  (identical(searchable, "auto") && search_choice_count < search_threshold)) "hidden" else NULL
+            )),
+            shiny::tags$svg(
+              width = "13",
+              height = "13",
+              viewBox = "0 0 24 24",
+              fill = "none",
+              stroke = colors$accent,
+              `stroke-width` = "2.2",
+              shiny::tags$circle(cx = "11", cy = "11", r = "8"),
+              shiny::tags$path(`stroke-linecap` = "round", d = "M21 21l-4.35-4.35")
+            ),
+            shiny::tags$input(
+              type = "text",
+              id = paste0(inputId, "-search"),
+              placeholder = "Search options...",
+              `aria-label` = "Search options",
+              autocomplete = "off"
             )
-          },
+          ),
 
           shiny::div(
             id = paste0(inputId, "-options"),
@@ -378,6 +435,10 @@ glassSelect <- function(
 #' @param disabled_choices Optional character vector of choice values to render
 #'   as disabled. Defaults to \code{NULL}, which leaves disabled choices
 #'   unchanged.
+#' @param searchable Optional new search visibility: \code{TRUE}, \code{FALSE},
+#'   or \code{"auto"}. \code{NULL} keeps the current setting.
+#' @param search_threshold Optional new choice-count threshold used when
+#'   \code{searchable = "auto"}. \code{NULL} keeps the current threshold.
 #'
 #' @return No return value. Called for its side effect of updating the client-side
 #'   widget.
@@ -392,33 +453,35 @@ updateGlassSelect <- function(
     check_style = NULL,
     shape = NULL,
     disabled = NULL,
-    disabled_choices = NULL
+    disabled_choices = NULL,
+    searchable = NULL,
+    search_threshold = NULL
 ) {
+  if (is.function(session$sendCustomMessage) && is.function(session$ns)) {
+    .gt_check_session(session, "sendCustomMessage")
+  } else {
+    .gt_check_session(session, "sendInputMessage")
+  }
   if (!is.null(check_style)) {
     check_style <- .gt_match_arg(check_style, c("checkbox", "check-only", "filled"), "check_style")
   }
   if (!is.null(shape)) {
     shape <- .gt_match_arg(shape, c("rounded", "square"), "shape")
   }
+  if (!is.null(disabled)) .gt_check_flag(disabled, "disabled")
+  if (!is.null(searchable)) searchable <- .gt_search_mode(searchable)
+  if (!is.null(search_threshold)) {
+    search_threshold <- .gt_positive_int(search_threshold, "search_threshold")
+  }
 
   message <- list()
 
   if (!is.null(choices)) {
-    normalized <- .gt_normalize_choices(choices)
-    disabled_vals <- if (is.null(disabled_choices)) character(0) else as.character(disabled_choices)
-    grps <- normalized$groups %||% rep("", length(normalized$values))
-
-    message$choices <- lapply(seq_along(normalized$values), function(i) {
-      list(
-        label = normalized$labels[[i]],
-        value = normalized$values[[i]],
-        group = grps[[i]],
-        disabled = normalized$values[[i]] %in% disabled_vals
-      )
-    })
+    message$choices <- .gt_update_choice_payload(choices, disabled_choices)
   }
 
   if (!is.null(selected)) {
+    .gt_check_no_missing(selected, "selected", "updateGlassSelect")
     selected <- as.character(selected)
 
     if (length(selected) > 1) {
@@ -449,14 +512,23 @@ updateGlassSelect <- function(
   }
 
   if (!is.null(disabled)) {
-    message$disabled <- isTRUE(disabled)
+    message$disabled <- disabled
   }
 
   if (!is.null(disabled_choices)) {
     message$disabled_choices <- unname(as.character(disabled_choices))
   }
+  if (!is.null(searchable)) message$searchable <- searchable
+  if (!is.null(search_threshold)) message$search_threshold <- search_threshold
 
-  session$sendInputMessage(inputId, message)
+  if (is.function(session$sendCustomMessage) && is.function(session$ns)) {
+    session$sendCustomMessage(
+      "glasstabs_update_select",
+      list(inputId = session$ns(inputId), data = message)
+    )
+  } else {
+    session$sendInputMessage(inputId, message)
+  }
   invisible(NULL)
 }
 
@@ -509,6 +581,11 @@ glassSelectValue <- function(input, inputId) {
 #'   Default \code{50}.
 #' @param ignore_case Logical. Match labels and values case-insensitively.
 #'   Default \code{TRUE}.
+#' @param disabled_choices Optional character vector of choice values to
+#'   render as disabled in search responses. Default \code{NULL}, which
+#'   leaves previously loaded disabled state unchanged. A disabled value
+#'   need not appear in any rendered page yet; it takes effect when it
+#'   first arrives in a response.
 #'
 #' @return An observer created by [shiny::observeEvent()].
 #'
@@ -540,7 +617,8 @@ glassSelectServer <- function(
     choices,
     session = shiny::getDefaultReactiveDomain(),
     limit = 50L,
-    ignore_case = TRUE
+    ignore_case = TRUE,
+    disabled_choices = NULL
 ) {
   .gt_register_server_choices(
     inputId = inputId,
@@ -548,6 +626,7 @@ glassSelectServer <- function(
     session = session,
     limit = limit,
     ignore_case = ignore_case,
-    type = "single"
+    type = "single",
+    disabled_choices = disabled_choices
   )
 }

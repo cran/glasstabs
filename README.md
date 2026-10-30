@@ -24,7 +24,7 @@ Install the CRAN release:
 install.packages("glasstabs")
 ```
 
-Install the development version from GitHub when you want changes that are not yet available in the CRAN release:
+To install directly from the current GitHub source:
 
 ``` r
 pak::pak("PrigasG/glasstabs@main")
@@ -117,6 +117,79 @@ glassMultiSelect(
 glassFilterTags("status")
 ```
 
+The [multi-select guide](https://prigasg.github.io/glasstabs/articles/multiselect.html) covers selection semantics, summaries, search, linked filters, server updates, and migration from `selectizeInput(multiple = TRUE)`. The corresponding [single-select guide](https://prigasg.github.io/glasstabs/articles/glassSelect.html) covers one-value controls.
+
+Select dropdowns always match their trigger width. The standard width is a compact `160px`; use the optional `width` argument only when an app needs more room for long labels. Both fixed and fluid CSS widths are supported and remain capped by the containing layout, so `width = "240px"` works well for a wider filter while `width = "100%"` fills the available column. Exceptionally long labels still wrap safely inside the matching panel.
+
+``` r
+glassSelect("industry", industry_choices, width = "240px")
+glassMultiSelect("filters", filter_choices, width = "100%")
+```
+
+With `glassSelect()`, `overflow_tooltip = "auto"` (the default) reveals an ellipsized selected label on pointer hover or keyboard focus. Inside either open dropdown, it reveals only the truncated option currently hovered or reached with keyboard navigation. Multi-select never combines every selected label into one noisy trigger tooltip. Touch users read the wrapped option in the open dropdown. Set `overflow_tooltip = "never"` to suppress visual tooltips.
+
+The select controls also expose their presentation choices directly:
+
+``` r
+glassSelect(
+  "industry", industry_choices,
+  theme = "auto",
+  dark_selector = "body.app-dark", # optional custom dark-mode hook
+  tongue = FALSE,              # detached panel with a short fade
+  label_bold = TRUE,
+  label_size = "14px",
+  search_focus_ring = FALSE    # quiet search focus is the default
+)
+
+glassMultiSelect(
+  "filters", filter_choices,
+  check_style = "filled",
+  fill_colors = "single"       # use "multi" for per-choice hues
+)
+```
+
+`tongue = TRUE` keeps the signature attached unfurl animation. Turning it off does not remove motion entirely: the detached panel uses a restrained open and close transition and still honors reduced-motion preferences.
+
+With `theme = "auto"`, all tabs and select widgets default to Bootstrap's `[data-bs-theme="dark"]` signal. Supply `dark_selector` when an application uses a different class or attribute to announce dark mode. An explicit selector also works with `theme = "light"` for applications that switch modes later.
+
+For a short list, the search box can stay out of the way. Both select widgets accept `searchable = "auto"`; search appears only when the list reaches the chosen threshold. Five categories, for example, remain uncluttered when the threshold is six.
+
+``` r
+glassSelect(
+  "category",
+  category_choices,
+  searchable = "auto",
+  search_threshold = 6
+)
+```
+
+The multi-select trigger can also show a compact summary instead of the generic “Multiple selection” label.
+
+``` r
+glassMultiSelect(
+  "facility",
+  facility_choices,
+  searchable = "auto",
+  search_threshold = 12,
+  selection_display = "summary",
+  selection_max_items = 2,
+  dropdown_max_height = "18rem"
+)
+```
+
+Choice updates are handled as one transaction. Existing selections are kept when they still exist, and Shiny is notified only when the effective value changes. `notify = "never"` is useful when several linked filters are settling and the final update should be the only one that reaches the server.
+
+``` r
+updateGlassMultiSelect(
+  session,
+  "facility",
+  choices = facilities_for_region,
+  preserve_selection = TRUE,
+  drop_invalid = TRUE,
+  notify = "changed"
+)
+```
+
 ## Match the surrounding app
 
 Use `theme = "auto"` in Bootstrap 5 or `bslib` apps so the widgets follow the page's light and dark modes. Use `shape = "square"` when the controls sit next to native Shiny inputs.
@@ -150,6 +223,21 @@ glassTabsUI(
 ```
 
 `tab_align` places the tab group at the left, center, or right of the available navigation area in either layout. `text_align` separately aligns labels and icons inside each tab button. For visible left or right alignment in a horizontal bar, the buttons share the width of the widest label.
+
+Tab content sits in a subtle glass container, so the tabs and their content read as one connected component instead of a tab bar floating over bare space. The active tab picks up a soft light on its content-facing edge to tie them together.
+
+Use `style = "attached"` to dock the tab bar directly onto the content box as a single card, and `transition = "slide"` to slide panes in the direction you move between tabs:
+
+``` r
+glassTabsUI(
+  "reports",
+  glassTabPanel("summary", "Summary", selected = TRUE, summary_ui),
+  glassTabPanel("activity", "Recent activity", activity_ui),
+  glassTabPanel("quality", "Data quality", quality_ui),
+  style = "attached",
+  transition = "slide"
+)
+```
 
 ## Tabs that fit the screen
 
@@ -267,7 +355,7 @@ conditionalPanel(
 
 ## Large choice sets
 
-For hundreds or thousands of choices, keep the full vector on the server and send a small page of matches to the browser.
+For hundreds or thousands of choices, keep the full vector on the server and send up to `server_limit` matching choices to the browser for each search.
 
 ``` r
 many_choices <- stats::setNames(
@@ -298,13 +386,13 @@ server <- function(input, output, session) {
 | `runGlassExample(example)` | Launch a built-in example app (`runGlassExample()` lists all available apps) |
 | `glasstabs_news()` | Print the package changelog to the R console |
 
-Built-in examples include `basic`, `bs4dash`, `bslib`, `connect-workflow`, `dashboard`, `indicators`, `server-select`, `smoke-test`, and `square-corners`. The Connect workflow doubles as a v0.4.0 test lab, with the responsive, keyboard, touch, dynamic-tab, badge, theme, and page-wrapper checks collected in one app.
+Built-in examples include `basic`, `bs4dash`, `bslib`, `connect-workflow`, `dashboard`, `indicators`, `light-mode`, `native-comparison`, `server-select`, `smoke-test`, `square-corners`, `stress-test`, and `theme-switcher`. The `native-comparison` lab places native Shiny and glasstabs fields side by side, including an intentionally truncated selected label and live controls for width, tongue motion, labels, search focus, filled colors, and overflow tooltips. The dedicated light-mode example includes long select labels for checking adaptive dropdown sizing. The theme-switcher example flips every select between dark and light with one switch, and exercises long category names, wide text in a narrow phone frame, and a bottom-of-page dropdown that must flip above the field. The Connect workflow brings responsive, keyboard, touch, dynamic-tab, badge, theme, and page-wrapper features together in one app.
 
 ### Tab widget
 
 | Function | Description |
 |----|----|
-| `glassTabsUI(id, ..., selected, wrap, compact, shape, indicator, orientation, tab_align, text_align, overflow, swipe, extra_ui, theme, dark_selector)` | Animated tab bar with responsive overflow and optional touch swipes |
+| `glassTabsUI(id, ..., selected, wrap, compact, content_min_height, style, transition, shape, indicator, orientation, tab_align, text_align, overflow, swipe, extra_ui, theme, dark_selector)` | Animated tab bar with responsive overflow and optional touch swipes |
 | `glassTabPanel(value, label, ..., icon, selected)` | Define one tab and its content; `icon` accepts `shiny::icon()` |
 | `glassTabsServer(id, bookmark)` | Reactive returning the active tab; can bookmark the active tab in the URL |
 | `glassTabsOutput(outputId)` | UI placeholder for a server-rendered tab widget |
@@ -327,7 +415,7 @@ Built-in examples include `basic`, `bs4dash`, `bslib`, `connect-workflow`, `dash
 | `glassMultiSelect(inputId, choices, ...)` | Multi-select dropdown widget |
 | `glassMultiSelectServer(inputId, choices, ...)` | Server-side search for large multi-select choice sets |
 | `updateGlassMultiSelect(session, inputId, ...)` | Update multi-select choices, selection, or style |
-| `glassMultiSelectValue(input, inputId)` | Reactive helpers for multi-select value and style |
+| `glassMultiSelectValue(input, inputId, ...)` | Raw and resolved multi-select values, empty state, and style |
 | `glassSelect(inputId, choices, ...)` | Single-select dropdown widget |
 | `glassSelectServer(inputId, choices, ...)` | Server-side search for large single-select choice sets |
 | `updateGlassSelect(session, inputId, ...)` | Update single-select choices, selection, or style |
@@ -346,10 +434,11 @@ Built-in examples include `basic`, `bs4dash`, `bslib`, `connect-workflow`, `dash
 | `input$<inputId>` | `character vector` | Selected values from `glassMultiSelect()` |
 | `input$<inputId>_style` | `character` | Active selection style from `glassMultiSelect()` |
 | `input$<inputId>_open` | `logical` | Whether a select dropdown is open |
+| `input$<inputId>_ready` | `logical` | Whether the select widget has finished initializing |
 | `input$<inputId>` | `character` or `NULL` | Selected value from `glassSelect()` |
 
 ## Documentation and support
 
-The [glasstabs website](https://prigasg.github.io/glasstabs/) includes focused articles, a searchable function reference, and the [v0.4.0 cheatsheet](https://prigasg.github.io/glasstabs/articles/cheatsheet.html). Release notes are available in [`NEWS.md`](NEWS.md) or from R with `glasstabs_news()`.
+The [glasstabs website](https://prigasg.github.io/glasstabs/) includes focused articles, a searchable function reference, and the [v0.4.1 cheatsheet](https://prigasg.github.io/glasstabs/articles/cheatsheet.html). Release notes are available in [`NEWS.md`](NEWS.md) or from R with `glasstabs_news()`.
 
 If a widget does not fit naturally into your app, please open a [GitHub issue](https://github.com/PrigasG/glasstabs/issues) with a small Shiny example. Questions, bug reports, and ideas for making the package easier to use are all welcome.
